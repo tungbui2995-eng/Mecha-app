@@ -158,54 +158,6 @@ body {
 .phase-step-label { font-size: 10px; color: var(--text2); text-align: center; max-width: 70px; line-height: 1.3; }
 .phase-step.active-ph .phase-step-label { color: var(--text0); font-weight: 500; }
 
-.task-list { display: flex; flex-direction: column; }
-.task-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); transition: background .1s; }
-.task-row:last-child { border-bottom: none; }
-.task-row:hover { background: var(--bg3); }
-.task-cb {
-  width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border2); cursor: pointer; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; background: var(--bg3); transition: all .15s;
-}
-.task-cb.checked { background: var(--green); border-color: var(--green); }
-.task-cb svg { width: 10px; height: 10px; color: #fff; }
-.task-name { flex: 1; font-size: 13px; }
-.task-name.done { text-decoration: line-through; color: var(--text2); }
-.task-assign { font-size: 11px; color: var(--text2); }
-.task-prio { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
-
-.phase-detail-grid { display: grid; grid-template-columns: 280px 1fr; gap: 16px; }
-.phase-nav-list { display: flex; flex-direction: column; gap: 3px; }
-.phase-nav-item {
-  display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--r); cursor: pointer; transition: background .1s; font-size: 13px; color: var(--text1);
-}
-.phase-nav-item:hover { background: var(--bg3); color: var(--text0); }
-.phase-nav-item.active { background: rgba(79,142,247,.1); color: var(--accent); font-weight: 500; }
-.phase-nav-pct { margin-left: auto; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
-.phase-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-
-/* ── GANTT ── */
-.gantt-wrap { overflow-x: auto; }
-.gantt-grid { min-width: 800px; }
-.gantt-head { display: grid; grid-template-columns: 180px repeat(10,1fr); font-size: 10px; color: var(--text2); letter-spacing: .05em; text-transform: uppercase; }
-.gantt-head-cell { padding: 6px 8px; text-align: center; border-left: 1px solid var(--border); }
-.gantt-head-cell:first-child { border-left: none; text-align: left; }
-.gantt-row { display: grid; grid-template-columns: 180px repeat(10,1fr); border-top: 1px solid var(--border); }
-.gantt-name { padding: 8px 10px; font-size: 12px; display: flex; align-items: center; gap: 6px; color: var(--text1); }
-.gantt-cell { border-left: 1px solid var(--border); position: relative; height: 34px; }
-.gantt-bar {
-  position: absolute; top: 7px; height: 20px; border-radius: 4px; display: flex; align-items: center;
-  padding-left: 6px; font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; letter-spacing: .02em;
-}
-
-/* ── ISSUES ── */
-.issue-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background .1s; }
-.issue-row:last-child { border-bottom: none; }
-.issue-row:hover { background: var(--bg3); }
-.issue-prio-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
-.issue-body { flex: 1; }
-.issue-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
-.issue-meta { font-size: 11px; color: var(--text2); display: flex; gap: 12px; }
-
 /* ── MODALS & FORMS ── */
 .overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center;
@@ -250,8 +202,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 .folder-count { margin-left: auto; font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .empty-state { text-align: center; padding: 48px 24px; color: var(--text2); font-size: 13px; }
-.empty-icon { font-size: 36px; margin-bottom: 10px; }
-.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text1); background: var(--bg3); border: 1px solid var(--border); padding: 3px 9px; border-radius: 20px; }
 .progress-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
 </style>
 </head>
@@ -349,7 +299,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         </div>
       </div>
 
-      <div class="two-col style="margin-bottom:16px"">
+      <div class="two-col" style="margin-bottom:16px">
         <div class="card">
           <div class="card-header">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -393,7 +343,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
     </div>
 
     <div class="view" id="view-docs">
-      <div style="display:flex;gap:10px;margin-bottom:14px"><button class="btn btn-sm btn-accent" onclick="openModal('new-doc')">Tải lên tài liệu</button></div>
+      <div style="display:flex;gap:10px;margin-bottom:14px"><button class="btn btn-sm btn-accent" onclick="openModal('new-doc')">Tải lên tài liệu / Thư mục</button></div>
       <div class="docs-layout">
         <div class="folder-list" id="folder-list"></div>
         <div class="card"><table class="tbl"><thead><tr><th>Dự án</th><th>Tên file</th><th>Định dạng</th><th>Giai đoạn</th><th>Ngày sửa</th><th>Dung lượng</th></tr></thead><tbody id="docs-tbody"></tbody></table></div>
@@ -666,6 +616,19 @@ function renderTeam() {
   tbody.innerHTML = team.map(t => `<tr><td>${t.name}</td><td>${t.role}</td><td>${t.projects.join(', ')}</td><td>${t.status}</td></tr>`).join('');
 }
 
+function toggleUploadMode(mode) {
+  const input = document.getElementById('fd-file-input');
+  if (mode === 'folder') {
+    input.setAttribute('webkitdirectory', '');
+    input.setAttribute('directory', '');
+    input.multiple = true;
+  } else {
+    input.removeAttribute('webkitdirectory');
+    input.removeAttribute('directory');
+    input.multiple = false;
+  }
+}
+
 function openModal(type) {
   const overlay = document.getElementById('overlay');
   overlay.classList.add('open');
@@ -686,12 +649,19 @@ function openModal(type) {
       <div class="form-row"><label class="form-label">Nội dung sự cố</label><textarea class="form-ctrl" id="fi-title"></textarea></div>
     `;
     document.getElementById('modal-ft').innerHTML = `<button class="btn btn-accent" onclick="saveIssue()">Lưu lỗi</button>`;
-} else if(type==='new-doc') {
-    document.getElementById('modal-hd').innerHTML = `📎 Thêm tài liệu thực tế lên Drive`;
+  } else if(type==='new-doc') {
+    document.getElementById('modal-hd').innerHTML = `📎 Tải lên tài liệu / Thư mục bản vẽ`;
     document.getElementById('modal-body').innerHTML = `
       <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fd-proj" placeholder="TL-2025-001"></div>
-      <div class="form-row"><label class="form-label">Chọn file từ máy tính *</label><input class="form-ctrl" type="file" id="fd-file-input"></div>
-      <div class="form-row"><label class="form-label">Thư mục phân loại</label><select class="form-ctrl" id="fd-folder"><option value="f1">Bản vẽ 2D/3D</option><option value="f3">BOM vật tư</option></select></div>
+      <div class="form-row">
+        <label class="form-label">Chế độ tải lên</label>
+        <div style="display:flex; gap:16px; margin-bottom:8px; font-size:13px">
+          <label style="cursor:pointer"><input type="radio" name="up-mode" value="file" checked onclick="toggleUploadMode('file')"> Tải file lẻ</label>
+          <label style="cursor:pointer"><input type="radio" name="up-mode" value="folder" onclick="toggleUploadMode('folder')"> Tải trọn bộ thư mục</label>
+        </div>
+      </div>
+      <div class="form-row"><label class="form-label">Chọn tệp / Thư mục bản vẽ *</label><input class="form-ctrl" type="file" id="fd-file-input"></div>
+      <div class="form-row"><label class="form-label">Thư mục phân loại</label><select class="form-ctrl" id="fd-folder"><option value="f1">Bản vẽ 2D/3D</option><option value="f2">Sơ đồ mạch điện</option><option value="f3">BOM vật tư</option><option value="f4">Tài liệu hướng dẫn & CO/CQ</option></select></div>
     `;
     document.getElementById('modal-ft').innerHTML = `<button class="btn btn-accent" onclick="saveDocWithFile()">Xác nhận Upload</button>`;
   }
@@ -714,69 +684,84 @@ function saveIssue() {
   closeModal(); syncDataToDrive();
 }
 
-function saveDoc() function saveDocWithFile() {
+function saveDocWithFile() {
   const proj = document.getElementById('fd-proj').value.trim();
   const fileInput = document.getElementById('fd-file-input');
   
   if (!fileInput.files || fileInput.files.length === 0) {
-    alert('Vui lòng chọn một file từ máy tính trước!');
+    alert('Vui lòng chọn file hoặc thư mục trước khi bấm xác nhận!');
     return;
   }
   
-  const file = fileInput.files[0];
-  const reader = new FileReader();
-  
-  showLoading("Đang mã hóa và tải file lên Google Drive...");
-  
-  reader.onload = function(e) {
-    const base64Data = e.target.result.split(',')[1];
+  const files = Array.from(fileInput.files);
+  let currentUploadIndex = 0;
+
+  showLoading(`Đang khởi tạo tải lên (${files.length} tệp)...`);
+
+  function uploadNextFile() {
+    if (currentUploadIndex >= files.length) {
+      hideLoading();
+      closeModal();
+      syncDataToDrive();
+      toast(`Đã tải lên toàn bộ ${files.length} tài liệu thành công!`);
+      return;
+    }
+
+    const file = files[currentUploadIndex];
+    const reader = new FileReader();
     
-    const payload = {
-      action: "upload_file",
-      proj: proj,
-      filename: file.name,
-      mimeType: file.type,
-      fileData: base64Data,
-      folderIntent: document.getElementById('fd-folder').value
+    // Giữ nguyên đường dẫn tương đối nếu upload thư mục, nếu không có thì lấy tên file lẻ
+    const relativePath = file.webkitRelativePath || file.name;
+    
+    showLoading(`Đang xử lý gói dữ liệu (${currentUploadIndex + 1}/${files.length}): \n${file.name}`);
+
+    reader.onload = function(e) {
+      const base64Data = e.target.result.split(',')[1];
+      
+      const payload = {
+        action: "upload_file",
+        proj: proj,
+        filename: relativePath,
+        mimeType: file.type || "application/octet-stream",
+        fileData: base64Data,
+        folderIntent: document.getElementById('fd-folder').value
+      };
+      
+      fetch(DRIVE_API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if(resData.status === "success") {
+          docs.unshift({
+            proj: proj,
+            name: relativePath,
+            type: file.name.split('.').pop().toUpperCase() || 'UNKNOWN',
+            phase: 'Thiết kế',
+            folder: document.getElementById('fd-folder').value,
+            date: new Date().toISOString().slice(0,10),
+            size: (file.size / (1024*1024)).toFixed(2) + ' MB'
+          });
+          
+          currentUploadIndex++;
+          uploadNextFile(); // Thực hiện đệ quy tải file tiếp theo tuần tự
+        } else {
+          hideLoading();
+          alert(`Lỗi phát sinh tại tệp ${file.name}: ${resData.message}`);
+        }
+      })
+      .catch(err => {
+        hideLoading();
+        alert("Lỗi kết nối đường truyền mạng: " + err);
+      });
     };
     
-    fetch(DRIVE_API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(resData => {
-      hideLoading();
-      if(resData.status === "success") {
-        docs.unshift({
-          proj: proj,
-          name: file.name,
-          type: file.name.split('.').pop().toUpperCase(),
-          phase: 'Thiết kế',
-          folder: document.getElementById('fd-folder').value,
-          date: new Date().toISOString().slice(0,10),
-          size: (file.size / (1024*1024)).toFixed(2) + ' MB'
-        });
-        closeModal();
-        syncDataToDrive();
-        toast("Tải file vật lý lên Drive thành công!");
-      } else {
-        alert("Lỗi từ Drive: " + resData.message);
-      }
-    })
-    .catch(err => {
-      hideLoading();
-      alert("Lỗi đường truyền: " + err);
-    });
-  };
-  
-  reader.readAsDataURL(file);
-}
-  {
-  const proj = document.getElementById('fd-proj').value;
-  const name = document.getElementById('fd-name').value;
-  docs.unshift({proj, name, type:'DWG', phase:'Thiết kế', folder: document.getElementById('fd-folder').value, date: '2025-01-20', size:'2.4 MB'});
-  closeModal(); syncDataToDrive();
+    reader.readAsDataURL(file);
+  }
+
+  // Bắt đầu chuỗi tải lên tuần tự
+  uploadNextFile();
 }
 
 function filterProj(v) {
