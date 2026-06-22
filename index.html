@@ -686,14 +686,14 @@ function openModal(type) {
       <div class="form-row"><label class="form-label">Nội dung sự cố</label><textarea class="form-ctrl" id="fi-title"></textarea></div>
     `;
     document.getElementById('modal-ft').innerHTML = `<button class="btn btn-accent" onclick="saveIssue()">Lưu lỗi</button>`;
-  } else if(type==='new-doc') {
-    document.getElementById('modal-hd').innerHTML = `📎 Thêm tài liệu tham chiếu`;
+} else if(type==='new-doc') {
+    document.getElementById('modal-hd').innerHTML = `📎 Thêm tài liệu thực tế lên Drive`;
     document.getElementById('modal-body').innerHTML = `
-      <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fd-proj"></div>
-      <div class="form-row"><label class="form-label">Tên file bản vẽ</label><input class="form-ctrl" id="fd-name"></div>
+      <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fd-proj" placeholder="TL-2025-001"></div>
+      <div class="form-row"><label class="form-label">Chọn file từ máy tính *</label><input class="form-ctrl" type="file" id="fd-file-input"></div>
       <div class="form-row"><label class="form-label">Thư mục phân loại</label><select class="form-ctrl" id="fd-folder"><option value="f1">Bản vẽ 2D/3D</option><option value="f3">BOM vật tư</option></select></div>
     `;
-    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-accent" onclick="saveDoc()">Lưu tài liệu</button>`;
+    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-accent" onclick="saveDocWithFile()">Xác nhận Upload</button>`;
   }
 }
 function closeModal() { document.getElementById('overlay').classList.remove('open'); }
@@ -714,7 +714,65 @@ function saveIssue() {
   closeModal(); syncDataToDrive();
 }
 
-function saveDoc() {
+function saveDoc() function saveDocWithFile() {
+  const proj = document.getElementById('fd-proj').value.trim();
+  const fileInput = document.getElementById('fd-file-input');
+  
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert('Vui lòng chọn một file từ máy tính trước!');
+    return;
+  }
+  
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  
+  showLoading("Đang mã hóa và tải file lên Google Drive...");
+  
+  reader.onload = function(e) {
+    const base64Data = e.target.result.split(',')[1];
+    
+    const payload = {
+      action: "upload_file",
+      proj: proj,
+      filename: file.name,
+      mimeType: file.type,
+      fileData: base64Data,
+      folderIntent: document.getElementById('fd-folder').value
+    };
+    
+    fetch(DRIVE_API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(resData => {
+      hideLoading();
+      if(resData.status === "success") {
+        docs.unshift({
+          proj: proj,
+          name: file.name,
+          type: file.name.split('.').pop().toUpperCase(),
+          phase: 'Thiết kế',
+          folder: document.getElementById('fd-folder').value,
+          date: new Date().toISOString().slice(0,10),
+          size: (file.size / (1024*1024)).toFixed(2) + ' MB'
+        });
+        closeModal();
+        syncDataToDrive();
+        toast("Tải file vật lý lên Drive thành công!");
+      } else {
+        alert("Lỗi từ Drive: " + resData.message);
+      }
+    })
+    .catch(err => {
+      hideLoading();
+      alert("Lỗi đường truyền: " + err);
+    });
+  };
+  
+  reader.readAsDataURL(file);
+}
+  {
   const proj = document.getElementById('fd-proj').value;
   const name = document.getElementById('fd-name').value;
   docs.unshift({proj, name, type:'DWG', phase:'Thiết kế', folder: document.getElementById('fd-folder').value, date: '2025-01-20', size:'2.4 MB'});
