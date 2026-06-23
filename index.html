@@ -3,31 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MechaProject — Quản lý dự án cơ khí (Online Drive)</title>
+<title>MechaProject — Quản lý dự án cơ khí</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg0: #0d0f12;
-  --bg1: #13161b;
-  --bg2: #1a1e26;
-  --bg3: #222733;
-  --bg4: #2a3040;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text0: #f0f2f5;
-  --text1: #a8b0c0;
-  --text2: #6b7585;
+  --bg0: #0a0c10;
+  --bg1: #111318;
+  --bg2: #171b23;
+  --bg3: #1e2330;
+  --bg4: #262d3d;
+  --bg5: #2f3850;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.11);
+  --border3: rgba(255,255,255,0.18);
+  --text0: #eef0f4;
+  --text1: #9aa3b5;
+  --text2: #5c6578;
   --accent: #4f8ef7;
-  --accent2: #2d5fb8;
-  --green: #3ecf8e;
-  --amber: #f59e0b;
+  --accent-dim: rgba(79,142,247,0.12);
+  --accent-glow: rgba(79,142,247,0.25);
+  --green: #34d399;
+  --green-dim: rgba(52,211,153,0.1);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.1);
   --red: #f87171;
+  --red-dim: rgba(248,113,113,0.1);
   --purple: #a78bfa;
   --teal: #2dd4bf;
+  --teal-dim: rgba(45,212,191,0.1);
   --orange: #fb923c;
   --r: 8px;
   --r2: 12px;
+  --r3: 16px;
+  --sidebar-w: 248px;
+  --topbar-h: 58px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 14px; }
@@ -39,196 +49,369 @@ body {
   display: flex;
   overflow: hidden;
 }
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border3); }
 
 /* ── LOADING OVERLAY ── */
 .global-loading {
-  position: fixed; inset: 0; background: rgba(13,15,18,0.9);
+  position: fixed; inset: 0; background: rgba(10,12,16,0.92);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  z-index: 9999; gap: 12px; transition: opacity 0.3s;
+  z-index: 9999; gap: 14px; transition: opacity 0.3s; backdrop-filter: blur(6px);
 }
-.spinner {
-  width: 32px; height: 32px; border: 3px solid var(--bg4);
-  border-top-color: var(--accent); border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.spinner-ring {
+  width: 40px; height: 40px; position: relative;
+}
+.spinner-ring::before, .spinner-ring::after {
+  content: ''; position: absolute; border-radius: 50%;
+}
+.spinner-ring::before {
+  inset: 0; border: 2px solid var(--bg4);
+}
+.spinner-ring::after {
+  inset: 0; border: 2px solid transparent; border-top-color: var(--accent);
+  animation: spin 0.7s cubic-bezier(0.45,0.05,0.55,0.95) infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 12px; color: var(--text1); letter-spacing: 0.03em; }
+.loading-sub { font-size: 11px; color: var(--text2); }
 
 /* ── SIDEBAR ── */
 .sidebar {
-  width: 240px; flex-shrink: 0; background: var(--bg1); border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; padding: 0; overflow-y: auto;
+  width: var(--sidebar-w); flex-shrink: 0; background: var(--bg1);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow-y: auto;
 }
-.logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-.logo-icon {
-  width: 32px; height: 32px; background: var(--accent); border-radius: 8px;
-  display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+.logo {
+  padding: 18px 16px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 11px;
 }
-.logo-text { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
-.logo-sub { font-size: 10px; color: var(--text2); margin-top: 1px; letter-spacing: .04em; text-transform: uppercase; }
+.logo-mark {
+  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg, #3a7de0 0%, #6366f1 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(79,142,247,0.3);
+}
+.logo-mark svg { width: 18px; height: 18px; }
+.logo-name { font-size: 14px; font-weight: 700; letter-spacing: -0.03em; color: var(--text0); }
+.logo-tag { font-size: 10px; color: var(--text2); margin-top: 1px; letter-spacing: 0.06em; text-transform: uppercase; }
 
-.nav-section { padding: 12px 0 4px; }
-.nav-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; color: var(--text2); text-transform: uppercase; padding: 0 18px 6px; }
+.nav-section { padding: 10px 0 2px; }
+.nav-label {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .12em; color: var(--text2);
+  text-transform: uppercase; padding: 0 16px 6px;
+}
 .nav-item {
-  display: flex; align-items: center; gap: 9px; padding: 8px 18px; cursor: pointer;
-  font-size: 13px; color: var(--text1); border-left: 2px solid transparent; transition: all .15s; user-select: none;
+  display: flex; align-items: center; gap: 9px; padding: 8px 16px; cursor: pointer;
+  font-size: 13px; color: var(--text1); border-left: 2px solid transparent;
+  transition: all .15s; user-select: none; position: relative;
 }
-.nav-item:hover { color: var(--text0); background: var(--bg2); }
-.nav-item.active { color: var(--accent); background: rgba(79,142,247,.08); border-left-color: var(--accent); font-weight: 500; }
-.nav-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: .7; }
-.nav-item.active svg { opacity: 1; }
+.nav-item:hover { color: var(--text0); background: rgba(255,255,255,0.03); }
+.nav-item.active {
+  color: var(--accent); background: var(--accent-dim);
+  border-left-color: var(--accent); font-weight: 500;
+}
+.nav-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: .6; }
+.nav-item.active .nav-icon { opacity: 1; }
 .nav-badge {
-  margin-left: auto; font-size: 10px; font-weight: 600; background: rgba(79,142,247,.2);
-  color: var(--accent); padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center;
+  margin-left: auto; font-size: 10px; font-weight: 700;
+  background: var(--accent-dim); color: var(--accent);
+  padding: 1px 6px; border-radius: 20px; min-width: 20px; text-align: center;
 }
-.nav-badge.red { background: rgba(248,113,113,.15); color: var(--red); }
-.sidebar-bottom { margin-top: auto; border-top: 1px solid var(--border); padding: 8px 0; }
+.nav-badge.red { background: var(--red-dim); color: var(--red); }
+.sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); padding: 8px 0 10px; }
+.sidebar-footer .nav-item { color: var(--accent); }
+.sidebar-footer .nav-item:hover { background: var(--accent-dim); }
 
 /* ── MAIN ── */
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 .topbar {
-  background: var(--bg1); border-bottom: 1px solid var(--border); padding: 0 24px;
-  height: 56px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  background: var(--bg1); border-bottom: 1px solid var(--border);
+  padding: 0 22px; height: var(--topbar-h);
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
 }
-.topbar-title { font-size: 15px; font-weight: 600; flex: 1; letter-spacing: -.01em; }
-.topbar-sub { font-size: 12px; color: var(--text2); margin-left: 4px; font-weight: 400; }
+.topbar-breadcrumb {
+  display: flex; align-items: center; gap: 6px; flex: 1; overflow: hidden;
+}
+.topbar-crumb-root { font-size: 12px; color: var(--text2); white-space: nowrap; }
+.topbar-crumb-sep { color: var(--text2); font-size: 12px; }
+.topbar-title { font-size: 14px; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.drive-status {
+  display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2);
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px;
+}
+.drive-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 
+/* ── BUTTONS ── */
 .btn {
-  display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r);
-  border: 1px solid var(--border2); background: var(--bg3); color: var(--text0);
-  cursor: pointer; font-size: 12px; font-weight: 500; font-family: inherit; transition: all .15s; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
+  border-radius: var(--r); border: 1px solid var(--border2); background: var(--bg3);
+  color: var(--text0); cursor: pointer; font-size: 12px; font-weight: 500;
+  font-family: inherit; transition: all .15s; white-space: nowrap; flex-shrink: 0;
+  letter-spacing: 0.01em;
 }
-.btn:hover { background: var(--bg4); border-color: var(--border2); }
-.btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn-accent:hover { background: #3a7de0; border-color: #3a7de0; }
+.btn:hover { background: var(--bg4); border-color: var(--border3); }
+.btn:active { transform: scale(0.98); }
+.btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(79,142,247,0.3); }
+.btn-accent:hover { background: #3a7de0; border-color: #3a7de0; box-shadow: 0 4px 14px rgba(79,142,247,0.4); }
 .btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-xs { padding: 3px 8px; font-size: 10px; border-radius: 6px; }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text1); }
-.btn-ghost:hover { background: var(--bg3); color: var(--text0); }
+.btn-ghost:hover { background: var(--bg3); color: var(--text0); border-color: var(--border); }
+.btn-green { background: var(--green-dim); border-color: rgba(52,211,153,0.2); color: var(--green); }
+.btn-green:hover { background: rgba(52,211,153,0.2); border-color: rgba(52,211,153,0.35); }
+.btn-danger { background: var(--red-dim); border-color: rgba(248,113,113,0.2); color: var(--red); }
+.btn-danger:hover { background: rgba(248,113,113,0.2); }
+.btn svg { flex-shrink: 0; }
 
-.content { flex: 1; overflow-y: auto; padding: 24px; }
+/* ── CONTENT ── */
+.content { flex: 1; overflow-y: auto; padding: 20px 22px; }
 .view { display: none; }
-.view.active { display: block; }
+.view.active { display: block; animation: fadeIn 0.15s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-/* ── CARDS & TABLES ── */
-.card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; }
-.card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-.card-title { font-size: 13px; font-weight: 600; flex: 1; }
-.card-body { padding: 16px 18px; }
+/* ── SECTION HEADER ── */
+.section-hd {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.section-hd-left { flex: 1; }
+.section-hd h2 { font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
+.section-hd p { font-size: 12px; color: var(--text2); margin-top: 2px; }
 
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-.stat { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 16px 18px; }
-.stat-num { font-size: 28px; font-weight: 600; letter-spacing: -.03em; font-family: 'JetBrains Mono', monospace; line-height: 1; margin-bottom: 6px; }
-.stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; font-weight: 500; }
-.stat-sub { font-size: 11px; color: var(--text1); margin-top: 4px; }
+/* ── STAT CARDS ── */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+.stat {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2);
+  padding: 16px 18px; position: relative; overflow: hidden;
+  transition: border-color .2s, transform .2s;
+}
+.stat:hover { border-color: var(--border2); transform: translateY(-1px); }
+.stat-accent-line {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  border-radius: var(--r2) var(--r2) 0 0;
+}
+.stat-num {
+  font-size: 26px; font-weight: 700; letter-spacing: -.04em;
+  font-family: 'JetBrains Mono', monospace; line-height: 1; margin-bottom: 6px;
+}
+.stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .07em; font-weight: 600; }
+.stat-sub { font-size: 11px; color: var(--text1); margin-top: 5px; }
 
+/* ── PROGRESS ── */
 .prog-wrap { height: 5px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
-.prog-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+.prog-fill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(0.4,0,0.2,1); }
 
-.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 20px; }
-.badge-green { background: rgba(62,207,142,.12); color: var(--green); }
-.badge-blue { background: rgba(79,142,247,.12); color: var(--accent); }
-.badge-amber { background: rgba(245,158,11,.12); color: var(--amber); }
-.badge-red { background: rgba(248,113,113,.12); color: var(--red); }
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+  letter-spacing: 0.01em;
+}
+.badge-green { background: var(--green-dim); color: var(--green); }
+.badge-blue { background: var(--accent-dim); color: var(--accent); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-red { background: var(--red-dim); color: var(--red); }
 .badge-gray { background: var(--bg3); color: var(--text1); border: 1px solid var(--border); }
-.badge-teal { background: rgba(45,212,191,0.12); color: var(--teal); }
+.badge-teal { background: var(--teal-dim); color: var(--teal); }
+.badge-purple { background: rgba(167,139,250,0.12); color: var(--purple); }
 
+/* ── CARD ── */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden; }
+.card-header {
+  padding: 13px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title { font-size: 13px; font-weight: 600; flex: 1; }
+.card-body { padding: 16px; }
+
+/* ── TABLES ── */
 .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .tbl th {
-  text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 600; letter-spacing: .08em; color: var(--text2); text-transform: uppercase; border-bottom: 1px solid var(--border);
+  text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; color: var(--text2); text-transform: uppercase;
+  border-bottom: 1px solid var(--border); background: var(--bg1);
+  white-space: nowrap;
 }
-.tbl td { padding: 11px 14px; border-bottom: 1px solid var(--border); }
+.tbl td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: none; }
-.tbl tbody tr { cursor: pointer; transition: background .1s; }
+.tbl tbody tr { transition: background .1s; }
 .tbl tbody tr:hover td { background: var(--bg3); }
 .tbl-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); }
 
-/* ── PHASES TABS ── */
-.phase-timeline { display: flex; gap: 0; margin-bottom: 28px; position: relative; }
-.phase-timeline::after { content: ''; position: absolute; top: 18px; left: 0; right: 0; height: 2px; background: var(--border); z-index: 0; }
+/* ── PHASE TIMELINE ── */
+.phase-timeline { display: flex; gap: 0; margin-bottom: 24px; position: relative; }
+.phase-timeline::after {
+  content: ''; position: absolute; top: 17px; left: 4%; right: 4%;
+  height: 2px; background: var(--border); z-index: 0;
+}
 .phase-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; z-index: 1; cursor: pointer; }
 .phase-dot {
-  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; border: 2px solid var(--border); background: var(--bg2); transition: all .2s;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; border: 2px solid var(--border2);
+  background: var(--bg2); transition: all .2s; font-family: 'JetBrains Mono', monospace;
 }
-.phase-dot.done { border-color: var(--green); background: rgba(62,207,142,.15); color: var(--green); }
-.phase-dot.active-ph { border-color: var(--accent); background: rgba(79,142,247,.2); color: var(--accent); box-shadow: 0 0 0 4px rgba(79,142,247,.1); }
+.phase-dot.done { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+.phase-dot.active-ph { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
 .phase-dot.pending { color: var(--text2); }
-.phase-step-label { font-size: 10px; color: var(--text2); text-align: center; max-width: 70px; line-height: 1.3; }
+.phase-step-label { font-size: 10px; color: var(--text2); text-align: center; max-width: 68px; line-height: 1.4; }
 .phase-step.active-ph .phase-step-label { color: var(--text0); font-weight: 500; }
 
-/* ── MODALS & FORMS ── */
+/* ── MODALS ── */
 .overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center;
-  z-index: 200; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity .2s;
+  position: fixed; inset: 0; background: rgba(0,0,0,.65);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; backdrop-filter: blur(6px);
+  opacity: 0; pointer-events: none; transition: opacity .2s;
 }
 .overlay.open { opacity: 1; pointer-events: all; }
 .modal {
-  background: var(--bg2); border: 1px solid var(--border2); border-radius: 14px; width: 520px; max-height: 85vh; overflow-y: auto;
-  transform: translateY(12px); transition: transform .2s; box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--r3);
+  width: 520px; max-height: 88vh; overflow-y: auto;
+  transform: translateY(14px) scale(0.98); transition: transform .22s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,0.04);
 }
-.overlay.open .modal { transform: translateY(0); }
-.modal-hd { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+.overlay.open .modal { transform: translateY(0) scale(1); }
+.modal-hd {
+  padding: 18px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14px; font-weight: 600;
+}
+.modal-close { color: var(--text2); cursor: pointer; padding: 4px; border-radius: 6px; transition: all .15s; }
+.modal-close:hover { background: var(--bg4); color: var(--text0); }
 .modal-body { padding: 20px; }
 .modal-ft { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
 
+/* ── FORMS ── */
 .form-row { margin-bottom: 14px; }
-.form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 6px; }
+.form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
 .form-ctrl {
   width: 100%; padding: 9px 12px; background: var(--bg3); border: 1px solid var(--border2);
-  border-radius: var(--r); color: var(--text0); font-size: 13px; font-family: inherit; transition: border-color .15s;
+  border-radius: var(--r); color: var(--text0); font-size: 13px; font-family: inherit; transition: all .15s;
 }
-.form-ctrl:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,.1); }
+.form-ctrl:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.12); background: var(--bg4); }
 .form-ctrl::placeholder { color: var(--text2); }
 textarea.form-ctrl { resize: vertical; min-height: 72px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+/* ── TOAST ── */
 .toast {
-  position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border2);
-  border-radius: var(--r2); padding: 12px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.4); transform: translateY(80px); opacity: 0; transition: all .25s; z-index: 300;
+  position: fixed; bottom: 20px; right: 20px; background: var(--bg3);
+  border: 1px solid var(--border2); border-radius: var(--r2);
+  padding: 10px 14px 10px 12px; font-size: 12px;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  transform: translateY(80px); opacity: 0; transition: all .25s cubic-bezier(0.34,1.56,0.64,1); z-index: 300;
 }
+.toast::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; flex-shrink: 0; }
 .toast.show { transform: translateY(0); opacity: 1; }
 
-.docs-layout { display: grid; grid-template-columns: 240px 1fr; gap: 16px; }
-.folder-list { display: flex; flex-direction: column; gap: 4px; }
+/* ── DOCS / FOLDERS ── */
+.docs-layout { display: grid; grid-template-columns: 228px 1fr; gap: 14px; }
+.folder-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 10px; }
+.folder-panel-title { font-size: 10px; font-weight: 700; color: var(--text2); letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px 8px; }
 .folder-item {
-  display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--r); cursor: pointer;
-  font-size: 13px; color: var(--text1); transition: all .15s; user-select: none;
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--r);
+  cursor: pointer; font-size: 12px; color: var(--text1); transition: all .12s; user-select: none;
 }
 .folder-item:hover { color: var(--text0); background: var(--bg3); }
-.folder-item.active { color: var(--accent); background: rgba(79,142,247,.08); font-weight: 500; }
-.folder-count { margin-left: auto; font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.empty-state { text-align: center; padding: 48px 24px; color: var(--text2); font-size: 13px; }
+.folder-item.active { color: var(--accent); background: var(--accent-dim); font-weight: 500; }
+.folder-count { margin-left: auto; font-size: 10px; color: var(--text2); font-family: 'JetBrains Mono', monospace; background: var(--bg3); padding: 1px 6px; border-radius: 10px; }
+.folder-item.active .folder-count { color: var(--accent); background: rgba(79,142,247,0.15); }
+
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center; padding: 48px 24px; color: var(--text2); font-size: 13px;
+}
+.empty-state-icon { font-size: 28px; margin-bottom: 10px; opacity: 0.5; }
+.empty-state-title { font-weight: 500; color: var(--text1); margin-bottom: 4px; }
+
+/* ── ISSUE ROWS ── */
+.issue-row { border-bottom: 1px solid var(--border); padding: 12px 16px; transition: background .1s; }
+.issue-row:hover { background: var(--bg3); }
+.issue-row:last-child { border-bottom: none; }
+
+/* ── GANTT ── */
+.gantt-row { margin-bottom: 14px; }
+.gantt-row-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+.gantt-row-name { font-size: 12px; font-weight: 500; }
+.gantt-row-pct { font-size: 11px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+.gantt-bar { height: 10px; border-radius: 5px; background: var(--bg4); overflow: hidden; }
+.gantt-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, var(--teal), var(--accent)); transition: width .6s ease; }
+
+/* ── SEARCH BAR ── */
+.search-wrap { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+.search-input-wrap { position: relative; flex: 1; max-width: 280px; }
+.search-input-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text2); pointer-events: none; }
+.search-input { padding-left: 32px !important; }
+
+/* ── DOWNLOAD BTN ── */
+.download-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: 6px; border: 1px solid rgba(79,142,247,0.25);
+  background: var(--accent-dim); color: var(--accent);
+  cursor: pointer; font-size: 11px; font-weight: 600; font-family: inherit;
+  transition: all .15s; white-space: nowrap; text-decoration: none;
+}
+.download-btn:hover { background: rgba(79,142,247,0.2); border-color: rgba(79,142,247,0.4); }
+.download-btn svg { flex-shrink: 0; }
+
+/* ── FILE TYPE BADGE ── */
+.file-type {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700;
+  padding: 2px 6px; border-radius: 4px; letter-spacing: 0.04em;
+}
+.file-type-dwg { background: rgba(251,191,36,0.12); color: var(--amber); }
+.file-type-pdf { background: rgba(248,113,113,0.12); color: var(--red); }
+.file-type-xlsx { background: rgba(52,211,153,0.12); color: var(--green); }
+.file-type-default { background: var(--bg3); color: var(--text1); }
+
+/* ── PROGRESS LABEL ── */
 .progress-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+
+/* ── PHASE DETAIL CARD ── */
+.phase-info-card {
+  background: var(--bg1); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
+}
+.phase-info-name { font-size: 14px; font-weight: 600; }
+.phase-info-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
 </style>
 </head>
 <body>
 
 <div id="global-loading" class="global-loading">
-  <div class="spinner"></div>
-  <div style="font-size:13px; color:var(--text1)" id="loading-text">Đang kết nối cơ sở dữ liệu Google Drive...</div>
+  <div class="spinner-ring"></div>
+  <div class="loading-text" id="loading-text">Đang kết nối Google Drive...</div>
+  <div class="loading-sub" id="loading-sub">Vui lòng chờ</div>
 </div>
 
 <nav class="sidebar">
   <div class="logo">
-    <div class="logo-icon">⚙</div>
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"/>
+      </svg>
+    </div>
     <div>
-      <div class="logo-text">MechaProject</div>
-      <div class="logo-sub">Cơ khí chế tạo máy</div>
+      <div class="logo-name">MechaProject</div>
+      <div class="logo-tag">Cơ khí chế tạo máy</div>
     </div>
   </div>
 
   <div class="nav-section">
     <div class="nav-label">Tổng quan</div>
     <div class="nav-item active" onclick="nav('dashboard',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
     </div>
     <div class="nav-item" onclick="nav('projects',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
       Dự án <span class="nav-badge" id="b-proj">0</span>
     </div>
   </div>
@@ -236,30 +419,30 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
   <div class="nav-section">
     <div class="nav-label">Quản lý</div>
     <div class="nav-item" onclick="nav('phases',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       Giai đoạn & Công việc
     </div>
     <div class="nav-item" onclick="nav('gantt',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="15" y2="10"/><line x1="3" y1="14" x2="18" y2="14"/><line x1="3" y1="18" x2="12" y2="18"/></svg>
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="15" y2="10"/><line x1="3" y1="14" x2="18" y2="14"/><line x1="3" y1="18" x2="12" y2="18"/></svg>
       Tiến độ Gantt
     </div>
     <div class="nav-item" onclick="nav('issues',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       Vấn đề & NCR <span class="nav-badge red" id="b-issue">0</span>
     </div>
     <div class="nav-item" onclick="nav('docs',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Tài liệu
     </div>
     <div class="nav-item" onclick="nav('team',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Nhân sự
     </div>
   </div>
 
-  <div class="sidebar-bottom">
-    <div class="nav-item" onclick="openModal('new-project')" style="color:var(--accent)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+  <div class="sidebar-footer">
+    <div class="nav-item" onclick="openModal('new-project')">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       Tạo dự án mới
     </div>
   </div>
@@ -267,126 +450,253 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 
 <div class="main">
   <div class="topbar">
-    <span class="topbar-title" id="topbar-title">Dashboard <span class="topbar-sub">Tổng quan hệ thống</span></span>
-    <button class="btn btn-sm btn-ghost" id="btn-refresh" onclick="fetchDataFromDrive()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      Tải lại Drive
-    </button>
+    <div class="topbar-breadcrumb">
+      <span class="topbar-crumb-root">MechaProject</span>
+      <span class="topbar-crumb-sep">›</span>
+      <span class="topbar-title" id="topbar-title">Dashboard</span>
+    </div>
+    <div class="topbar-actions">
+      <div class="drive-status" id="drive-status">
+        <span class="drive-dot" id="drive-dot"></span>
+        <span id="drive-status-text">Drive</span>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="fetchDataFromDrive()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Tải lại
+      </button>
+    </div>
   </div>
 
   <div class="content">
+    <!-- DASHBOARD -->
     <div class="view active" id="view-dashboard">
       <div class="stats-row">
         <div class="stat">
+          <div class="stat-accent-line" style="background:linear-gradient(90deg,var(--accent),var(--purple))"></div>
           <div class="stat-num" style="color:var(--accent)" id="stat-active-proj">0</div>
           <div class="stat-label">Dự án hệ thống</div>
           <div class="stat-sub">Đang thực hiện & chờ chạy</div>
         </div>
         <div class="stat">
+          <div class="stat-accent-line" style="background:linear-gradient(90deg,var(--green),var(--teal))"></div>
           <div class="stat-num" style="color:var(--green)" id="stat-total-val">0đ</div>
-          <div class="stat-label">Tổng giá trị cơ khí</div>
-          <div class="stat-sub">Dữ liệu trên tài khoản</div>
+          <div class="stat-label">Tổng giá trị</div>
+          <div class="stat-sub">Toàn bộ dự án trên Drive</div>
         </div>
         <div class="stat">
+          <div class="stat-accent-line" style="background:linear-gradient(90deg,var(--amber),var(--orange))"></div>
           <div class="stat-num" style="color:var(--amber)" id="stat-done-proj">0</div>
           <div class="stat-label">Dự án hoàn thành</div>
           <div class="stat-sub">Bàn giao & Nghiệm thu</div>
         </div>
         <div class="stat">
+          <div class="stat-accent-line" style="background:linear-gradient(90deg,var(--red),var(--orange))"></div>
           <div class="stat-num" style="color:var(--red)" id="stat-issues">0</div>
           <div class="stat-label">Vấn đề NCR mở</div>
-          <div class="stat-sub">Cần xử lý thiết kế & vật tư</div>
+          <div class="stat-sub">Cần xử lý kỹ thuật & vật tư</div>
         </div>
       </div>
 
-      <div class="two-col" style="margin-bottom:16px">
+      <div class="two-col" style="margin-bottom:14px">
         <div class="card">
           <div class="card-header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-            <span class="card-title">Dự án mới cập nhật</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span class="card-title">Dự án mới nhất</span>
+            <span style="font-size:11px;color:var(--text2)" id="dash-proj-count"></span>
           </div>
-          <div style="padding:8px 0" id="dash-proj-list"></div>
+          <div id="dash-proj-list"></div>
         </div>
         <div class="card">
           <div class="card-header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span class="card-title">Sự cố kỹ thuật / Vật tư gấp</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span class="card-title">Cảnh báo kỹ thuật</span>
           </div>
           <div style="padding:12px 16px" id="dash-alerts"></div>
         </div>
       </div>
+
+      <div class="card">
+        <div class="card-header">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="15" y2="10"/><line x1="3" y1="14" x2="18" y2="14"/><line x1="3" y1="18" x2="12" y2="18"/></svg>
+          <span class="card-title">Tiến độ tổng thể</span>
+        </div>
+        <div class="card-body" id="dash-gantt-mini"></div>
+      </div>
     </div>
 
+    <!-- PROJECTS -->
     <div class="view" id="view-projects">
-      <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center">
-        <input class="form-ctrl" style="max-width:260px" placeholder="Tìm theo tên máy, mã..." oninput="filterProj(this.value)">
-        <span style="margin-left:auto;font-size:12px;color:var(--text2)" id="proj-count"></span>
+      <div class="search-wrap">
+        <div class="search-input-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="form-ctrl search-input" placeholder="Tìm mã DA, tên máy, khách hàng..." oninput="filterProj(this.value)">
+        </div>
+        <span style="margin-left:auto;font-size:11px;color:var(--text2)" id="proj-count"></span>
+        <button class="btn btn-sm btn-accent" onclick="openModal('new-project')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tạo dự án
+        </button>
       </div>
       <div class="card">
         <table class="tbl">
-          <thead><tr><th>Mã DA</th><th>Tên dự án thiết bị</th><th>Khách hàng</th><th>Tiến độ bản vẽ / máy</th><th>Hạn bàn giao</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Mã DA</th>
+              <th>Tên thiết bị / Máy</th>
+              <th>Khách hàng</th>
+              <th style="min-width:140px">Tiến độ</th>
+              <th>Hạn bàn giao</th>
+              <th>Giá trị</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
           <tbody id="proj-tbody"></tbody>
         </table>
       </div>
     </div>
 
+    <!-- PHASES -->
     <div class="view" id="view-phases">
-      <div style="display:flex;gap:10px;margin-bottom:16px;"><select class="form-ctrl" style="max-width:320px" onchange="loadPhases(this.value)" id="phase-proj-sel"></select></div>
-      <div id="phases-content"></div>
-    </div>
-
-    <div class="view" id="view-gantt"><div class="card"><div class="card-body"><div class="gantt-wrap" id="gantt-wrap"></div></div></div></div>
-
-    <div class="view" id="view-issues">
-      <div style="display:flex;margin-bottom:14px"><button class="btn btn-sm btn-accent" style="margin-left:auto" onclick="openModal('new-issue')">Thêm vấn đề</button></div>
-      <div class="card" id="issues-container"></div>
-    </div>
-
-    <div class="view" id="view-docs">
-      <div style="display:flex;gap:10px;margin-bottom:14px"><button class="btn btn-sm btn-accent" onclick="openModal('new-doc')">Tải lên tài liệu / Thư mục</button></div>
-      <div class="docs-layout">
-        <div class="folder-list" id="folder-list"></div>
-        <div class="card"><table class="tbl"><thead><tr><th>Dự án</th><th>Tên file</th><th>Định dạng</th><th>Giai đoạn</th><th>Ngày sửa</th><th>Dung lượng</th></tr></thead><tbody id="docs-tbody"></tbody></table></div>
+      <div class="search-wrap">
+        <select class="form-ctrl" style="max-width:340px" onchange="loadPhases(this.value)" id="phase-proj-sel">
+          <option value="">— Chọn dự án để xem giai đoạn —</option>
+        </select>
+      </div>
+      <div id="phases-content">
+        <div class="empty-state">
+          <div class="empty-state-icon">📐</div>
+          <div class="empty-state-title">Chọn một dự án để bắt đầu</div>
+          Tiến độ 8 giai đoạn thiết kế sẽ hiển thị ở đây
+        </div>
       </div>
     </div>
 
-    <div class="view" id="view-team"><div class="card"><table class="tbl"><thead><tr><th>Kỹ sư</th><th>Vai trò chuyên môn</th><th>Dự án tham gia</th><th>Trạng thái</th></tr></thead><tbody id="team-tbody"></tbody></table></div></div>
+    <!-- GANTT -->
+    <div class="view" id="view-gantt">
+      <div class="card">
+        <div class="card-header">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="15" y2="10"/><line x1="3" y1="14" x2="18" y2="14"/><line x1="3" y1="18" x2="12" y2="18"/></svg>
+          <span class="card-title">Biểu đồ tiến độ tổng hợp</span>
+        </div>
+        <div class="card-body" id="gantt-wrap"></div>
+      </div>
+    </div>
+
+    <!-- ISSUES -->
+    <div class="view" id="view-issues">
+      <div class="section-hd">
+        <div class="section-hd-left">
+          <h2>Vấn đề & NCR</h2>
+          <p>Non-Conformance Report — lỗi kỹ thuật, vật tư chưa đạt yêu cầu</p>
+        </div>
+        <button class="btn btn-sm btn-accent" onclick="openModal('new-issue')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Thêm NCR
+        </button>
+      </div>
+      <div class="card" id="issues-container"></div>
+    </div>
+
+    <!-- DOCS -->
+    <div class="view" id="view-docs">
+      <div class="section-hd">
+        <div class="section-hd-left">
+          <h2>Kho tài liệu</h2>
+          <p>Bản vẽ, BOM, tài liệu kỹ thuật đồng bộ Google Drive</p>
+        </div>
+        <button class="btn btn-sm btn-accent" onclick="openModal('new-doc')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Tải lên tài liệu
+        </button>
+      </div>
+      <div class="docs-layout">
+        <div class="folder-panel">
+          <div class="folder-panel-title">Phân loại</div>
+          <div id="folder-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span class="card-title" id="docs-panel-title">Tất cả tài liệu</span>
+            <span class="badge badge-gray" id="docs-count-badge">0 file</span>
+          </div>
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Dự án</th>
+                <th>Tên file</th>
+                <th>Định dạng</th>
+                <th>Giai đoạn</th>
+                <th>Ngày cập nhật</th>
+                <th>Dung lượng</th>
+                <th>Tải xuống</th>
+              </tr>
+            </thead>
+            <tbody id="docs-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="view" id="view-team">
+      <div class="section-hd">
+        <div class="section-hd-left">
+          <h2>Nhân sự</h2>
+          <p>Kỹ sư, chuyên viên thiết kế & vận hành dự án</p>
+        </div>
+      </div>
+      <div class="card">
+        <table class="tbl">
+          <thead>
+            <tr><th>Kỹ sư / Chuyên viên</th><th>Vai trò chuyên môn</th><th>Dự án tham gia</th><th>Trạng thái</th></tr>
+          </thead>
+          <tbody id="team-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- MODAL -->
 <div class="overlay" id="overlay" onclick="if(event.target===this) closeModal()">
-  <div class="modal"><div class="modal-hd" id="modal-hd"></div><div class="modal-body" id="modal-body"></div><div class="modal-ft" id="modal-ft"></div></div>
+  <div class="modal">
+    <div class="modal-hd" id="modal-hd">
+      <span id="modal-hd-title"></span>
+      <span class="modal-close" onclick="closeModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </span>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-ft" id="modal-ft"></div>
+  </div>
 </div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ==========================================
-// CẤU HÌNH ĐƯỜNG DẪN WEB APP GOOGLE APPS SCRIPT CỦA BẠN
-// ==========================================
-const DRIVE_API_URL = "https://script.google.com/macros/s/AKfycbzA-4NPh-rxPxMERUD9wKlev-cauLgI99Kd4H-Q7W2unJLbxu42wiM_X4NWjBv0bjv-/exec"; 
+const DRIVE_API_URL = "https://script.google.com/macros/s/AKfycbzA-4NPh-rxPxMERUD9wKlev-cauLgI99Kd4H-Q7W2unJLbxu42wiM_X4NWjBv0bjv-/exec";
 
 const PH = [
   {id:'p1', name:'Khảo sát & Phương án', icon:'🔍'},
   {id:'p2', name:'Thiết kế 3D & Cơ khí', icon:'📐'},
   {id:'p3', name:'Thiết kế Điện & Thủy khí', icon:'⚡'},
-  {id:'p4', name:'Bóc tách Bản vẽ & BOM', icon:'📄'},
-  {id:'p5', name:'Gia công Chế tạo & Đặt hàng', icon:'⚙'},
-  {id:'p6', name:'Lắp ráp Cơ điện tại xưởng', icon:'🔧'},
-  {id:'p7', name:'Lập trình PLC & HMI', icon:'💻'},
-  {id:'p8', name:'Lắp đặt, Cân chỉnh & Nghiệm thu', icon:'🏁'}
+  {id:'p4', name:'Bóc tách BVẽ & BOM', icon:'📄'},
+  {id:'p5', name:'Gia công & Đặt hàng', icon:'⚙'},
+  {id:'p6', name:'Lắp ráp Cơ điện', icon:'🔧'},
+  {id:'p7', name:'Lập trình PLC/HMI', icon:'💻'},
+  {id:'p8', name:'Nghiệm thu & Bàn giao', icon:'🏁'}
 ];
 
-let projects = [];
-let issues = [];
-let docs = [];
-let currentFolder = 'all';
+let projects = [], issues = [], docs = [], currentFolder = 'all';
 
-let folders = [
+const folders = [
   {id:'all', name:'📁 Tất cả tài liệu'},
-  {id:'f1', name:'📂 Bản vẽ 2D/3D (DWG/NX)'},
-  {id:'f2', name:'📂 Sơ đồ mạch điện (Eplan)'},
-  {id:'f3', name:'📂 Danh mục vật tư (BOM)'},
-  {id:'f4', name:'📂 Tài liệu hướng dẫn & CO/CQ'}
+  {id:'f1', name:'📐 Bản vẽ 2D/3D (DWG/NX)'},
+  {id:'f2', name:'⚡ Sơ đồ mạch điện (Eplan)'},
+  {id:'f3', name:'📋 Danh mục vật tư (BOM)'},
+  {id:'f4', name:'📖 Tài liệu hướng dẫn & CO/CQ'}
 ];
 
 let team = [
@@ -395,132 +705,128 @@ let team = [
   {name:'Lê Văn C', role:'Automation & Electrical Engineer', projects:['TL-2025-001'], status:'Bận'}
 ];
 
-// ── TẢI DATA TỪ DRIVE ──
-function fetchDataFromDrive() {
-  showLoading("Đang nạp dữ liệu từ Google Drive...");
-  if(DRIVE_API_URL.includes("DÁN_URL")) {
-    hideLoading();
-    alert("Vui lòng cấu hình URL Web App Google Apps Script chính xác ở dòng 212 để kích hoạt database.");
-    return;
-  }
-  
-  fetch(DRIVE_API_URL)
-    .then(res => res.json())
-    .then(data => {
-      projects = data.projects || [];
-      issues = data.issues || [];
-      docs = data.docs || [];
-      renderAll();
-      hideLoading();
-      toast("Đã nạp toàn bộ cấu trúc dữ liệu đám mây!");
-    })
-    .catch(err => {
-      console.error(err);
-      hideLoading();
-      toast("Lỗi kết nối database Drive");
-    });
-}
-
-// ── ĐẨY DATA LÊN DRIVE ──
-function syncDataToDrive() {
-  showLoading("Đang đồng bộ thay đổi lên Google Drive...");
-  const payload = { projects, issues, docs };
-  
-  fetch(DRIVE_API_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
-  .then(() => {
-    hideLoading();
-    toast("Đã tự động lưu dữ liệu lên Drive!");
-    renderAll();
-  })
-  .catch(err => {
-    hideLoading();
-    alert("Đồng bộ lỗi: " + err);
-  });
-}
-
-function showLoading(text) {
-  document.getElementById('global-loading').style.opacity = '1';
-  document.getElementById('global-loading').style.pointerEvents = 'all';
-  document.getElementById('loading-text').textContent = text;
-}
-function hideLoading() {
-  document.getElementById('global-loading').style.opacity = '0';
-  document.getElementById('global-loading').style.pointerEvents = 'none';
-}
+// ── TOPBAR TITLE MAP ──
+const PAGE_TITLES = {
+  dashboard: 'Dashboard',
+  projects: 'Dự án',
+  phases: 'Giai đoạn & Công việc',
+  gantt: 'Tiến độ Gantt',
+  issues: 'Vấn đề & NCR',
+  docs: 'Kho tài liệu',
+  team: 'Nhân sự'
+};
 
 function nav(viewId, el) {
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(`view-${viewId}`).classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[viewId] || viewId;
 }
 
-function formatVND(n) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n); }
+function formatVND(n) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', notation: 'compact', maximumFractionDigits: 1 }).format(n); }
+function formatVNDFull(n) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n); }
 
+function getFileTypeCls(ext) {
+  const e = (ext||'').toLowerCase();
+  if(['dwg','dxf','nx','stp','step','igs'].includes(e)) return 'file-type-dwg';
+  if(e==='pdf') return 'file-type-pdf';
+  if(['xlsx','xls','csv'].includes(e)) return 'file-type-xlsx';
+  return 'file-type-default';
+}
+
+// ── RENDER DASHBOARD ──
 function renderDashboard() {
   document.getElementById('stat-active-proj').textContent = projects.filter(p=>p.status!=='Hoàn thành').length;
   document.getElementById('stat-done-proj').textContent = projects.filter(p=>p.status==='Hoàn thành').length;
   document.getElementById('stat-issues').textContent = issues.filter(i=>i.status==='Mở').length;
-  
+  document.getElementById('b-proj').textContent = projects.length;
+  document.getElementById('b-issue').textContent = issues.filter(i=>i.status==='Mở').length;
+
   let totalVal = projects.reduce((a,b)=>a+(parseInt(b.val)||0),0);
   document.getElementById('stat-total-val').textContent = formatVND(totalVal);
 
+  // Project list
   const list = document.getElementById('dash-proj-list');
-  if(projects.length===0) { list.innerHTML = `<div class="empty-state">Chưa có dự án nào</div>`; }
-  else {
-    list.innerHTML = projects.slice(0,4).map(p => {
+  document.getElementById('dash-proj-count').textContent = `${projects.length} dự án`;
+  if(projects.length===0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">Chưa có dự án nào</div>Tạo dự án đầu tiên để bắt đầu</div>`;
+  } else {
+    list.innerHTML = projects.slice(0,5).map(p => {
       const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
-      return `<div style="padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-        <div>
-          <div style="font-size:13px;font-weight:500;margin-bottom:2px">${p.name}</div>
-          <div style="font-size:11px;color:var(--text2)">${p.id} · Hạn: ${p.deadline}</div>
+      const color = avg >= 80 ? 'var(--green)' : avg >= 40 ? 'var(--accent)' : 'var(--amber)';
+      return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px" onclick="goToPhaseDetail('${p.id}')" style="cursor:pointer">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
+          <div style="font-size:11px;color:var(--text2)">${p.id} · ${p.client} · Hạn: ${p.deadline}</div>
         </div>
-        <div style="width:120px;text-align:right">
-          <div class="progress-label"><span>${avg}%</span></div>
-          <div class="prog-wrap"><div class="prog-fill" style="width:${avg}%;background:var(--accent)"></div></div>
+        <div style="width:110px;text-align:right;flex-shrink:0">
+          <div style="font-size:11px;color:${color};font-weight:600;font-family:monospace;margin-bottom:4px">${avg}%</div>
+          <div class="prog-wrap"><div class="prog-fill" style="width:${avg}%;background:${color}"></div></div>
         </div>
       </div>`;
     }).join('');
   }
 
+  // Alerts
   const alerts = document.getElementById('dash-alerts');
   const activeIssues = issues.filter(i=>i.status==='Mở');
   if(activeIssues.length===0){
-    alerts.innerHTML = `<div style="color:var(--green);font-size:12px">⚙ Hệ thống an toàn. Chưa phát hiện lỗi thiết kế.</div>`;
+    alerts.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--green);font-size:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Hệ thống an toàn. Không có lỗi kỹ thuật.</div>`;
   } else {
-    alerts.innerHTML = activeIssues.map(i => `<div style="margin-bottom:8px;font-size:12px">
-      <span class="badge badge-red" style="padding:1px 4px;font-size:9px">${i.priority}</span> ${i.proj}: ${i.title}
+    alerts.innerHTML = activeIssues.slice(0,5).map(i => `<div style="margin-bottom:8px;padding:8px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);font-size:12px">
+      <span class="badge badge-red" style="margin-right:6px">${i.priority||'Cao'}</span>${i.proj}: ${i.title}
     </div>`).join('');
+  }
+
+  // Mini gantt
+  const mg = document.getElementById('dash-gantt-mini');
+  if(projects.length===0) { mg.innerHTML = `<div class="empty-state" style="padding:20px">Chưa có dữ liệu tiến độ</div>`; }
+  else {
+    mg.innerHTML = projects.slice(0,6).map(p => {
+      const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
+      return `<div class="gantt-row">
+        <div class="gantt-row-hd">
+          <span class="gantt-row-name">${p.id} — ${p.name}</span>
+          <span class="gantt-row-pct">${avg}%</span>
+        </div>
+        <div class="gantt-bar"><div class="gantt-fill" style="width:${avg}%"></div></div>
+      </div>`;
+    }).join('');
   }
 }
 
+// ── RENDER PROJECTS ──
 function renderProjects() {
   const tbody = document.getElementById('proj-tbody');
-  if(projects.length===0) { tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Trống</td></tr>`; return;}
+  if(projects.length===0) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">Chưa có dự án</div>Nhấn "Tạo dự án" để thêm</div></td></tr>`;
+    return;
+  }
   tbody.innerHTML = projects.map(p => {
     const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
+    const color = avg >= 80 ? 'var(--green)' : avg >= 40 ? 'var(--accent)' : 'var(--amber)';
     return `<tr>
-      <td class="tbl-code" onclick="goToPhaseDetail('${p.id}')">${p.id}</td>
-      <td style="font-weight:500" onclick="goToPhaseDetail('${p.id}')">${p.name}</td>
-      <td>${p.client}</td>
-      <td>
-        <div class="prog-wrap" style="width:100px;display:inline-block;margin-right:6px"><div class="prog-fill" style="width:${avg}%;background:var(--green)"></div></div>${avg}%
+      <td class="tbl-code" style="cursor:pointer" onclick="goToPhaseDetail('${p.id}')">${p.id}</td>
+      <td style="font-weight:500;cursor:pointer;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" onclick="goToPhaseDetail('${p.id}')">${p.name}</td>
+      <td style="color:var(--text1)">${p.client}</td>
+      <td style="min-width:140px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${avg}%;background:${color}"></div></div>
+          <span style="font-size:11px;color:${color};font-family:monospace;font-weight:600;min-width:30px">${avg}%</span>
+        </div>
       </td>
-      <td style="font-family:monospace">${p.deadline}</td>
+      <td style="font-family:monospace;font-size:12px">${p.deadline}</td>
+      <td style="font-size:12px;color:var(--text1)">${p.val ? formatVND(p.val) : '—'}</td>
       <td><span class="badge ${p.status==='Hoàn thành'?'badge-green':'badge-blue'}">${p.status}</span></td>
-      <td><button class="btn btn-sm btn-ghost" onclick="deleteProject('${p.id}')" style="color:var(--red)">Xóa</button></td>
+      <td><button class="btn btn-xs btn-danger" onclick="deleteProject('${p.id}')">Xóa</button></td>
     </tr>`;
   }).join('');
-  document.getElementById('proj-count').textContent = `Tổng: ${projects.length}`;
+  document.getElementById('proj-count').textContent = `${projects.length} dự án`;
 }
 
 function deleteProject(id) {
-  if(confirm(`Xóa dự án ${id}?`)){
+  if(confirm(`Xác nhận xóa dự án ${id}?`)){
     projects = projects.filter(p=>p.id!==id);
     syncDataToDrive();
   }
@@ -529,59 +835,115 @@ function deleteProject(id) {
 function goToPhaseDetail(id){
   document.getElementById('phase-proj-sel').value = id;
   loadPhases(id);
-  nav('phases', document.querySelectorAll('.nav-item')[2]);
+  const el = document.querySelectorAll('.nav-item')[2];
+  nav('phases', el);
 }
 
+// ── RENDER PHASES ──
 function loadPhases(pId) {
   const cont = document.getElementById('phases-content');
-  if(!pId){ cont.innerHTML = `<div class="empty-state">Chọn một dự án để xem thiết kế chi tiết</div>`; return; }
+  if(!pId) {
+    cont.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📐</div><div class="empty-state-title">Chọn một dự án để bắt đầu</div></div>`;
+    return;
+  }
   const p = projects.find(x=>x.id===pId);
-  
+  if(!p) return;
+  const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
+
   cont.innerHTML = `
-    <div style="margin-bottom:16px;background:var(--bg1);padding:12px;border-radius:var(--r);border:1px solid var(--border)">
-      <h3 style="font-size:14px">${p.name}</h3>
+    <div class="phase-info-card">
+      <div style="flex:1">
+        <div class="phase-info-name">${p.name}</div>
+        <div class="phase-info-meta">${p.id} · ${p.client} · Hạn: ${p.deadline}</div>
+      </div>
+      <span class="badge ${p.status==='Hoàn thành'?'badge-green':'badge-blue'}">${p.status}</span>
+      <div style="width:160px">
+        <div class="progress-label" style="margin-bottom:5px"><span style="font-size:11px;color:var(--text1)">Tiến độ tổng</span><span style="font-size:12px;font-weight:600;color:var(--accent);font-family:monospace">${avg}%</span></div>
+        <div class="prog-wrap"><div class="prog-fill" style="width:${avg}%;background:var(--accent)"></div></div>
+      </div>
     </div>
     <div class="phase-timeline">
-      ${PH.map((ph,i) => `
-        <div class="phase-step" onclick="updatePhasePct('${pId}',${i})">
-          <div class="phase-dot ${p.phases[i]===100?'done':'active-ph'}">${p.phases[i]}%</div>
-          <div class="phase-step-label">${ph.name}</div>
-        </div>
-      `).join('')}
+      ${PH.map((ph,i) => {
+        const pct = p.phases[i]||0;
+        const cls = pct===100?'done':'active-ph';
+        return `<div class="phase-step" onclick="updatePhasePct('${pId}',${i})">
+          <div class="phase-dot ${cls}">${pct}%</div>
+          <div class="phase-step-label">${ph.icon} ${ph.name}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Chi tiết từng giai đoạn</span><span style="font-size:11px;color:var(--text2)">Nhấn vào dot phía trên để cập nhật +20%</span></div>
+      <table class="tbl">
+        <thead><tr><th>Giai đoạn</th><th>Tên công việc</th><th style="min-width:180px">Tiến độ</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          ${PH.map((ph,i) => {
+            const pct = p.phases[i]||0;
+            const color = pct===100?'var(--green)':pct>0?'var(--accent)':'var(--text2)';
+            const st = pct===100?'<span class="badge badge-green">Hoàn thành</span>':pct>0?'<span class="badge badge-blue">Đang làm</span>':'<span class="badge badge-gray">Chưa bắt đầu</span>';
+            return `<tr>
+              <td class="tbl-code">P${i+1}</td>
+              <td>${ph.icon} ${ph.name}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
+                  <span style="font-size:11px;font-family:monospace;color:${color};min-width:28px">${pct}%</span>
+                </div>
+              </td>
+              <td>${st}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
     </div>
   `;
 }
 
 function updatePhasePct(pId, idx) {
   const p = projects.find(x=>x.id===pId);
-  let current = p.phases[idx];
-  p.phases[idx] = current === 100 ? 0 : current + 20;
+  p.phases[idx] = p.phases[idx] === 100 ? 0 : (p.phases[idx]||0) + 20;
+  loadPhases(pId);
   syncDataToDrive();
 }
 
+// ── RENDER GANTT ──
 function renderGantt() {
   const wrap = document.getElementById('gantt-wrap');
-  if(projects.length===0){ wrap.innerHTML = `<div class="empty-state">Không có tiến độ</div>`; return; }
+  if(projects.length===0){ wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">Không có dữ liệu tiến độ</div></div>`; return; }
   wrap.innerHTML = projects.map(p => {
     const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
-    return `<div style="margin-bottom:12px;font-size:12px">
-      <div style="margin-bottom:4px"><strong>${p.id}</strong> — ${p.name} (${avg}%)</div>
-      <div class="prog-wrap" style="height:12px"><div class="prog-fill" style="width:${avg}%;background:var(--teal)"></div></div>
+    return `<div class="gantt-row">
+      <div class="gantt-row-hd">
+        <span class="gantt-row-name"><span style="color:var(--text2);font-family:monospace;font-size:11px">${p.id}</span> — ${p.name}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:11px;color:var(--text2)">Hạn: ${p.deadline}</span>
+          <span class="gantt-row-pct" style="color:${avg>=80?'var(--green)':avg>=40?'var(--accent)':'var(--amber)'}">${avg}%</span>
+        </div>
+      </div>
+      <div class="gantt-bar"><div class="gantt-fill" style="width:${avg}%"></div></div>
     </div>`;
   }).join('');
 }
 
+// ── RENDER ISSUES ──
 function renderIssues() {
   const container = document.getElementById('issues-container');
-  if(issues.length===0){ container.innerHTML = `<div class="empty-state">Không có sự cố</div>`; return; }
+  if(issues.length===0){
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">Không có sự cố nào</div>Hệ thống hoạt động ổn định</div>`;
+    return;
+  }
   container.innerHTML = issues.map(i => `
     <div class="issue-row">
-      <div class="issue-body">
-        <div style="display:flex;align-items:center;gap:10px">
-          <strong style="color:var(--red)">${i.id}</strong>
-          <span>${i.title}</span>
-          <span class="badge badge-amber" style="margin-left:auto" onclick="closeIssue('${i.id}')">${i.status}</span>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <strong style="font-family:monospace;font-size:11px;color:var(--red)">${i.id}</strong>
+            <span class="badge badge-amber">${i.priority||'Cao'}</span>
+            <span style="font-size:11px;color:var(--text2)">${i.proj}</span>
+          </div>
+          <div style="font-size:13px">${i.title}</div>
         </div>
+        <button class="btn btn-xs btn-ghost" style="color:var(--green);border-color:rgba(52,211,153,0.2)" onclick="closeIssue('${i.id}')">Đóng NCR</button>
       </div>
     </div>
   `).join('');
@@ -592,176 +954,74 @@ function closeIssue(id) {
   syncDataToDrive();
 }
 
+// ── RENDER FOLDERS ──
 function renderFolders() {
   const list = document.getElementById('folder-list');
   list.innerHTML = folders.map(f => {
     const count = f.id==='all' ? docs.length : docs.filter(d=>d.folder===f.id).length;
     return `<div class="folder-item ${f.id===currentFolder?'active':''}" onclick="currentFolder='${f.id}';renderFolders();renderDocs();">
-      <span>${f.name}</span><span class="folder-count">${count}</span>
+      <span style="flex:1">${f.name}</span><span class="folder-count">${count}</span>
     </div>`;
   }).join('');
 }
 
+// ── RENDER DOCS (with download button) ──
 function renderDocs() {
   const tbody = document.getElementById('docs-tbody');
+  const titleEl = document.getElementById('docs-panel-title');
+  const countEl = document.getElementById('docs-count-badge');
   const filtered = currentFolder==='all' ? docs : docs.filter(d=>d.folder===currentFolder);
-  if(filtered.length===0){ tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Không tìm thấy tài liệu</td></tr>`; return;}
-  tbody.innerHTML = filtered.map(d => `<tr>
-    <td>${d.proj}</td><td>${d.name}</td><td>${d.type}</td><td>${d.phase}</td><td>${d.date}</td><td>${d.size}</td>
-  </tr>`).join('');
-}
-
-function renderTeam() {
-  const tbody = document.getElementById('team-tbody');
-  tbody.innerHTML = team.map(t => `<tr><td>${t.name}</td><td>${t.role}</td><td>${t.projects.join(', ')}</td><td>${t.status}</td></tr>`).join('');
-}
-
-function toggleUploadMode(mode) {
-  const input = document.getElementById('fd-file-input');
-  if (mode === 'folder') {
-    input.setAttribute('webkitdirectory', '');
-    input.setAttribute('directory', '');
-    input.multiple = true;
-  } else {
-    input.removeAttribute('webkitdirectory');
-    input.removeAttribute('directory');
-    input.multiple = false;
-  }
-}
-
-function openModal(type) {
-  const overlay = document.getElementById('overlay');
-  overlay.classList.add('open');
-  if(type==='new-project'){
-    document.getElementById('modal-hd').innerHTML = `➕ Tạo dự án mới`;
-    document.getElementById('modal-body').innerHTML = `
-      <div class="form-row"><label class="form-label">Mã DA *</label><input class="form-ctrl" id="f-id" placeholder="TL-2025-001"></div>
-      <div class="form-row"><label class="form-label">Tên thiết bị sản xuất *</label><input class="form-ctrl" id="f-name" placeholder="Tên máy"></div>
-      <div class="form-row"><label class="form-label">Khách hàng *</label><input class="form-ctrl" id="f-client"></div>
-      <div class="form-row"><label class="form-label">Giá trị (VNĐ)</label><input class="form-ctrl" type="number" id="f-val"></div>
-      <div class="form-row"><label class="form-label">Hạn hoàn thành</label><input class="form-ctrl" type="date" id="f-deadline"></div>
-    `;
-    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-accent" onclick="saveProject()">Xác nhận lưu</button>`;
-  } else if(type==='new-issue') {
-    document.getElementById('modal-hd').innerHTML = `⚠️ Thêm lỗi phát hiện`;
-    document.getElementById('modal-body').innerHTML = `
-      <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fi-proj"></div>
-      <div class="form-row"><label class="form-label">Nội dung sự cố</label><textarea class="form-ctrl" id="fi-title"></textarea></div>
-    `;
-    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-accent" onclick="saveIssue()">Lưu lỗi</button>`;
-  } else if(type==='new-doc') {
-    document.getElementById('modal-hd').innerHTML = `📎 Tải lên tài liệu / Thư mục bản vẽ`;
-    document.getElementById('modal-body').innerHTML = `
-      <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fd-proj" placeholder="TL-2025-001"></div>
-      <div class="form-row">
-        <label class="form-label">Chế độ tải lên</label>
-        <div style="display:flex; gap:16px; margin-bottom:8px; font-size:13px">
-          <label style="cursor:pointer"><input type="radio" name="up-mode" value="file" checked onclick="toggleUploadMode('file')"> Tải file lẻ</label>
-          <label style="cursor:pointer"><input type="radio" name="up-mode" value="folder" onclick="toggleUploadMode('folder')"> Tải trọn bộ thư mục</label>
-        </div>
-      </div>
-      <div class="form-row"><label class="form-label">Chọn tệp / Thư mục bản vẽ *</label><input class="form-ctrl" type="file" id="fd-file-input"></div>
-      <div class="form-row"><label class="form-label">Thư mục phân loại</label><select class="form-ctrl" id="fd-folder"><option value="f1">Bản vẽ 2D/3D</option><option value="f2">Sơ đồ mạch điện</option><option value="f3">BOM vật tư</option><option value="f4">Tài liệu hướng dẫn & CO/CQ</option></select></div>
-    `;
-    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-accent" onclick="saveDocWithFile()">Xác nhận Upload</button>`;
-  }
-}
-function closeModal() { document.getElementById('overlay').classList.remove('open'); }
-
-function saveProject() {
-  const id = document.getElementById('f-id').value.trim();
-  const name = document.getElementById('f-name').value.trim();
-  const client = document.getElementById('f-client').value.trim();
-  if(!id || !name){ alert('Điền đủ thông tin bắt buộc'); return; }
-  projects.unshift({id, name, client, val: document.getElementById('f-val').value||0, deadline: document.getElementById('f-deadline').value||'—', status: 'Đang thực hiện', phases:[0,0,0,0,0,0,0,0]});
-  closeModal(); syncDataToDrive();
-}
-
-function saveIssue() {
-  const proj = document.getElementById('fi-proj').value;
-  const title = document.getElementById('fi-title').value;
-  issues.unshift({id: 'IS-'+Date.now().toString().slice(-4), proj, title, priority:'Cao', status:'Mở'});
-  closeModal(); syncDataToDrive();
-}
-
-function saveDocWithFile() {
-  const proj = document.getElementById('fd-proj').value.trim();
-  const fileInput = document.getElementById('fd-file-input');
   
-  if (!fileInput.files || fileInput.files.length === 0) {
-    alert('Vui lòng chọn file hoặc thư mục trước khi bấm xác nhận!');
+  const folderName = folders.find(f=>f.id===currentFolder)?.name || 'Tất cả';
+  titleEl.textContent = folderName;
+  countEl.textContent = `${filtered.length} file`;
+
+  if(filtered.length===0){
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">Thư mục trống</div>Tải lên tài liệu để bắt đầu</div></td></tr>`;
     return;
   }
-  
-  const files = Array.from(fileInput.files);
-  let currentUploadIndex = 0;
+  tbody.innerHTML = filtered.map(d => {
+    const ext = (d.type||d.name.split('.').pop()||'').toUpperCase();
+    const typeCls = getFileTypeCls(d.type||d.name.split('.').pop());
+    const downloadHtml = d.fileId
+      ? `<a href="https://drive.google.com/uc?export=download&id=${d.fileId}" target="_blank" class="download-btn">
+           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+           Tải xuống
+         </a>`
+      : d.driveLink
+      ? `<a href="${d.driveLink}" target="_blank" class="download-btn">
+           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+           Tải xuống
+         </a>`
+      : `<button class="download-btn" onclick="downloadDoc('${d.name}')" style="opacity:0.6;cursor:default" disabled>
+           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+           Tải xuống
+         </button>`;
+    return `<tr>
+      <td class="tbl-code">${d.proj}</td>
+      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${d.name}">${d.name}</td>
+      <td><span class="file-type ${typeCls}">${ext}</span></td>
+      <td style="font-size:12px;color:var(--text1)">${d.phase}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${d.date}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${d.size}</td>
+      <td>${downloadHtml}</td>
+    </tr>`;
+  }).join('');
+}
 
-  showLoading(`Đang khởi tạo tải lên (${files.length} tệp)...`);
+function downloadDoc(name) {
+  toast(`File "${name}" chưa có liên kết Drive trực tiếp`);
+}
 
-  function uploadNextFile() {
-    if (currentUploadIndex >= files.length) {
-      hideLoading();
-      closeModal();
-      syncDataToDrive();
-      toast(`Đã tải lên toàn bộ ${files.length} tài liệu thành công!`);
-      return;
-    }
-
-    const file = files[currentUploadIndex];
-    const reader = new FileReader();
-    
-    // Giữ nguyên đường dẫn tương đối nếu upload thư mục, nếu không có thì lấy tên file lẻ
-    const relativePath = file.webkitRelativePath || file.name;
-    
-    showLoading(`Đang xử lý gói dữ liệu (${currentUploadIndex + 1}/${files.length}): \n${file.name}`);
-
-    reader.onload = function(e) {
-      const base64Data = e.target.result.split(',')[1];
-      
-      const payload = {
-        action: "upload_file",
-        proj: proj,
-        filename: relativePath,
-        mimeType: file.type || "application/octet-stream",
-        fileData: base64Data,
-        folderIntent: document.getElementById('fd-folder').value
-      };
-      
-      fetch(DRIVE_API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(resData => {
-        if(resData.status === "success") {
-          docs.unshift({
-            proj: proj,
-            name: relativePath,
-            type: file.name.split('.').pop().toUpperCase() || 'UNKNOWN',
-            phase: 'Thiết kế',
-            folder: document.getElementById('fd-folder').value,
-            date: new Date().toISOString().slice(0,10),
-            size: (file.size / (1024*1024)).toFixed(2) + ' MB'
-          });
-          
-          currentUploadIndex++;
-          uploadNextFile(); // Thực hiện đệ quy tải file tiếp theo tuần tự
-        } else {
-          hideLoading();
-          alert(`Lỗi phát sinh tại tệp ${file.name}: ${resData.message}`);
-        }
-      })
-      .catch(err => {
-        hideLoading();
-        alert("Lỗi kết nối đường truyền mạng: " + err);
-      });
-    };
-    
-    reader.readAsDataURL(file);
-  }
-
-  // Bắt đầu chuỗi tải lên tuần tự
-  uploadNextFile();
+// ── RENDER TEAM ──
+function renderTeam() {
+  const tbody = document.getElementById('team-tbody');
+  tbody.innerHTML = team.map(t => `<tr>
+    <td style="font-weight:500">${t.name}</td>
+    <td style="color:var(--text1);font-size:12px">${t.role}</td>
+    <td>${t.projects.map(p=>`<span class="badge badge-gray" style="margin-right:4px">${p}</span>`).join('')}</td>
+    <td><span class="badge ${t.status==='Bận'?'badge-amber':'badge-green'}">${t.status}</span></td>
+  </tr>`).join('');
 }
 
 function filterProj(v) {
@@ -771,13 +1031,186 @@ function filterProj(v) {
   });
 }
 
-function toast(msg){
+// ── MODAL ──
+function openModal(type) {
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('open');
+  const hd = document.getElementById('modal-hd-title');
+  if(type==='new-project'){
+    hd.textContent = '➕  Tạo dự án mới';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Mã DA *</label><input class="form-ctrl" id="f-id" placeholder="TL-2025-001"></div>
+        <div class="form-row"><label class="form-label">Trạng thái</label><select class="form-ctrl" id="f-status"><option>Đang thực hiện</option><option>Chờ triển khai</option><option>Hoàn thành</option></select></div>
+      </div>
+      <div class="form-row"><label class="form-label">Tên thiết bị / Máy *</label><input class="form-ctrl" id="f-name" placeholder="Máy hàn tự động, Băng tải, ..."></div>
+      <div class="form-row"><label class="form-label">Khách hàng *</label><input class="form-ctrl" id="f-client" placeholder="Tên khách hàng hoặc công ty"></div>
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Giá trị hợp đồng (VNĐ)</label><input class="form-ctrl" type="number" id="f-val" placeholder="0"></div>
+        <div class="form-row"><label class="form-label">Hạn bàn giao</label><input class="form-ctrl" type="date" id="f-deadline"></div>
+      </div>
+    `;
+    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveProject()">Xác nhận tạo</button>`;
+  } else if(type==='new-issue') {
+    hd.textContent = '⚠️  Thêm NCR / Sự cố kỹ thuật';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fi-proj" list="proj-list-opts" placeholder="TL-2025-001"><datalist id="proj-list-opts">${projects.map(p=>`<option value="${p.id}">`).join('')}</datalist></div>
+        <div class="form-row"><label class="form-label">Mức độ ưu tiên</label><select class="form-ctrl" id="fi-prio"><option>Cao</option><option>Trung bình</option><option>Thấp</option></select></div>
+      </div>
+      <div class="form-row"><label class="form-label">Nội dung sự cố *</label><textarea class="form-ctrl" id="fi-title" placeholder="Mô tả chi tiết vấn đề kỹ thuật..."></textarea></div>
+    `;
+    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveIssue()">Lưu NCR</button>`;
+  } else if(type==='new-doc') {
+    hd.textContent = '📎  Tải lên tài liệu / Thư mục';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fd-proj" list="proj-list-opts2" placeholder="TL-2025-001"><datalist id="proj-list-opts2">${projects.map(p=>`<option value="${p.id}">`).join('')}</datalist></div>
+        <div class="form-row"><label class="form-label">Phân loại thư mục</label><select class="form-ctrl" id="fd-folder"><option value="f1">Bản vẽ 2D/3D</option><option value="f2">Sơ đồ mạch điện</option><option value="f3">BOM vật tư</option><option value="f4">Tài liệu & CO/CQ</option></select></div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Chế độ tải lên</label>
+        <div style="display:flex; gap:20px; font-size:13px">
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="radio" name="up-mode" value="file" checked onclick="toggleUploadMode('file')"> File lẻ</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="radio" name="up-mode" value="folder" onclick="toggleUploadMode('folder')"> Trọn thư mục</label>
+        </div>
+      </div>
+      <div class="form-row"><label class="form-label">Chọn tệp *</label><input class="form-ctrl" type="file" id="fd-file-input" multiple></div>
+    `;
+    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveDocWithFile()">Xác nhận Upload</button>`;
+  }
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+
+function saveProject() {
+  const id = document.getElementById('f-id').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  const client = document.getElementById('f-client').value.trim();
+  if(!id || !name || !client){ toast('Vui lòng điền đủ thông tin bắt buộc'); return; }
+  projects.unshift({id, name, client, val: document.getElementById('f-val').value||0, deadline: document.getElementById('f-deadline').value||'—', status: document.getElementById('f-status').value, phases:[0,0,0,0,0,0,0,0]});
+  closeModal(); syncDataToDrive();
+}
+
+function saveIssue() {
+  const proj = document.getElementById('fi-proj').value;
+  const title = document.getElementById('fi-title').value.trim();
+  if(!title){ toast('Vui lòng nhập nội dung sự cố'); return; }
+  issues.unshift({id: 'NCR-'+Date.now().toString().slice(-4), proj, title, priority: document.getElementById('fi-prio').value, status:'Mở'});
+  closeModal(); syncDataToDrive();
+}
+
+function saveDocWithFile() {
+  const proj = document.getElementById('fd-proj').value.trim();
+  const fileInput = document.getElementById('fd-file-input');
+  if (!fileInput.files || fileInput.files.length === 0) { toast('Vui lòng chọn file trước khi tải lên'); return; }
+  const files = Array.from(fileInput.files);
+  let idx = 0;
+
+  showLoading(`Chuẩn bị tải lên ${files.length} tệp...`);
+
+  function uploadNext() {
+    if (idx >= files.length) {
+      hideLoading(); closeModal(); syncDataToDrive();
+      toast(`Đã tải lên ${files.length} tài liệu thành công!`);
+      return;
+    }
+    const file = files[idx];
+    const relativePath = file.webkitRelativePath || file.name;
+    showLoading(`Đang tải lên (${idx+1}/${files.length}): ${file.name}`);
+    document.getElementById('loading-sub').textContent = `${(file.size/1024/1024).toFixed(2)} MB`;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const payload = {
+        action: "upload_file", proj, filename: relativePath,
+        mimeType: file.type || "application/octet-stream",
+        fileData: e.target.result.split(',')[1],
+        folderIntent: document.getElementById('fd-folder').value
+      };
+      fetch(DRIVE_API_URL, { method: "POST", body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(res => {
+          if(res.status === "success") {
+            docs.unshift({
+              proj, name: relativePath,
+              type: file.name.split('.').pop().toUpperCase() || 'UNKNOWN',
+              phase: 'Thiết kế', folder: document.getElementById('fd-folder').value,
+              date: new Date().toISOString().slice(0,10),
+              size: (file.size/1024/1024).toFixed(2)+' MB',
+              fileId: res.fileId || null,
+              driveLink: res.driveLink || null
+            });
+            idx++; uploadNext();
+          } else { hideLoading(); alert(`Lỗi tệp ${file.name}: ${res.message}`); }
+        })
+        .catch(err => { hideLoading(); alert("Lỗi kết nối: " + err); });
+    };
+    reader.readAsDataURL(file);
+  }
+  uploadNext();
+}
+
+function toggleUploadMode(mode) {
+  const input = document.getElementById('fd-file-input');
+  if(mode==='folder') { input.setAttribute('webkitdirectory',''); input.setAttribute('directory',''); input.multiple = true; }
+  else { input.removeAttribute('webkitdirectory'); input.removeAttribute('directory'); input.multiple = false; }
+}
+
+// ── DRIVE API ──
+function fetchDataFromDrive() {
+  showLoading("Đang nạp dữ liệu từ Google Drive...");
+  document.getElementById('drive-status-text').textContent = 'Đang kết nối...';
+  document.getElementById('drive-dot').style.background = 'var(--amber)';
+  
+  if(DRIVE_API_URL.includes("DÁN_URL")) {
+    hideLoading(); alert("Vui lòng cấu hình URL Web App Google Apps Script."); return;
+  }
+  fetch(DRIVE_API_URL)
+    .then(res => res.json())
+    .then(data => {
+      projects = data.projects || [];
+      issues = data.issues || [];
+      docs = data.docs || [];
+      renderAll(); hideLoading();
+      document.getElementById('drive-status-text').textContent = 'Drive đã kết nối';
+      document.getElementById('drive-dot').style.background = 'var(--green)';
+      toast("Đã đồng bộ dữ liệu từ Drive!");
+    })
+    .catch(err => {
+      console.error(err); hideLoading();
+      document.getElementById('drive-status-text').textContent = 'Lỗi kết nối';
+      document.getElementById('drive-dot').style.background = 'var(--red)';
+      toast("Không thể kết nối Drive");
+    });
+}
+
+function syncDataToDrive() {
+  showLoading("Đang đồng bộ lên Google Drive...");
+  const payload = { projects, issues, docs };
+  fetch(DRIVE_API_URL, { method: "POST", mode: "no-cors", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload) })
+    .then(() => { hideLoading(); toast("Đã lưu dữ liệu lên Drive!"); renderAll(); })
+    .catch(err => { hideLoading(); alert("Lỗi đồng bộ: " + err); });
+}
+
+function showLoading(text) {
+  const el = document.getElementById('global-loading');
+  el.style.opacity = '1'; el.style.pointerEvents = 'all';
+  document.getElementById('loading-text').textContent = text;
+  document.getElementById('loading-sub').textContent = '';
+}
+function hideLoading() {
+  const el = document.getElementById('global-loading');
+  el.style.opacity = '0'; el.style.pointerEvents = 'none';
+}
+
+function toast(msg) {
   const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 2500);
+  setTimeout(()=>el.classList.remove('show'), 2800);
 }
 
 function renderAll() {
-  renderDashboard(); renderProjects(); renderGantt(); renderIssues(); renderFolders(); renderDocs(); renderTeam();
+  renderDashboard(); renderProjects(); renderGantt(); renderIssues();
+  renderFolders(); renderDocs(); renderTeam();
   const sel = document.getElementById('phase-proj-sel');
   if(sel) sel.innerHTML = '<option value="">— Chọn dự án —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
 }
