@@ -374,6 +374,17 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 /* ── PROGRESS LABEL ── */
 .progress-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
 
+/* ── PHASE UPLOAD BTN ── */
+.upload-phase-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+  border-radius: 6px; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text1);
+  cursor: pointer; font-size: 11px; font-weight: 600; font-family: inherit;
+  transition: all .15s; white-space: nowrap; user-select: none;
+}
+.upload-phase-btn:hover { background: var(--bg4); color: var(--text0); border-color: var(--border3); }
+.upload-phase-btn svg { flex-shrink: 0; }
+
 /* ── PHASE DETAIL CARD ── */
 .phase-info-card {
   background: var(--bg1); border: 1px solid var(--border); border-radius: var(--r);
@@ -848,13 +859,15 @@ function loadPhases(pId) {
   }
   const p = projects.find(x=>x.id===pId);
   if(!p) return;
+  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
+  if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
   const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
 
   cont.innerHTML = `
     <div class="phase-info-card">
       <div style="flex:1">
         <div class="phase-info-name">${p.name}</div>
-        <div class="phase-info-meta">${p.id} · ${p.client} · Hạn: ${p.deadline}</div>
+        <div class="phase-info-meta">${p.id} · ${p.client} · Hạn bàn giao: ${p.deadline}</div>
       </div>
       <span class="badge ${p.status==='Hoàn thành'?'badge-green':'badge-blue'}">${p.status}</span>
       <div style="width:160px">
@@ -873,17 +886,42 @@ function loadPhases(pId) {
       }).join('')}
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-title">Chi tiết từng giai đoạn</span><span style="font-size:11px;color:var(--text2)">Nhấn vào dot phía trên để cập nhật +20%</span></div>
+      <div class="card-header">
+        <span class="card-title">Chi tiết từng giai đoạn</span>
+        <span style="font-size:11px;color:var(--text2)">Nhấn vào dot phía trên để cập nhật +20%</span>
+      </div>
       <table class="tbl">
-        <thead><tr><th>Giai đoạn</th><th>Tên công việc</th><th style="min-width:180px">Tiến độ</th><th>Trạng thái</th></tr></thead>
+        <thead>
+          <tr>
+            <th>GĐ</th>
+            <th>Tên công việc</th>
+            <th style="min-width:160px">Tiến độ</th>
+            <th>Trạng thái</th>
+            <th style="min-width:150px">
+              <div style="display:flex;align-items:center;gap:5px">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Deadline giai đoạn
+              </div>
+            </th>
+            <th style="min-width:160px">
+              <div style="display:flex;align-items:center;gap:5px">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Tài liệu giai đoạn
+              </div>
+            </th>
+          </tr>
+        </thead>
         <tbody>
           ${PH.map((ph,i) => {
             const pct = p.phases[i]||0;
             const color = pct===100?'var(--green)':pct>0?'var(--accent)':'var(--text2)';
             const st = pct===100?'<span class="badge badge-green">Hoàn thành</span>':pct>0?'<span class="badge badge-blue">Đang làm</span>':'<span class="badge badge-gray">Chưa bắt đầu</span>';
+            const dl = p.phaseDeadlines[i] || '';
+            const dlDisplay = dl ? `<span style="font-family:monospace;font-size:11px;color:${isOverdue(dl)?'var(--red)':'var(--text1)'}">${formatDateVN(dl)}</span>` : '<span style="color:var(--text2);font-size:11px">Chưa đặt</span>';
+            const docCount = (p.phaseDocs[i]||[]).length;
             return `<tr>
               <td class="tbl-code">P${i+1}</td>
-              <td>${ph.icon} ${ph.name}</td>
+              <td style="font-size:13px">${ph.icon} ${ph.name}</td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px">
                   <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
@@ -891,12 +929,171 @@ function loadPhases(pId) {
                 </div>
               </td>
               <td>${st}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  ${dlDisplay}
+                  <button class="btn btn-xs btn-ghost" onclick="editPhaseDeadline('${pId}',${i})" title="Đặt deadline" style="padding:3px 6px;flex-shrink:0">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <label class="upload-phase-btn" title="Tải tài liệu lên giai đoạn P${i+1}">
+                    <input type="file" multiple style="display:none" onchange="uploadPhaseDoc('${pId}',${i},this)">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                    Tải lên
+                  </label>
+                  ${docCount > 0 ? `<button class="btn btn-xs" style="background:var(--green-dim);border-color:rgba(52,211,153,0.2);color:var(--green)" onclick="viewPhaseDocs('${pId}',${i})">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    ${docCount} file
+                  </button>` : ''}
+                </div>
+              </td>
             </tr>`;
           }).join('')}
         </tbody>
       </table>
     </div>
   `;
+}
+
+// ── PHASE DEADLINE HELPERS ──
+function formatDateVN(dateStr) {
+  if(!dateStr) return '';
+  const [y,m,d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+function isOverdue(dateStr) {
+  if(!dateStr) return false;
+  return new Date(dateStr) < new Date();
+}
+
+function editPhaseDeadline(pId, idx) {
+  const p = projects.find(x=>x.id===pId);
+  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
+  const current = p.phaseDeadlines[idx] || '';
+
+  // Open modal with date input
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('open');
+  document.getElementById('modal-hd-title').textContent = `📅  Deadline — P${idx+1}: ${PH[idx].name}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row">
+      <label class="form-label">Ngày hoàn thành giai đoạn</label>
+      <input class="form-ctrl" type="date" id="ph-deadline-input" value="${current}">
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:4px">Deadline dự án tổng: <strong style="color:var(--text1)">${p.deadline}</strong></div>
+  `;
+  document.getElementById('modal-ft').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
+    ${current ? `<button class="btn btn-danger btn-sm" onclick="savePhaseDeadline('${pId}',${idx},'')">Xóa deadline</button>` : ''}
+    <button class="btn btn-accent" onclick="savePhaseDeadline('${pId}',${idx},document.getElementById('ph-deadline-input').value)">Lưu</button>
+  `;
+}
+
+function savePhaseDeadline(pId, idx, val) {
+  const p = projects.find(x=>x.id===pId);
+  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
+  p.phaseDeadlines[idx] = val;
+  closeModal();
+  loadPhases(pId);
+  syncDataToDrive();
+  toast(val ? `Đã đặt deadline P${idx+1}: ${formatDateVN(val)}` : `Đã xóa deadline P${idx+1}`);
+}
+
+// ── PHASE DOC UPLOAD ──
+function uploadPhaseDoc(pId, idx, input) {
+  const p = projects.find(x=>x.id===pId);
+  if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
+  if(!p.phaseDocs[idx]) p.phaseDocs[idx] = [];
+
+  const files = Array.from(input.files);
+  if(!files.length) return;
+
+  let uploaded = 0;
+  showLoading(`Đang tải lên ${files.length} tệp cho P${idx+1}...`);
+
+  function next(i) {
+    if(i >= files.length) {
+      hideLoading();
+      loadPhases(pId);
+      syncDataToDrive();
+      toast(`Đã tải lên ${files.length} tài liệu cho P${idx+1}!`);
+      return;
+    }
+    const file = files[i];
+    showLoading(`Đang tải lên (${i+1}/${files.length}): ${file.name}`);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const payload = {
+        action: "upload_file",
+        proj: pId,
+        filename: file.name,
+        mimeType: file.type || "application/octet-stream",
+        fileData: e.target.result.split(',')[1],
+        folderIntent: `phase_p${idx+1}`
+      };
+      fetch(DRIVE_API_URL, { method: "POST", body: JSON.stringify(payload) })
+        .then(r => r.json())
+        .then(res => {
+          const docEntry = {
+            name: file.name,
+            type: file.name.split('.').pop().toUpperCase(),
+            size: (file.size/1024/1024).toFixed(2)+' MB',
+            date: new Date().toISOString().slice(0,10),
+            fileId: res.fileId || null,
+            driveLink: res.driveLink || null
+          };
+          p.phaseDocs[idx].push(docEntry);
+          // Also add to global docs
+          docs.unshift({
+            proj: pId, name: file.name,
+            type: file.name.split('.').pop().toUpperCase(),
+            phase: PH[idx].name,
+            folder: 'f1',
+            date: new Date().toISOString().slice(0,10),
+            size: docEntry.size,
+            fileId: docEntry.fileId,
+            driveLink: docEntry.driveLink
+          });
+          next(i+1);
+        })
+        .catch(err => { hideLoading(); alert("Lỗi tải lên: " + err); });
+    };
+    reader.readAsDataURL(file);
+  }
+  next(0);
+}
+
+function viewPhaseDocs(pId, idx) {
+  const p = projects.find(x=>x.id===pId);
+  const docList = (p.phaseDocs && p.phaseDocs[idx]) || [];
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('open');
+  document.getElementById('modal-hd-title').textContent = `📂  Tài liệu P${idx+1}: ${PH[idx].name}`;
+  document.getElementById('modal-body').innerHTML = docList.length === 0
+    ? `<div class="empty-state">Chưa có tài liệu nào</div>`
+    : `<table class="tbl" style="margin-top:0">
+        <thead><tr><th>Tên file</th><th>Loại</th><th>Dung lượng</th><th>Ngày</th><th>Tải xuống</th></tr></thead>
+        <tbody>
+          ${docList.map((d,di) => {
+            const dlBtn = d.fileId
+              ? `<a href="https://drive.google.com/uc?export=download&id=${d.fileId}" target="_blank" class="download-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải</a>`
+              : d.driveLink
+              ? `<a href="${d.driveLink}" target="_blank" class="download-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải</a>`
+              : `<span style="color:var(--text2);font-size:11px">Chờ sync</span>`;
+            return `<tr>
+              <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.name}</td>
+              <td><span class="file-type ${getFileTypeCls(d.type)}">${d.type}</span></td>
+              <td class="tbl-code">${d.size}</td>
+              <td class="tbl-code">${d.date}</td>
+              <td>${dlBtn}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Đóng</button>`;
 }
 
 function updatePhasePct(pId, idx) {
