@@ -1026,7 +1026,8 @@ const ROLE_TEMPLATES = {
 };
 
 let team = [
-  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer / PM', projects:['TL-2025-001'], status:'Bận', roleTemplate:'admin',    perms: {...ROLE_TEMPLATES.admin}},
+  {name:'Tung', email:'tungbui2995@gmail.com', role:'Lead Mechanical Engineer / PM', projects:[], status:'Sẵn sàng', roleTemplate:'admin',    perms: {...ROLE_TEMPLATES.admin}},
+  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer', projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
   {name:'Trần Văn B',   email:'b@company.com', role:'Senior Mechanical Designer',     projects:['TL-2025-002'], status:'Sẵn sàng', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
   {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}}
 ];
@@ -1689,12 +1690,14 @@ function renderTeam() {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-title">Chưa có nhân sự</div>Thêm kỹ sư để phân công giai đoạn</div></td></tr>`;
     return;
   }
+  const admin = isAdmin();
   tbody.innerHTML = team.map((t,i) => {
     const tmpl = t.roleTemplate || 'engineer';
-    const tmplLabel = tmpl==='admin'?'Admin':tmpl==='viewer'?'Khách hàng':'Kỹ sư';
+    const tmplLabel = tmpl==='admin'?'👑 Admin':tmpl==='viewer'?'👁 Khách hàng':'🔧 Kỹ sư';
     const tmplColor = tmpl==='admin'?'badge-red':tmpl==='viewer'?'badge-gray':'badge-blue';
+    const isSelf = currentUser?.email === t.email;
     return `<tr>
-      <td style="font-weight:600">${t.name}</td>
+      <td style="font-weight:600">${t.name}${isSelf?' <span style="font-size:10px;color:var(--accent)">(bạn)</span>':''}</td>
       <td><a href="mailto:${t.email}" style="color:var(--accent);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         ${t.email}</a></td>
@@ -1704,18 +1707,18 @@ function renderTeam() {
       <td>
         <div style="display:flex;align-items:center;gap:6px">
           <span class="badge ${tmplColor}">${tmplLabel}</span>
-          ${isAdmin() ? `<button class="btn btn-xs btn-ghost" onclick="openPermModal(${i})" title="Cài phân quyền chi tiết">
+          <button class="btn btn-xs btn-ghost" onclick="${admin?'openPermModal('+i+')':'showNoPermToast()'}" title="${admin?'Cài phân quyền chi tiết':'Chỉ Admin mới chỉnh được'}" style="${admin?'':'opacity:0.45;cursor:not-allowed'}">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             Phân quyền
-          </button>` : ''}
+          </button>
         </div>
       </td>
       <td>
         <div style="display:flex;gap:5px">
-          ${isAdmin()||currentUser?.email===t.email ? `<button class="btn btn-xs btn-ghost" onclick="editMember(${i})">
+          <button class="btn btn-xs btn-ghost" onclick="${admin||isSelf?'editMember('+i+')':'showNoPermToast()'}" style="${admin||isSelf?'':'opacity:0.45;cursor:not-allowed'}">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa
-          </button>` : ''}
-          ${isAdmin() ? `<button class="btn btn-xs btn-danger" onclick="deleteMember(${i})">Xóa</button>` : ''}
+          </button>
+          <button class="btn btn-xs btn-danger" onclick="${admin?'deleteMember('+i+')':'showNoPermToast()'}" style="${admin?'':'opacity:0.45;cursor:not-allowed'}">Xóa</button>
         </div>
       </td>
     </tr>`;
@@ -2482,6 +2485,7 @@ function canView(module)  { return getPerm(module) >= 1; }
 function canEdit(module)  { return getPerm(module) >= 2; }
 function canFull(module)  { return getPerm(module) >= 3; }
 function isAdmin()        { return canFull('team'); }
+function showNoPermToast() { toast('⛔ Chỉ Admin mới có quyền thực hiện thao tác này'); }
 
 function applyPermissions() {
   // Ẩn/hiện nav items
