@@ -549,6 +549,28 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         </div>
         <div class="card-body" id="dash-gantt-mini"></div>
       </div>
+
+      <!-- CÔNG VIỆC ĐỘT XUẤT TRÊN DASHBOARD -->
+      <div class="two-col" style="margin-top:14px">
+        <div class="card">
+          <div class="card-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span class="card-title" style="color:var(--red)">🚨 Yêu cầu gấp</span>
+            <span class="nav-badge red" id="dash-urgent-count" style="margin-left:4px">0</span>
+            <button class="btn btn-xs btn-ghost" onclick="openTaskModal('urgent')" style="margin-left:auto;color:var(--red);border-color:rgba(248,113,113,0.25)">+ Thêm</button>
+          </div>
+          <div id="dash-urgent-list" style="max-height:280px;overflow-y:auto"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="16" r="1.5" fill="var(--orange)"/></svg>
+            <span class="card-title" style="color:var(--orange)">📅 Cần xử lý hôm nay</span>
+            <span class="nav-badge red" id="dash-today-count" style="margin-left:4px">0</span>
+            <button class="btn btn-xs btn-ghost" onclick="openTaskModal('today')" style="margin-left:auto;color:var(--orange);border-color:rgba(251,146,60,0.25)">+ Thêm</button>
+          </div>
+          <div id="dash-today-list" style="max-height:280px;overflow-y:auto"></div>
+        </div>
+      </div>
     </div>
 
     <!-- PROJECTS -->
@@ -1789,7 +1811,7 @@ function saveTask(editId) {
     tasks.unshift(task);
   }
   closeModal();
-  renderUrgent(); renderToday(); updateTaskBadges();
+  renderUrgent(); renderToday(); renderDashTasks(); updateTaskBadges();
   syncDataToDrive();
   toast(editId ? 'Đã cập nhật công việc' : 'Đã thêm công việc đột xuất');
 }
@@ -1797,7 +1819,7 @@ function saveTask(editId) {
 function deleteTask(id) {
   if(!confirm('Xóa công việc này?')) return;
   tasks = tasks.filter(t=>t.id!==id);
-  closeModal(); renderUrgent(); renderToday(); updateTaskBadges(); syncDataToDrive();
+  closeModal(); renderUrgent(); renderToday(); renderDashTasks(); updateTaskBadges(); syncDataToDrive();
   toast('Đã xóa công việc');
 }
 
@@ -1805,7 +1827,7 @@ function toggleTaskDone(id) {
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
   t.done = !t.done;
-  renderUrgent(); renderToday(); updateTaskBadges(); syncDataToDrive();
+  renderUrgent(); renderToday(); renderDashTasks(); updateTaskBadges(); syncDataToDrive();
 }
 
 function updateTaskBadges() {
@@ -1831,27 +1853,24 @@ function taskCardHtml(t) {
     const d = new Date(t.deadline);
     const now = new Date();
     const diffMin = Math.round((d-now)/60000);
-    if(diffMin < 0)       dlStr = `<span style="color:var(--red);font-weight:700">Quá hạn ${Math.abs(diffMin)<60?Math.abs(diffMin)+'ph':Math.round(Math.abs(diffMin)/60)+'h'}</span>`;
-    else if(diffMin < 60) dlStr = `<span style="color:var(--orange);font-weight:700">Còn ${diffMin} phút</span>`;
+    if(diffMin < 0)         dlStr = `<span style="color:var(--red);font-weight:700">Quá hạn ${Math.abs(diffMin)<60?Math.abs(diffMin)+'ph':Math.round(Math.abs(diffMin)/60)+'h'}</span>`;
+    else if(diffMin < 60)   dlStr = `<span style="color:var(--orange);font-weight:700">Còn ${diffMin} phút</span>`;
     else if(diffMin < 1440) dlStr = `<span style="color:var(--amber)">Còn ${Math.round(diffMin/60)}h</span>`;
     else {
-      const dd = d.getDate().toString().padStart(2,'0');
-      const mm = (d.getMonth()+1).toString().padStart(2,'0');
-      const hh = d.getHours().toString().padStart(2,'0');
-      const mi = d.getMinutes().toString().padStart(2,'0');
-      dlStr = `<span style="color:var(--text1)">${dd}/${mm} ${hh}:${mi}</span>`;
+      const d2 = new Date(t.deadline);
+      dlStr = `<span style="color:var(--text1)">${d2.getDate().toString().padStart(2,'0')}/${(d2.getMonth()+1).toString().padStart(2,'0')} ${d2.getHours().toString().padStart(2,'0')}:${d2.getMinutes().toString().padStart(2,'0')}</span>`;
     }
   }
 
+  const canSendEmail = member && member.email;
+
   return `
   <div style="${doneSty}background:${accentBg};border:1px solid ${accentBdr};border-left:3px solid ${accentClr};border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
-    <!-- Checkbox -->
     <div style="flex-shrink:0;margin-top:2px">
       <div onclick="toggleTaskDone('${t.id}')" style="width:18px;height:18px;border-radius:4px;border:2px solid ${t.done?accentClr:'var(--border3)'};background:${t.done?accentClr:'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s">
         ${t.done?'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
       </div>
     </div>
-    <!-- Content -->
     <div style="flex:1;min-width:0">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <span class="badge" style="background:${accentBg};color:${accentClr};border:1px solid ${accentBdr}">${label}</span>
@@ -1865,13 +1884,107 @@ function taskCardHtml(t) {
         ${t.note    ? `<span style="color:var(--text2)">📝 ${t.note}</span>` : ''}
       </div>
     </div>
-    <!-- Actions -->
-    <div style="display:flex;gap:5px;flex-shrink:0">
+    <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
       <button class="btn btn-xs btn-ghost" onclick="openTaskModal('${t.type}','${t.id}')">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Sửa
       </button>
+      ${canSendEmail ? `<button class="btn btn-xs" style="background:var(--accent-dim);border-color:rgba(79,142,247,0.25);color:var(--accent)" onclick="sendTaskEmail('${t.id}')">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Gửi mail
+      </button>` : ''}
     </div>
   </div>`;
+}
+
+// ── GỬI EMAIL THÔNG BÁO TASK ──
+function sendTaskEmail(taskId) {
+  const t = tasks.find(x=>x.id===taskId);
+  if(!t) return;
+  const member    = team.find(m=>m.email===t.pic);
+  const requester = team.find(m=>m.email===t.requester);
+  const proj      = projects.find(p=>p.id===t.proj);
+  if(!member) { toast('Chưa có người xử lý để gửi email'); return; }
+
+  const isUrgent  = t.type === 'urgent';
+  const label     = isUrgent ? '🚨 Yêu cầu gấp' : '📅 Cần xử lý hôm nay';
+  const barColor  = isUrgent ? '#ef4444,#f97316' : '#f59e0b,#f97316';
+
+  let dlText = 'Chưa đặt';
+  if(t.deadline) {
+    const d = new Date(t.deadline);
+    dlText = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+  }
+
+  const htmlBody = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
+      <div style="background:linear-gradient(135deg,${barColor});padding:22px 24px 18px">
+        <div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px">${label}</div>
+      </div>
+      <div style="padding:22px 24px">
+        <div style="font-size:15px;font-weight:600;margin-bottom:16px">Xin chào ${member.name},</div>
+        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px">Bạn được giao xử lý công việc đột xuất sau:</p>
+        <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:16px 18px;margin-bottom:18px">
+          <table style="font-size:13px;border-collapse:collapse;width:100%">
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0;white-space:nowrap">Nội dung</td><td style="color:#eef0f4;font-weight:700">${t.title}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Loại</td><td style="color:${isUrgent?'#f87171':'#fb923c'};font-weight:700">${label}</td></tr>
+            ${requester?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Người YC</td><td style="color:#eef0f4">${requester.name}</td></tr>`:''}
+            ${proj?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Dự án</td><td style="color:#4f8ef7">${proj.id} — ${proj.name}</td></tr>`:''}
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Deadline</td><td style="color:${isUrgent?'#f87171':'#fbbf24'};font-weight:700">${dlText}</td></tr>
+            ${t.note?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ghi chú</td><td style="color:#9aa3b5">${t.note}</td></tr>`:''}
+          </table>
+        </div>
+        <p style="font-size:12px;color:#5c6578">Vui lòng xử lý và cập nhật trạng thái trên MechaProject.</p>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Thông báo tự động · Không reply email này</div>
+    </div>`;
+
+  const plainBody = `${label}\n\nNội dung: ${t.title}\n`
+    + (requester?`Người YC: ${requester.name}\n`:'')
+    + (proj?`Dự án: ${proj.id} — ${proj.name}\n`:'')
+    + `Deadline: ${dlText}\n`
+    + (t.note?`Ghi chú: ${t.note}`:'');
+
+  const payload = {
+    action: 'send_email',
+    to: member.email,
+    subject: `[MechaProject] ${label}: ${t.title}`,
+    body: plainBody,
+    htmlBody
+  };
+
+  fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify(payload) })
+    .then(r=>r.json())
+    .then(res => {
+      if(res.status==='success') toast(`✉ Đã gửi email tới ${member.name} (${member.email})`);
+      else toast(`Lỗi gửi email: ${res.message||''}`);
+    })
+    .catch(()=>toast('Lỗi kết nối khi gửi email'));
+}
+
+// ── RENDER DASHBOARD TASK LISTS ──
+function renderDashTasks() {
+  const urgentOpen = tasks.filter(t=>t.type==='urgent'&&!t.done);
+  const todayOpen  = tasks.filter(t=>t.type==='today' &&!t.done);
+
+  document.getElementById('dash-urgent-count').textContent = urgentOpen.length || '';
+  document.getElementById('dash-today-count').textContent  = todayOpen.length  || '';
+
+  const emptyU = `<div class="empty-state" style="padding:28px 16px">
+    <div style="font-size:20px;margin-bottom:6px">✅</div>
+    <div style="font-size:12px;color:var(--text2)">Không có yêu cầu gấp</div>
+  </div>`;
+  const emptyT = `<div class="empty-state" style="padding:28px 16px">
+    <div style="font-size:20px;margin-bottom:6px">📋</div>
+    <div style="font-size:12px;color:var(--text2)">Không có việc hôm nay</div>
+  </div>`;
+
+  document.getElementById('dash-urgent-list').innerHTML =
+    urgentOpen.length ? '<div style="padding:10px 14px">' + urgentOpen.map(taskCardHtml).join('') + '</div>' : emptyU;
+  document.getElementById('dash-today-list').innerHTML =
+    todayOpen.length  ? '<div style="padding:10px 14px">' + todayOpen.map(taskCardHtml).join('')  + '</div>' : emptyT;
+}
 }
 
 function renderUrgent() {
@@ -1918,7 +2031,7 @@ function renderToday() {
 
 function renderAll() {
   renderDashboard(); renderProjects(); renderGantt(); renderIssues();
-  renderFolders(); renderDocs(); renderTeam(); renderUrgent(); renderToday();
+  renderFolders(); renderDocs(); renderTeam(); renderUrgent(); renderToday(); renderDashTasks();
   const sel = document.getElementById('phase-proj-sel');
   if(sel) sel.innerHTML = '<option value="">— Chọn dự án —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
 }
