@@ -389,7 +389,49 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 .upload-phase-btn:hover { background: var(--bg4); color: var(--text0); border-color: var(--border3); }
 .upload-phase-btn svg { flex-shrink: 0; }
 
-/* ── PHASE DETAIL CARD ── */
+/* ── CHAT ── */
+.chat-layout { display:grid; grid-template-columns:220px 1fr; gap:0; height:calc(100vh - var(--topbar-h) - 40px); min-height:400px; }
+.chat-rooms { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r2) 0 0 var(--r2); overflow-y:auto; }
+.chat-rooms-hd { padding:12px 14px; border-bottom:1px solid var(--border); font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.08em; display:flex; align-items:center; justify-content:space-between; }
+.chat-room-item { padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .12s; display:flex; align-items:center; gap:9px; }
+.chat-room-item:hover { background:var(--bg3); }
+.chat-room-item.active { background:var(--accent-dim); border-left:2px solid var(--accent); }
+.chat-room-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.chat-room-name { font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.chat-room-last { font-size:11px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:1px; }
+.chat-room-unread { margin-left:auto; flex-shrink:0; background:var(--accent); color:#fff; font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
+.chat-main { display:flex; flex-direction:column; border:1px solid var(--border); border-left:none; border-radius:0 var(--r2) var(--r2) 0; background:var(--bg1); overflow:hidden; }
+.chat-header { padding:12px 16px; border-bottom:1px solid var(--border); background:var(--bg2); display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.chat-header-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.chat-header-name { font-size:14px; font-weight:600; }
+.chat-header-meta { font-size:11px; color:var(--text2); }
+.chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.chat-msg { display:flex; gap:9px; align-items:flex-start; animation:fadeIn .15s ease; }
+.chat-msg-avatar { width:30px; height:30px; border-radius:50%; background:var(--accent-dim); border:1px solid rgba(79,142,247,0.3); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--accent); flex-shrink:0; margin-top:2px; }
+.chat-msg-body { flex:1; min-width:0; }
+.chat-msg-meta { display:flex; align-items:baseline; gap:8px; margin-bottom:3px; }
+.chat-msg-name { font-size:12px; font-weight:700; }
+.chat-msg-time { font-size:10px; color:var(--text2); font-family:monospace; }
+.chat-msg-text { font-size:13px; line-height:1.55; color:var(--text0); background:var(--bg3); border:1px solid var(--border); border-radius:4px 12px 12px 12px; padding:8px 12px; display:inline-block; max-width:100%; word-break:break-word; }
+.chat-msg-text .mention { color:var(--accent); font-weight:600; background:var(--accent-dim); padding:1px 4px; border-radius:4px; }
+.chat-msg-file { display:flex; align-items:center; gap:8px; margin-top:5px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:12px; }
+.chat-msg-file a { color:var(--accent); text-decoration:none; font-weight:500; }
+.chat-msg-file a:hover { text-decoration:underline; }
+.chat-msg-system { text-align:center; font-size:11px; color:var(--text2); padding:4px 0; font-style:italic; }
+
+.chat-input-area { border-top:1px solid var(--border); background:var(--bg2); padding:12px 14px; flex-shrink:0; }
+.chat-input-wrap { display:flex; gap:8px; align-items:flex-end; }
+.chat-input-box { flex:1; background:var(--bg3); border:1px solid var(--border2); border-radius:var(--r2); padding:9px 12px; font-size:13px; font-family:inherit; color:var(--text0); resize:none; min-height:38px; max-height:120px; transition:border-color .15s; line-height:1.5; }
+.chat-input-box:focus { outline:none; border-color:var(--accent); background:var(--bg4); }
+.chat-input-box::placeholder { color:var(--text2); }
+.chat-actions { display:flex; gap:6px; align-items:center; }
+.chat-input-meta { font-size:11px; color:var(--text2); margin-bottom:6px; display:flex; align-items:center; gap:10px; }
+.mention-dropdown { position:absolute; background:var(--bg2); border:1px solid var(--border2); border-radius:var(--r); min-width:200px; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,.5); overflow:hidden; }
+.mention-item { padding:8px 12px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:8px; transition:background .1s; }
+.mention-item:hover { background:var(--accent-dim); color:var(--accent); }
+.chat-wrap-pos { position:relative; flex:1; }
+
 .phase-info-card {
   background: var(--bg1); border: 1px solid var(--border); border-radius: var(--r);
   padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;
@@ -452,6 +494,10 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
     <div class="nav-item" onclick="nav('team',this)">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Nhân sự
+    </div>
+    <div class="nav-item" onclick="nav('chat',this)" id="nav-chat">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Chat nhóm <span class="nav-badge" id="b-chat" style="display:none">0</span>
     </div>
   </div>
 
@@ -751,6 +797,63 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
       </div>
       <div id="today-container"></div>
     </div>
+    <!-- CHAT -->
+    <div class="view" id="view-chat">
+      <div class="chat-layout">
+        <!-- Room list -->
+        <div class="chat-rooms">
+          <div class="chat-rooms-hd">
+            💬 Rooms
+            <button class="btn btn-xs btn-ghost" onclick="createProjectRooms()" title="Đồng bộ room dự án" style="padding:2px 6px">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+          </div>
+          <div id="chat-room-list"></div>
+        </div>
+        <!-- Chat main -->
+        <div class="chat-main">
+          <div class="chat-header" id="chat-header">
+            <div class="chat-header-icon" id="chat-header-icon">💬</div>
+            <div>
+              <div class="chat-header-name" id="chat-header-name">Chọn một room</div>
+              <div class="chat-header-meta" id="chat-header-meta">—</div>
+            </div>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div class="empty-state" style="margin:auto">
+              <div class="empty-state-icon">💬</div>
+              <div class="empty-state-title">Chọn room để bắt đầu trò chuyện</div>
+            </div>
+          </div>
+          <div class="chat-input-area" id="chat-input-area" style="display:none">
+            <div class="chat-input-meta">
+              <span id="chat-sender-label">Gửi với tư cách: <strong style="color:var(--accent)" id="chat-sender-name">—</strong></span>
+              <select id="chat-sender-select" class="form-ctrl" style="max-width:180px;padding:3px 8px;font-size:11px" onchange="setChatSender(this.value)">
+                <option value="">— Chọn tên của bạn —</option>
+              </select>
+            </div>
+            <div class="chat-input-wrap">
+              <div class="chat-wrap-pos">
+                <div class="mention-dropdown" id="mention-dropdown" style="display:none;position:absolute;bottom:44px;left:0"></div>
+                <textarea class="chat-input-box" id="chat-input" placeholder="Nhắn tin... Dùng @ để tag người" rows="1"
+                  oninput="onChatInput(this)"
+                  onkeydown="onChatKeydown(event)"></textarea>
+              </div>
+              <div class="chat-actions">
+                <label class="btn btn-sm btn-ghost" title="Đính kèm file" style="cursor:pointer">
+                  <input type="file" id="chat-file-input" style="display:none" multiple onchange="sendChatFiles(this)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                </label>
+                <button class="btn btn-sm btn-accent" onclick="sendChatMessage()" id="chat-send-btn">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Gửi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -811,7 +914,8 @@ const PAGE_TITLES = {
   docs: 'Kho tài liệu',
   team: 'Nhân sự',
   urgent: '🚨 Yêu cầu gấp',
-  today: '📅 Cần xử lý hôm nay'
+  today: '📅 Cần xử lý hôm nay',
+  chat: '💬 Chat nhóm'
 };
 
 function nav(viewId, el) {
@@ -1682,6 +1786,7 @@ function fetchDataFromDrive() {
       docs = data.docs || [];
       if(data.team  && data.team.length  > 0) team  = data.team;
       if(data.tasks && data.tasks.length > 0) tasks = data.tasks;
+      if(data.chatRooms) chatRooms = data.chatRooms;
       renderAll(); hideLoading();
       document.getElementById('drive-status-text').textContent = 'Drive đã kết nối';
       document.getElementById('drive-dot').style.background = 'var(--green)';
@@ -1697,7 +1802,7 @@ function fetchDataFromDrive() {
 
 function syncDataToDrive() {
   showLoading("Đang đồng bộ lên Google Drive...");
-  const payload = { projects, issues, docs, team, tasks };
+  const payload = { projects, issues, docs, team, tasks, chatRooms };
   fetch(DRIVE_API_URL, { method: "POST", mode: "no-cors", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload) })
     .then(() => { hideLoading(); toast("Đã lưu dữ liệu lên Drive!"); renderAll(); })
     .catch(err => { hideLoading(); alert("Lỗi đồng bộ: " + err); });
@@ -2133,6 +2238,270 @@ function renderToday() {
   if(done.length)  html += `<div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin:18px 0 8px;padding:0 4px">✓ Đã hoàn thành (${done.length})</div>`
     + done.map(taskCardHtml).join('');
   el.innerHTML = html;
+}
+
+// ── CHAT SYSTEM ─────────────────────────────────────────────
+let chatRooms = [
+  { id:'general', name:'Toàn team', icon:'💬', color:'#4f8ef7', type:'general', messages:[] }
+];
+let currentRoomId = null;
+let chatSenderEmail = '';
+let mentionQuery = '';
+let mentionActive = false;
+
+function initChat() {
+  createProjectRooms();
+  renderChatRooms();
+  populateSenderSelect();
+}
+
+function createProjectRooms() {
+  // Tạo room cho mỗi dự án nếu chưa có
+  projects.forEach(p => {
+    if(!chatRooms.find(r=>r.id==='proj-'+p.id)) {
+      chatRooms.push({ id:'proj-'+p.id, name:p.id+' — '+p.name, icon:'📁', color:'#34d399', type:'project', projId:p.id, messages:[] });
+    }
+  });
+  renderChatRooms();
+}
+
+function populateSenderSelect() {
+  const sel = document.getElementById('chat-sender-select');
+  if(!sel) return;
+  const saved = localStorage.getItem('chatSenderEmail') || '';
+  sel.innerHTML = '<option value="">— Chọn tên của bạn —</option>'
+    + team.map(t=>`<option value="${t.email}" ${t.email===saved?'selected':''}>${t.name}</option>`).join('');
+  if(saved) setChatSender(saved);
+}
+
+function setChatSender(email) {
+  chatSenderEmail = email;
+  if(email) localStorage.setItem('chatSenderEmail', email);
+  const m = team.find(t=>t.email===email);
+  const nameEl = document.getElementById('chat-sender-name');
+  if(nameEl) nameEl.textContent = m ? m.name : '—';
+}
+
+function renderChatRooms() {
+  const list = document.getElementById('chat-room-list');
+  if(!list) return;
+  list.innerHTML = chatRooms.map(r => {
+    const last = r.messages && r.messages.length ? r.messages[r.messages.length-1] : null;
+    const lastText = last ? (last.senderName+': '+(last.text||'📎 File').slice(0,28)) : 'Chưa có tin nhắn';
+    const isActive = r.id === currentRoomId;
+    return `<div class="chat-room-item ${isActive?'active':''}" onclick="openRoom('${r.id}')">
+      <div class="chat-room-icon" style="background:${r.color}22;color:${r.color}">${r.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div class="chat-room-name">${r.name}</div>
+        <div class="chat-room-last">${lastText}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openRoom(roomId) {
+  currentRoomId = roomId;
+  const room = chatRooms.find(r=>r.id===roomId);
+  if(!room) return;
+  renderChatRooms();
+
+  // Header
+  document.getElementById('chat-header-icon').textContent = room.icon;
+  document.getElementById('chat-header-icon').style.background = room.color+'22';
+  document.getElementById('chat-header-name').textContent = room.name;
+  document.getElementById('chat-header-meta').textContent =
+    room.type==='project' ? `Phòng dự án · ${(room.messages||[]).length} tin nhắn`
+    : `Toàn team · ${(room.messages||[]).length} tin nhắn`;
+
+  document.getElementById('chat-input-area').style.display = '';
+  populateSenderSelect();
+  renderMessages(room);
+}
+
+function renderMessages(room) {
+  const el = document.getElementById('chat-messages');
+  const msgs = room.messages || [];
+  if(msgs.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="margin:auto">
+      <div class="empty-state-icon">💬</div>
+      <div class="empty-state-title">Chưa có tin nhắn nào</div>
+      <div style="margin-top:4px;font-size:12px">Hãy là người đầu tiên nhắn tin!</div>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  let lastDate = '';
+  msgs.forEach(msg => {
+    // Date separator
+    const msgDate = new Date(msg.ts).toLocaleDateString('vi-VN');
+    if(msgDate !== lastDate) {
+      html += `<div class="chat-msg-system">— ${msgDate} —</div>`;
+      lastDate = msgDate;
+    }
+
+    if(msg.type === 'system') {
+      html += `<div class="chat-msg-system">${msg.text}</div>`;
+      return;
+    }
+
+    const timeStr = new Date(msg.ts).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+    const initial = (msg.senderName||'?').slice(-1).toUpperCase();
+    const avatarColor = stringToColor(msg.senderEmail||msg.senderName||'');
+
+    // Render text with @mentions highlighted
+    const textHtml = (msg.text||'').replace(/@(\S+)/g, '<span class="mention">@$1</span>');
+
+    html += `<div class="chat-msg">
+      <div class="chat-msg-avatar" style="background:${avatarColor}22;border-color:${avatarColor}44;color:${avatarColor}">${initial}</div>
+      <div class="chat-msg-body">
+        <div class="chat-msg-meta">
+          <span class="chat-msg-name" style="color:${avatarColor}">${msg.senderName}</span>
+          <span class="chat-msg-time">${timeStr}</span>
+        </div>
+        ${msg.text ? `<div class="chat-msg-text">${textHtml}</div>` : ''}
+        ${(msg.files||[]).map(f=>`
+          <div class="chat-msg-file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text1)">${f.name}</span>
+            <span style="font-family:monospace;font-size:10px;color:var(--text2)">${f.size}</span>
+            ${f.fileId ? `<a href="https://drive.google.com/uc?export=download&id=${f.fileId}" target="_blank" class="download-btn" style="padding:3px 8px">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Tải
+            </a>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+  el.scrollTop = el.scrollHeight;
+}
+
+function stringToColor(str) {
+  const colors = ['#4f8ef7','#34d399','#a78bfa','#fbbf24','#f87171','#2dd4bf','#fb923c','#60a5fa'];
+  let hash = 0;
+  for(let i=0;i<str.length;i++) hash = str.charCodeAt(i) + ((hash<<5)-hash);
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function onChatInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  handleMentionTrigger(el);
+}
+
+function handleMentionTrigger(el) {
+  const val = el.value;
+  const cursor = el.selectionStart;
+  const before = val.slice(0, cursor);
+  const match = before.match(/@(\w*)$/);
+  const dd = document.getElementById('mention-dropdown');
+
+  if(match) {
+    mentionQuery = match[1].toLowerCase();
+    mentionActive = true;
+    const filtered = team.filter(t => t.name.toLowerCase().includes(mentionQuery) || t.email.toLowerCase().includes(mentionQuery));
+    if(filtered.length) {
+      dd.style.display = 'block';
+      dd.innerHTML = filtered.map(t=>`
+        <div class="mention-item" onclick="insertMention('${t.name}')">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${t.name.slice(-1)}</div>
+          <div><div style="font-weight:600">${t.name}</div><div style="font-size:10px;color:var(--text2)">${t.role||''}</div></div>
+        </div>`).join('');
+    } else { dd.style.display = 'none'; }
+  } else {
+    mentionActive = false;
+    dd.style.display = 'none';
+  }
+}
+
+function insertMention(name) {
+  const input = document.getElementById('chat-input');
+  const val = input.value;
+  const cursor = input.selectionStart;
+  const before = val.slice(0, cursor);
+  const replaced = before.replace(/@\w*$/, '@'+name+' ');
+  input.value = replaced + val.slice(cursor);
+  document.getElementById('mention-dropdown').style.display = 'none';
+  mentionActive = false;
+  input.focus();
+  input.selectionStart = input.selectionEnd = replaced.length;
+}
+
+function onChatKeydown(e) {
+  if(e.key === 'Escape') { document.getElementById('mention-dropdown').style.display='none'; return; }
+  if(e.key === 'Enter' && !e.shiftKey && !mentionActive) { e.preventDefault(); sendChatMessage(); }
+}
+
+function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text || !currentRoomId) return;
+  if(!chatSenderEmail) { toast('Vui lòng chọn tên của bạn trước khi gửi'); return; }
+
+  const sender = team.find(t=>t.email===chatSenderEmail);
+  const msg = {
+    id: 'msg-'+Date.now(),
+    type: 'text',
+    senderEmail: chatSenderEmail,
+    senderName: sender ? sender.name : chatSenderEmail,
+    text,
+    files: [],
+    ts: new Date().toISOString()
+  };
+
+  const room = chatRooms.find(r=>r.id===currentRoomId);
+  if(!room.messages) room.messages = [];
+  room.messages.push(msg);
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('mention-dropdown').style.display='none';
+
+  renderMessages(room);
+  renderChatRooms();
+  syncChatToDrive();
+}
+
+function sendChatFiles(input) {
+  if(!currentRoomId || !chatSenderEmail) { toast('Chọn room và tên của bạn trước'); return; }
+  const files = Array.from(input.files);
+  if(!files.length) return;
+  const sender = team.find(t=>t.email===chatSenderEmail);
+  const room = chatRooms.find(r=>r.id===currentRoomId);
+  if(!room.messages) room.messages = [];
+
+  let idx = 0;
+  showLoading(`Đang tải lên ${files.length} file...`);
+
+  function next() {
+    if(idx >= files.length) { hideLoading(); renderMessages(room); renderChatRooms(); syncChatToDrive(); input.value=''; return; }
+    const file = files[idx];
+    showLoading(`Đang tải (${idx+1}/${files.length}): ${file.name}`);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
+        action:'upload_file', proj: currentRoomId, folderIntent:'chat',
+        filename: file.name, mimeType: file.type||'application/octet-stream',
+        fileData: e.target.result.split(',')[1]
+      })}).then(r=>r.json()).then(res=>{
+        room.messages.push({
+          id:'msg-'+Date.now(), type:'text',
+          senderEmail: chatSenderEmail,
+          senderName: sender ? sender.name : chatSenderEmail,
+          text:'', files:[{ name:file.name, size:(file.size/1024).toFixed(0)+'KB', fileId: res.fileId||null }],
+          ts: new Date().toISOString()
+        });
+        idx++; next();
+      }).catch(()=>{ hideLoading(); toast('Lỗi tải file: '+file.name); });
+    };
+    reader.readAsDataURL(file);
+  }
+  next();
+}
+
+function syncChatToDrive() {
+  const payload = { projects, issues, docs, team, tasks, chatRooms };
+  fetch(DRIVE_API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }).catch(()=>{});
 }
 
 function renderAll() {
