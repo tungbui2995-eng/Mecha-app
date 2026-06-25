@@ -518,6 +518,11 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Đăng nhập
       </button>
+      <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px;color:var(--text2)" onclick="emergencyAdminLogin()">
+          🔑 Đăng nhập khẩn cấp với quyền Admin
+        </button>
+      </div>
       <div style="margin-top:12px;font-size:11px;color:var(--text2);text-align:center">Mật khẩu mặc định: <strong style="color:var(--text1)">1234</strong> · Liên hệ PM để đổi mật khẩu</div>
     </div>
   </div>
@@ -2468,8 +2473,10 @@ let currentUser = null;
 function getPerm(module) {
   if(!currentUser) return 0;
   const member = team.find(t=>t.email===currentUser.email);
-  if(!member || !member.perms) return 0;
-  return member.perms[module] ?? 0;
+  if(!member) return 0;
+  // Nếu chưa có perms (data cũ từ Drive) → cấp full quyền
+  if(!member.perms || Object.keys(member.perms).length === 0) return 3;
+  return member.perms[module] ?? 1;
 }
 function canView(module)  { return getPerm(module) >= 1; }
 function canEdit(module)  { return getPerm(module) >= 2; }
@@ -2522,6 +2529,23 @@ function onLoginUserChange(email) {
   if(m){ prev.style.display='block'; prev.innerHTML=`👷 <strong style="color:var(--text0)">${m.name}</strong> · ${m.role} · <span class="badge ${m.status==='Bận'?'badge-amber':'badge-green'}">${m.status}</span>`; }
   else prev.style.display='none';
   document.getElementById('login-err').style.display='none';
+}
+
+function emergencyAdminLogin() {
+  // Tạo tài khoản Admin tạm thời nếu chưa có ai là Admin
+  const adminUser = {
+    email: 'admin@mechaproject.local',
+    name: 'Admin (Khẩn cấp)',
+    role: 'System Administrator',
+    color: '#f87171',
+    perms: {...ROLE_TEMPLATES.admin}
+  };
+  // Thêm vào team nếu chưa có
+  if(!team.find(t=>t.email===adminUser.email)) {
+    team.push({...adminUser, projects:[], status:'Sẵn sàng', roleTemplate:'admin', password:'admin1234'});
+  }
+  applyLogin(adminUser);
+  toast('⚠️ Đăng nhập khẩn cấp. Vào Nhân sự → Phân quyền để cài lại cho từng người.');
 }
 
 function doLogin() {
