@@ -119,6 +119,7 @@ body {
   border-left-color: var(--red) !important; font-weight: 500;
 }
 .nav-item.active-red .nav-icon { opacity: 1; }
+.nav-badge {
   margin-left: auto; font-size: 10px; font-weight: 700;
   background: var(--accent-dim); color: var(--accent);
   padding: 1px 6px; border-radius: 20px; min-width: 20px; text-align: center;
@@ -495,7 +496,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
   </div>
 
   <div class="content">
-    <!-- DASHBOARD -->
     <div class="view active" id="view-dashboard">
       <div class="stats-row">
         <div class="stat">
@@ -541,17 +541,26 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
           <div style="padding:12px 16px" id="dash-alerts"></div>
         </div>
       </div>
-
-      <div class="card">
+      
+      <div class="card" style="margin-bottom:14px">
         <div class="card-header">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="15" y2="10"/><line x1="3" y1="14" x2="18" y2="14"/><line x1="3" y1="18" x2="12" y2="18"/></svg>
           <span class="card-title">Tiến độ tổng thể</span>
         </div>
         <div class="card-body" id="dash-gantt-mini"></div>
       </div>
+
+      <div class="card">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span class="card-title" style="color:var(--text0)">Danh sách việc ưu tiên chưa xử lý</span>
+          </div>
+        </div>
+        <div id="dash-priority-tasks" style="padding:4px 16px 12px;"></div>
+      </div>
     </div>
 
-    <!-- PROJECTS -->
     <div class="view" id="view-projects">
       <div class="search-wrap">
         <div class="search-input-wrap">
@@ -583,81 +592,51 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
       </div>
     </div>
 
-    <!-- PHASES -->
     <div class="view" id="view-phases">
       <div class="search-wrap">
-        <select class="form-ctrl" style="max-width:340px" onchange="loadPhases(this.value)" id="phase-proj-sel">
-          <option value="">— Chọn dự án để xem giai đoạn —</option>
-        </select>
+        <select class="form-ctrl" style="max-width:240px" id="phase-proj-select" onchange="selectPhaseProj(this.value)"></select>
+        <button class="btn btn-sm" style="margin-left:auto" onclick="openModal('batch-update-modal')">Cập nhật nhanh tiến độ</button>
       </div>
-      <div id="phases-content">
-        <div class="empty-state">
-          <div class="empty-state-icon">📐</div>
-          <div class="empty-state-title">Chọn một dự án để bắt đầu</div>
-          Tiến độ 8 giai đoạn thiết kế sẽ hiển thị ở đây
-        </div>
-      </div>
+      <div id="phase-content-area"></div>
     </div>
 
-    <!-- GANTT -->
     <div class="view" id="view-gantt">
       <div class="card">
-        <div class="card-header">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="15" y2="10"/><line x1="3" y1="14" x2="18" y2="14"/><line x1="3" y1="18" x2="12" y2="18"/></svg>
-          <span class="card-title">Biểu đồ tiến độ tổng hợp</span>
-        </div>
-        <div class="card-body" id="gantt-wrap"></div>
+        <div class="card-header"><span class="card-title">Sơ đồ tiến độ ngang (Gantt)</span></div>
+        <div class="card-body" id="gantt-container" style="padding:20px 24px"></div>
       </div>
     </div>
 
-    <!-- ISSUES -->
     <div class="view" id="view-issues">
-      <div class="section-hd">
-        <div class="section-hd-left">
-          <h2>Vấn đề & NCR</h2>
-          <p>Non-Conformance Report — lỗi kỹ thuật, vật tư chưa đạt yêu cầu</p>
-        </div>
-        <button class="btn btn-sm btn-accent" onclick="openModal('new-issue')">
+      <div class="search-wrap">
+        <button class="btn btn-sm btn-danger" onclick="openModal('new-issue')">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Thêm NCR
+          Báo cáo vấn đề / NCR
         </button>
       </div>
-      <div class="card" id="issues-container"></div>
+      <div class="card" id="issues-list-container"></div>
     </div>
 
-    <!-- DOCS -->
     <div class="view" id="view-docs">
-      <div class="section-hd">
-        <div class="section-hd-left">
-          <h2>Kho tài liệu</h2>
-          <p>Bản vẽ, BOM, tài liệu kỹ thuật đồng bộ Google Drive</p>
-        </div>
-        <button class="btn btn-sm btn-accent" onclick="openModal('new-doc')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-          Tải lên tài liệu
-        </button>
-      </div>
       <div class="docs-layout">
         <div class="folder-panel">
-          <div class="folder-panel-title">Phân loại</div>
+          <div class="folder-panel-title">Thư mục dự án</div>
           <div id="folder-list"></div>
         </div>
         <div class="card">
-          <div class="card-header">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span class="card-title" id="docs-panel-title">Tất cả tài liệu</span>
-            <span class="badge badge-gray" id="docs-count-badge">0 file</span>
+          <div class="card-header" style="background:var(--bg1)">
+            <span class="card-title" id="doc-table-title">Tài liệu kỹ thuật</span>
+            <button class="btn btn-xs btn-accent" id="btn-upload-doc" style="display:none" onclick="triggerDocUpload()">Tải lên file</button>
+            <input type="file" id="hidden-doc-file" style="display:none" onchange="handleDocFileUpload(this)">
           </div>
           <table class="tbl">
             <thead>
               <tr>
-                <th>Dự án</th>
-                <th>Tên file</th>
+                <th>Tên tài liệu / Bản vẽ</th>
                 <th>Định dạng</th>
-                <th>Giai đoạn</th>
-                <th>Ngày cập nhật</th>
-                <th>Dung lượng</th>
-                <th>Tải xuống</th>
+                <th>Kích thước</th>
+                <th>Ngày tạo</th>
+                <th style="text-align:right">Tải về</th>
               </tr>
             </thead>
             <tbody id="docs-tbody"></tbody>
@@ -666,1264 +645,1262 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
       </div>
     </div>
 
-    <!-- TEAM -->
     <div class="view" id="view-team">
       <div class="section-hd">
         <div class="section-hd-left">
-          <h2>Nhân sự</h2>
-          <p>Kỹ sư, chuyên viên thiết kế & vận hành dự án</p>
+          <h2>Danh sách nhân sự & Kỹ sư phụ trách</h2>
+          <p>Quản lý thông tin tài khoản và phân quyền PIC trong hệ thống chế tạo</p>
         </div>
+        <button class="btn btn-sm btn-accent" onclick="openModal('new-team-modal')">Thêm nhân sự</button>
       </div>
       <div class="card">
-        <div class="card-header">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span class="card-title">Danh sách nhân sự</span>
-          <button class="btn btn-sm btn-accent" onclick="openModal('new-member')" style="margin-left:auto">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Thêm nhân sự
-          </button>
-        </div>
         <table class="tbl">
           <thead>
             <tr>
-              <th>Họ tên</th>
-              <th>Email</th>
-              <th>Vai trò chuyên môn</th>
-              <th>Dự án tham gia</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
+              <th>Họ và tên</th>
+              <th>Chức vụ / Bộ phận</th>
+              <th>Email liên hệ</th>
+              <th>Số điện thoại</th>
+              <th>Hành động</th>
             </tr>
           </thead>
           <tbody id="team-tbody"></tbody>
         </table>
       </div>
     </div>
-  </div>
 
-    <!-- URGENT — YÊU CẦU GẤP -->
     <div class="view" id="view-urgent">
       <div class="section-hd">
         <div class="section-hd-left">
-          <h2 style="color:var(--red)">🚨 Yêu cầu gấp</h2>
-          <p>Công việc đột xuất ưu tiên cao — cần xử lý trong vài giờ</p>
+          <h2 style="color:var(--red)">🔥 Yêu cầu gấp phát sinh</h2>
+          <p>Các công việc đột xuất cần xử lý ngay lập tức để không ảnh hưởng dây chuyền</p>
         </div>
-        <button class="btn btn-sm btn-accent" style="background:var(--red-dim);border-color:rgba(248,113,113,0.3);color:var(--red)" onclick="openTaskModal('urgent')">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Thêm việc gấp
-        </button>
       </div>
-      <div id="urgent-container"></div>
+      <div class="card" style="max-width:640px; margin-bottom:16px;">
+        <div style="padding:14px 16px; display:flex; gap:10px; border-bottom:1px solid var(--border); background:var(--bg1)">
+          <input type="text" class="form-ctrl" id="urgent-input" placeholder="Nhập nội dung công việc gấp cần xử lý..." onkeydown="if(event.key==='Enter')addTask('urgent')">
+          <button class="btn btn-accent" onclick="addTask('urgent')">Thêm việc</button>
+        </div>
+        <div style="padding:8px 16px; background:rgba(255,255,255,0.01); display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="urgent-send-email" style="width:14px; height:14px; cursor:pointer;">
+          <label for="urgent-send-email" style="font-size:12px; color:var(--text1); cursor:pointer; user-select:none;">Gửi email thông báo cho PIC ngay</label>
+        </div>
+      </div>
+      <div id="urgent-container" style="max-width:640px"></div>
     </div>
 
-    <!-- TODAY — CẦN XỬ LÝ HÔM NAY -->
     <div class="view" id="view-today">
       <div class="section-hd">
         <div class="section-hd-left">
-          <h2 style="color:var(--orange)">📅 Cần xử lý hôm nay</h2>
-          <p>Công việc đột xuất cần hoàn thành trong ngày hôm nay</p>
+          <h2 style="color:var(--orange)">📋 Cần xử lý hôm nay</h2>
+          <p>Danh sách các đầu việc cá nhân hoặc đội nhóm cần dứt điểm trong ngày</p>
         </div>
-        <button class="btn btn-sm" style="background:rgba(251,146,60,0.1);border-color:rgba(251,146,60,0.3);color:var(--orange)" onclick="openTaskModal('today')">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Thêm việc hôm nay
-        </button>
       </div>
-      <div id="today-container"></div>
+      <div class="card" style="max-width:640px; margin-bottom:16px;">
+        <div style="padding:14px 16px; display:flex; gap:10px; border-bottom:1px solid var(--border); background:var(--bg1)">
+          <input type="text" class="form-ctrl" id="today-input" placeholder="Thêm việc cần xử lý trong ngày hôm nay..." onkeydown="if(event.key==='Enter')addTask('today')">
+          <button class="btn btn-accent" onclick="addTask('today')">Thêm việc</button>
+        </div>
+        <div style="padding:8px 16px; background:rgba(255,255,255,0.01); display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="today-send-email" style="width:14px; height:14px; cursor:pointer;">
+          <label for="today-send-email" style="font-size:12px; color:var(--text1); cursor:pointer; user-select:none;">Gửi email thông báo cho PIC ngay</label>
+        </div>
+      </div>
+      <div id="today-container" style="max-width:640px"></div>
     </div>
   </div>
 </div>
 
-<!-- MODAL -->
-<div class="overlay" id="overlay" onclick="if(event.target===this) closeModal()">
+<div class="overlay" id="modal-new-project">
   <div class="modal">
-    <div class="modal-hd" id="modal-hd">
-      <span id="modal-hd-title"></span>
-      <span class="modal-close" onclick="closeModal()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </span>
+    <div class="modal-hd">
+      <span>Tạo dự án chế tạo máy mới</span>
+      <span class="modal-close" onclick="closeModal('new-project')">✕</span>
     </div>
-    <div class="modal-body" id="modal-body"></div>
-    <div class="modal-ft" id="modal-ft"></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">Mã dự án (Ví dụ: P2026-01)</label>
+          <input type="text" class="form-ctrl" id="p-code" placeholder="Nhập mã...">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Tên khách hàng</label>
+          <input type="text" class="form-ctrl" id="p-customer" placeholder="Tên đơn vị đặt hàng...">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Tên thiết bị / Hệ thống máy</label>
+        <input type="text" class="form-ctrl" id="p-name" placeholder="Ví dụ: Máy cấp phôi tự động, Đồ gá kiểm tra...">
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">Hạn bàn giao dự kiến</label>
+          <input type="date" class="form-ctrl" id="p-deadline">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Giá trị hợp đồng (VNĐ)</label>
+          <input type="number" class="form-ctrl" id="p-value" placeholder="Nhập số tiền...">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Mô tả đặc tính kỹ thuật chính</label>
+        <textarea class="form-ctrl" id="p-desc" placeholder="Kích thước, sản lượng, các lưu ý vật tư đặc biệt nếu có..."></textarea>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('new-project')">Hủy bỏ</button>
+      <button class="btn btn-accent" onclick="saveNewProject()">Xác nhận tạo</button>
+    </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="overlay" id="modal-assign-pic">
+  <div class="modal">
+    <div class="modal-hd">
+      <span id="pic-modal-title">Gán kỹ sư phụ trách giai đoạn</span>
+      <span class="modal-close" onclick="closeModal('assign-pic')">✕</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pic-proj-id">
+      <input type="hidden" id="pic-phase-id">
+      <div class="form-row">
+        <label class="form-label">Kỹ sư phụ trách chính (PIC)</label>
+        <select class="form-ctrl" id="pic-user-select"></select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Hạn hoàn thành giai đoạn (Deadline)</label>
+        <input type="date" class="form-ctrl" id="pic-phase-deadline">
+      </div>
+      <div style="margin-top:16px; display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="send-email-chk" style="width:16px; height:16px; cursor:pointer;" checked>
+        <label for="send-email-chk" style="font-size:13px; color:var(--text1); cursor:pointer; user-select:none;">Gửi email thông báo cho PIC ngay bây giờ</label>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('assign-pic')">Đóng</button>
+      <button class="btn btn-accent" onclick="savePIC()">Xác nhận bàn giao</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-batch-update-modal">
+  <div class="modal" style="width:600px">
+    <div class="modal-hd">
+      <span>Cập nhật nhanh trạng thái các giai đoạn</span>
+      <span class="modal-close" onclick="closeModal('batch-update-modal')">✕</span>
+    </div>
+    <div class="modal-body" id="batch-update-body" style="padding:16px 20px"></div>
+    <div class="modal-ft">
+      <button class="btn btn-accent" onclick="closeModal('batch-update-modal')">Hoàn tất</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-new-issue">
+  <div class="modal">
+    <div class="modal-hd">
+      <span>Báo cáo sự cố / Phát hành lỗi NCR</span>
+      <span class="modal-close" onclick="closeModal('new-issue')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">Thuộc dự án</label>
+        <select class="form-ctrl" id="issue-proj-select"></select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Tiêu đề lỗi / Vấn đề</label>
+        <input type="text" class="form-ctrl" id="issue-title" placeholder="Ví dụ: Sai số kích thước trục gối đỡ, Chậm vật tư cảm biến...">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Mức độ nghiêm trọng</label>
+        <select class="form-ctrl" id="issue-severity">
+          <option value="Thấp">Thấp (Nhắc nhở, tối ưu thêm)</option>
+          <option value="Trung bình" selected>Trung bình (Cần sửa đổi, chưa dừng cụm)</option>
+          <option value="Nghiêm trọng">Nghiêm trọng (NCR lỗi chế tạo, dừng cụm lắp ráp)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Nội dung chi tiết & Biện pháp khắc phục dự kiến</label>
+        <textarea class="form-ctrl" id="issue-desc" placeholder="Mô tả cụ thể hiện trạng sự cố kỹ thuật..."></textarea>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('new-issue')">Hủy bỏ</button>
+      <button class="btn btn-accent" onclick="saveNewIssue()">Phát hành báo cáo</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-new-team-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <span>Thêm nhân sự / Kỹ sư vào danh sách</span>
+      <span class="modal-close" onclick="closeModal('new-team-modal')">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">Họ và tên</label>
+        <input type="text" class="form-ctrl" id="t-name" placeholder="Nhập họ tên...">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Bộ phận / Chức vụ</label>
+        <input type="text" class="form-ctrl" id="t-role" placeholder="Ví dụ: Kỹ sư thiết kế cơ khí, Lắp ráp, Gia công CNC...">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Địa chỉ Email</label>
+        <input type="email" class="form-ctrl" id="t-email" placeholder="email@company.com...">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Số điện thoại</label>
+        <input type="text" class="form-ctrl" id="t-phone" placeholder="Nhập SĐT...">
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="closeModal('new-team-modal')">Hủy</button>
+      <button class="btn btn-accent" onclick="saveNewTeamMember()">Thêm mới</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="global-toast">Thao tác thành công</div>
 
 <script>
-const DRIVE_API_URL = "https://script.google.com/macros/s/AKfycbzA-4NPh-rxPxMERUD9wKlev-cauLgI99Kd4H-Q7W2unJLbxu42wiM_X4NWjBv0bjv-/exec";
-
-const PH = [
-  {id:'p1', name:'Khảo sát & Phương án', icon:'🔍'},
-  {id:'p2', name:'Thiết kế 3D & Cơ khí', icon:'📐'},
-  {id:'p3', name:'Thiết kế Điện & Thủy khí', icon:'⚡'},
-  {id:'p4', name:'Bóc tách BVẽ & BOM', icon:'📄'},
-  {id:'p5', name:'Gia công & Đặt hàng', icon:'⚙'},
-  {id:'p6', name:'Lắp ráp Cơ điện', icon:'🔧'},
-  {id:'p7', name:'Lập trình PLC/HMI', icon:'💻'},
-  {id:'p8', name:'Nghiệm thu & Bàn giao', icon:'🏁'}
+// ── CORE DATA STRUCTURE ──
+let projects = [];
+let issues   = [];
+let tasks    = [];
+let team     = [
+  { name: "Bùi Văn Tùng", role: "Trưởng phòng kỹ thuật", email: "tung.bv@ptitech.vn", phone: "0987.654.321" },
+  { name: "Nguyễn Văn Tuấn", role: "Kỹ sư thiết kế", email: "tuan.nv@ptitech.vn", phone: "0912.345.678" },
+  { name: "Trần Đức Hoàng", role: "Lập trình & Điện tự động", email: "hoang.td@ptitech.vn", phone: "0966.888.999" },
+  { name: "Lê Đình Bảo", role: "Quản lý sản xuất / Lắp ráp", email: "bao.ld@ptitech.vn", phone: "0933.222.111" }
 ];
 
-let projects = [], issues = [], docs = [], currentFolder = 'all';
-
-const folders = [
-  {id:'all', name:'📁 Tất cả tài liệu'},
-  {id:'f1', name:'📐 Bản vẽ 2D/3D (DWG/NX)'},
-  {id:'f2', name:'⚡ Sơ đồ mạch điện (Eplan)'},
-  {id:'f3', name:'📋 Danh mục vật tư (BOM)'},
-  {id:'f4', name:'📖 Tài liệu hướng dẫn & CO/CQ'}
+const PHASES_LIST = [
+  { id: 'P1', name: 'Khảo sát / Lên phương án' },
+  { id: 'P2', name: 'Thiết kế Concept 3D' },
+  { id: 'P3', name: 'Thiết kế Detail / Xuất bản vẽ 2D' },
+  { id: 'P4', name: 'Đặt hàng vật tư thương mại' },
+  { id: 'P5', name: 'Gia công chi tiết cơ khí' },
+  { id: 'P6', name: 'Lắp ráp cơ khí / Đi dây điện' },
+  { id: 'P7', name: 'Lập trình / Khảo nghiệm chạy thử' },
+  { id: 'P8', name: 'Đóng gói / Bàn giao / Nghiệm thu' }
 ];
 
-let team = [
-  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer / PM', projects:['TL-2025-001'], status:'Bận'},
-  {name:'Trần Văn B', email:'b@company.com', role:'Senior Mechanical Designer', projects:['TL-2025-002'], status:'Sẵn sàng'},
-  {name:'Lê Văn C', email:'c@company.com', role:'Automation & Electrical Engineer', projects:['TL-2025-001'], status:'Bận'}
-];
+let selectedFolderProjId = null;
+let selectedPhaseProjId  = null;
 
-const PAGE_TITLES = {
-  dashboard: 'Dashboard',
-  projects: 'Dự án',
-  phases: 'Giai đoạn & Công việc',
-  gantt: 'Tiến độ Gantt',
-  issues: 'Vấn đề & NCR',
-  docs: 'Kho tài liệu',
-  team: 'Nhân sự',
-  urgent: '🚨 Yêu cầu gấp',
-  today: '📅 Cần xử lý hôm nay'
-};
+// ── INIT APPS ──
+window.addEventListener('DOMContentLoaded', () => {
+  // Đồng bộ hoặc khởi tạo local trước phòng khi Drive lỗi
+  if(localStorage.getItem('mecha_projects')) projects = JSON.parse(localStorage.getItem('mecha_projects'));
+  if(localStorage.getItem('mecha_issues'))   issues   = JSON.parse(localStorage.getItem('mecha_issues'));
+  if(localStorage.getItem('mecha_tasks'))    tasks    = JSON.parse(localStorage.getItem('mecha_tasks'));
+  if(localStorage.getItem('mecha_team'))     team     = JSON.parse(localStorage.getItem('mecha_team'));
+  
+  if(!projects.length) initMockData();
+  
+  fetchDataFromDrive();
+});
 
+function initMockData() {
+  projects = [
+    {
+      id: "P-101", code: "P2026-01", name: "Hệ thống Washer Assembly Machine tự động", customer: "Samsung Electronics",
+      deadline: "2026-08-15", value: 450000000, desc: "Máy lắp ráp vòng đệm tự động tích hợp đồ gá jig kiểm tra cảm biến", status: "Đang chạy",
+      phases: {
+        'P1': { status: 'Hoàn thành', pic: 'Bùi Văn Tùng', deadline: '2026-04-10' },
+        'P2': { status: 'Hoàn thành', pic: 'Nguyễn Văn Tuấn', deadline: '2026-05-01' },
+        'P3': { status: 'Đang chạy', pic: 'Nguyễn Văn Tuấn', deadline: '2026-06-15' },
+        'P4': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P5': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P6': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P7': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P8': { status: 'Chờ chạy', pic: '', deadline: '' }
+      }
+    },
+    {
+      id: "P-102", code: "P2026-02", name: "Đồ gá semi-auto kiểm tra cân bằng cánh quạt", customer: "PTI Tech",
+      deadline: "2026-07-20", value: 120000000, desc: "Jig kiểm tra đồng tâm và cân bằng động cánh quạt công nghiệp", status: "Đang chạy",
+      phases: {
+        'P1': { status: 'Hoàn thành', pic: 'Bùi Văn Tùng', deadline: '2026-05-10' },
+        'P2': { status: 'Đang chạy', pic: 'Bùi Văn Tùng', deadline: '2026-06-10' },
+        'P3': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P4': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P5': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P6': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P7': { status: 'Chờ chạy', pic: '', deadline: '' },
+        'P8': { status: 'Chờ chạy', pic: '', deadline: '' }
+      }
+    }
+  ];
+  issues = [
+    { id: "I-1", projectCode: "P2026-01", title: "Cảm biến tiệm cận Omron phân loại sai lòng khuôn", severity: "Trung bình", status: "Mở", desc: "Cần đổi sang dòng cảm biến có bước sóng cao hơn hoặc đổi thiết kế gá treo gạt bụi", date: "2026-06-20" }
+  ];
+  tasks = [
+    { id: "T-1", type: "urgent", text: "Kiểm tra lại bản vẽ layout cụm đồ gá cụm Washer", done: false, date: "2026-06-24T08:00:00.000Z" },
+    { id: "T-2", type: "today", text: "Gửi báo giá bổ sung linh kiện khí nén SMC", done: false, date: "2026-06-25T02:00:00.000Z" }
+  ];
+  saveData();
+}
+
+function saveData() {
+  localStorage.setItem('mecha_projects', JSON.stringify(projects));
+  localStorage.setItem('mecha_issues', JSON.stringify(issues));
+  localStorage.setItem('mecha_tasks', JSON.stringify(tasks));
+  localStorage.setItem('mecha_team', JSON.stringify(team));
+}
+
+// ── DRIVE INTERACTION (GAS BRIDGE) ──
+function fetchDataFromDrive() {
+  updateDriveStatus('loading', 'Đang đồng bộ dữ liệu...');
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler((res) => {
+        if(res) {
+          if(res.projects) projects = res.projects;
+          if(res.issues)   issues   = res.issues;
+          if(res.tasks)    tasks    = res.tasks;
+          if(res.team)     team     = res.team;
+          saveData();
+        }
+        updateDriveStatus('active', 'Đã đồng bộ Drive');
+        hideLoading();
+        renderAll();
+      })
+      .withFailureHandler((err) => {
+        updateDriveStatus('error', 'Lỗi đồng bộ');
+        hideLoading();
+        renderAll();
+        showToast("⚠️ Không thể tải dữ liệu từ Drive. Hệ thống đang chạy offline.", "error");
+      })
+      .loadApplicationDataBackend();
+  } else {
+    setTimeout(() => {
+      updateDriveStatus('active', 'Chế độ Local Offline');
+      hideLoading();
+      renderAll();
+    }, 800);
+  }
+}
+
+function syncToDrive() {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    const payload = { projects, issues, tasks, team };
+    google.script.run
+      .withSuccessHandler(() => showToast("💾 Đã lưu dữ liệu lên Google Drive thành công!"))
+      .withFailureHandler((err) => showToast("❌ Lỗi lưu Drive: " + err, "error"))
+      .saveApplicationDataBackend(payload);
+  }
+}
+
+function updateDriveStatus(state, text) {
+  const dot = document.getElementById('drive-dot');
+  const txt = document.getElementById('drive-status-text');
+  if(!dot || !txt) return;
+  txt.textContent = text;
+  dot.className = 'drive-dot';
+  if(state==='loading')  dot.style.background = 'var(--amber)';
+  if(state==='active')   dot.style.background = 'var(--green)';
+  if(state==='error')    dot.style.background = 'var(--red)';
+}
+
+function hideLoading() {
+  const l = document.getElementById('global-loading');
+  if(l) l.style.opacity = '0';
+  setTimeout(() => { if(l) l.style.display = 'none'; }, 300);
+}
+
+// ── NAVIGATION ──
 function nav(viewId, el) {
-  document.querySelectorAll('.nav-item').forEach(i=>{
-    i.classList.remove('active');
-    i.classList.remove('active-red');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active', 'active-red'));
+  
+  const targetView = document.getElementById('view-' + viewId);
+  if(targetView) targetView.classList.add('active');
+  
+  if(el) {
+    if(viewId === 'urgent' || viewId === 'today') {
+      el.classList.add('active-red');
+    } else {
+      el.classList.add('active');
+    }
+  }
+  
+  // Update Title
+  const titleMap = {
+    dashboard: 'Dashboard', projects: 'Quản lý dự án', phases: 'Giai đoạn & Công việc phụ trách',
+    gantt: 'Tiến độ Gantt', issues: 'Vấn đề kỹ thuật & NCR', docs: 'Thư viện tài liệu kỹ thuật',
+    team: 'Quản lý nhân sự', urgent: 'Yêu cầu khẩn cấp', today: 'Công việc xử lý hôm nay'
+  };
+  document.getElementById('topbar-title').textContent = titleMap[viewId] || 'Hệ thống';
+  
+  // Render specific views
+  if(viewId === 'dashboard') renderDashboard();
+  if(viewId === 'projects')  renderProjects();
+  if(viewId === 'phases')    renderPhases();
+  if(viewId === 'gantt')     renderGantt();
+  if(viewId === 'issues')    renderIssues();
+  if(viewId === 'docs')      renderFolders();
+  if(viewId === 'team')      renderTeam();
+  if(viewId === 'urgent')    renderUrgent();
+  if(viewId === 'today')     renderToday();
+}
+
+// ── TOAST & UTILS ──
+function showToast(msg, type='success') {
+  const t = document.getElementById('global-toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.style.borderLeft = type === 'error' ? '3px solid var(--red)' : '3px solid var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function formatVND(val) {
+  if(!val) return '0đ';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val).replace(/\s/g, '');
+}
+
+function getProjectProgress(proj) {
+  if(!proj.phases) return 0;
+  let done = 0;
+  PHASES_LIST.forEach(p => {
+    if(proj.phases[p.id] && proj.phases[p.id].status === 'Hoàn thành') done++;
   });
-  const isRed = viewId === 'urgent' || viewId === 'today';
-  el.classList.add(isRed ? 'active-red' : 'active');
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById(`view-${viewId}`).classList.add('active');
-  document.getElementById('topbar-title').textContent = PAGE_TITLES[viewId] || viewId;
+  return Math.round((done / PHASES_LIST.length) * 100);
 }
 
-function formatVND(n) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', notation: 'compact', maximumFractionDigits: 1 }).format(n); }
-function formatVNDFull(n) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n); }
-
-function getFileTypeCls(ext) {
-  const e = (ext||'').toLowerCase();
-  if(['dwg','dxf','nx','stp','step','igs'].includes(e)) return 'file-type-dwg';
-  if(e==='pdf') return 'file-type-pdf';
-  if(['xlsx','xls','csv'].includes(e)) return 'file-type-xlsx';
-  return 'file-type-default';
+// ── OPEN/CLOSE MODALS ──
+function openModal(id) {
+  const modal = document.getElementById('modal-' + id);
+  if(modal) {
+    modal.classList.add('open');
+    if(id==='assign-pic') populateUserSelect('pic-user-select');
+    if(id==='new-issue')  populateProjectSelect('issue-proj-select');
+  }
+}
+function closeModal(id) {
+  const modal = document.getElementById('modal-' + id);
+  if(modal) modal.classList.remove('open');
 }
 
-// ── RENDER DASHBOARD ──
+function populateUserSelect(elementId) {
+  const sel = document.getElementById(elementId);
+  if(!sel) return;
+  sel.innerHTML = team.map(t => `<option value="${t.name}">${t.name} (${t.role})</option>`).join('');
+}
+function populateProjectSelect(elementId) {
+  const sel = document.getElementById(elementId);
+  if(!sel) return;
+  sel.innerHTML = projects.map(p => `<option value="${p.code}">${p.code} - ${p.name}</option>`).join('');
+}
+
+// ── RENDERING FUNCTIONS ──
+
+// 1. DASHBOARD
 function renderDashboard() {
-  document.getElementById('stat-active-proj').textContent = projects.filter(p=>p.status!=='Hoàn thành').length;
-  document.getElementById('stat-done-proj').textContent = projects.filter(p=>p.status==='Hoàn thành').length;
-  document.getElementById('stat-issues').textContent = issues.filter(i=>i.status==='Mở').length;
-  document.getElementById('b-proj').textContent = projects.length;
-  document.getElementById('b-issue').textContent = issues.filter(i=>i.status==='Mở').length;
+  const running   = projects.filter(p => p.status === 'Đang chạy').length;
+  const doneCount = projects.filter(p => p.status === 'Hoàn thành').length;
+  const openNCR   = issues.filter(i => i.status === 'Mở').length;
+  const totalValue = projects.reduce((sum, p) => sum + (Number(p.value) || 0), 0);
 
-  let totalVal = projects.reduce((a,b)=>a+(parseInt(b.val)||0),0);
-  document.getElementById('stat-total-val').textContent = formatVND(totalVal);
+  document.getElementById('stat-active-proj').textContent = running;
+  document.getElementById('stat-total-val').textContent = formatVND(totalValue);
+  document.getElementById('stat-done-proj').textContent = doneCount;
+  document.getElementById('stat-issues').textContent = openNCR;
 
-  // Project list
-  const list = document.getElementById('dash-proj-list');
-  document.getElementById('dash-proj-count').textContent = `${projects.length} dự án`;
-  if(projects.length===0) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">Chưa có dự án nào</div>Tạo dự án đầu tiên để bắt đầu</div>`;
+  // Newest projects list
+  const listContainer = document.getElementById('dash-proj-list');
+  document.getElementById('dash-proj-count').textContent = `Tổng: ${projects.length} dự án`;
+  
+  if(!projects.length) {
+    listContainer.innerHTML = '<div class="empty-state">Chưa có dự án nào</div>';
   } else {
-    list.innerHTML = projects.slice(0,5).map(p => {
-      const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
-      const color = avg >= 80 ? 'var(--green)' : avg >= 40 ? 'var(--accent)' : 'var(--amber)';
-      return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px" onclick="goToPhaseDetail('${p.id}')" style="cursor:pointer">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
-          <div style="font-size:11px;color:var(--text2)">${p.id} · ${p.client} · Hạn: ${p.deadline}</div>
+    listContainer.innerHTML = projects.slice(0, 4).map(p => {
+      const pct = getProjectProgress(p);
+      return `
+        <div style="padding:14px 16px; border-bottom:1px solid var(--border); cursor:pointer" onclick="selectedPhaseProjId='${p.id}';nav('phases')">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+            <span style="font-weight:600;font-size:13px;color:var(--accent)">${p.code}</span>
+            <span class="badge ${p.status==='Hoàn thành'?'badge-green':'badge-blue'}">${p.status}</span>
+          </div>
+          <div style="font-size:12.5px;font-weight:500;margin-bottom:8px;color:var(--text0)">${p.name}</div>
+          <div class="progress-label">
+            <span style="color:var(--text2)">Tiến độ công việc</span>
+            <span style="font-family:'JetBrains Mono';font-weight:500;color:var(--text1)">${pct}%</span>
+          </div>
+          <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:var(--accent)"></div></div>
         </div>
-        <div style="width:110px;text-align:right;flex-shrink:0">
-          <div style="font-size:11px;color:${color};font-weight:600;font-family:monospace;margin-bottom:4px">${avg}%</div>
-          <div class="prog-wrap"><div class="prog-fill" style="width:${avg}%;background:${color}"></div></div>
-        </div>
-      </div>`;
+      `;
     }).join('');
   }
 
-  // Alerts
-  const alerts = document.getElementById('dash-alerts');
-  const activeIssues = issues.filter(i=>i.status==='Mở');
-  if(activeIssues.length===0){
-    alerts.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--green);font-size:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Hệ thống an toàn. Không có lỗi kỹ thuật.</div>`;
+  // NCR Alerts list
+  const alertContainer = document.getElementById('dash-alerts');
+  const openNCRItems = issues.filter(i => i.status === 'Mở');
+  if(!openNCRItems.length) {
+    alertContainer.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:8px 0">✅ Không có lỗi kỹ thuật mở.</div>';
   } else {
-    alerts.innerHTML = activeIssues.slice(0,5).map(i => `<div style="margin-bottom:8px;padding:8px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);font-size:12px">
-      <span class="badge badge-red" style="margin-right:6px">${i.priority||'Cao'}</span>${i.proj}: ${i.title}
-    </div>`).join('');
+    alertContainer.innerHTML = openNCRItems.slice(0, 4).map(i => `
+      <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="color:var(--red); font-weight:500;">⚠️ [${i.projectCode}] ${i.title}</span>
+        <span class="badge badge-red" style="font-size:10px">${i.severity}</span>
+      </div>
+    `).join('');
   }
 
-  // Mini gantt
-  const mg = document.getElementById('dash-gantt-mini');
-  if(projects.length===0) { mg.innerHTML = `<div class="empty-state" style="padding:20px">Chưa có dữ liệu tiến độ</div>`; }
-  else {
-    mg.innerHTML = projects.slice(0,6).map(p => {
-      const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
-      return `<div class="gantt-row">
-        <div class="gantt-row-hd">
-          <span class="gantt-row-name">${p.id} — ${p.name}</span>
-          <span class="gantt-row-pct">${avg}%</span>
+  // Mini Gantt
+  const miniGantt = document.getElementById('dash-gantt-mini');
+  if(!projects.length) {
+    miniGantt.innerHTML = '<div class="empty-state">Không có tiến độ ngang</div>';
+  } else {
+    miniGantt.innerHTML = projects.slice(0, 3).map(p => {
+      const pct = getProjectProgress(p);
+      return `
+        <div class="gantt-row">
+          <div class="gantt-row-hd">
+            <span class="gantt-row-name">${p.code} — ${p.customer}</span>
+            <span class="gantt-row-pct">${pct}%</span>
+          </div>
+          <div class="gantt-bar"><div class="gantt-fill" style="width:${pct}%"></div></div>
         </div>
-        <div class="gantt-bar"><div class="gantt-fill" style="width:${avg}%"></div></div>
-      </div>`;
+      `;
     }).join('');
+  }
+
+  // --- UPDATED INTERFACE: PRIORITY TASKS RENDERING ON DASHBOARD ---
+  const taskContainer = document.getElementById('dash-priority-tasks');
+  if (taskContainer) {
+    const uncompletedUrgent = tasks.filter(t => t.type === 'urgent' && !t.done);
+    const uncompletedToday  = tasks.filter(t => t.type === 'today' && !t.done);
+
+    if (uncompletedUrgent.length === 0 && uncompletedToday.length === 0) {
+      taskContainer.innerHTML = `
+        <div style="color:var(--text2); font-size:12.5px; padding:16px 0; text-align:center;">
+          ✨ Tuyệt vời! Không có công việc ưu tiên khẩn cấp nào chưa hoàn thành.
+        </div>`;
+    } else {
+      let html = '<div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">';
+      
+      // Urgent tasks first
+      uncompletedUrgent.forEach(t => {
+        html += `
+          <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg3); border:1px solid rgba(248,113,113,0.15); padding:10px 14px; border-radius:var(--r);">
+            <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+              <span style="background:var(--red-dim); color:var(--red); font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; flex-shrink:0;">GẤP</span>
+              <span style="color:var(--text0); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.text}</span>
+            </div>
+            <button class="btn btn-xs" onclick="quickCompleteTask('${t.id}')" style="border-color:var(--border3);">Xong</button>
+          </div>
+        `;
+      });
+
+      // Today tasks next
+      uncompletedToday.forEach(t => {
+        html += `
+          <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg3); border:1px solid rgba(251,146,60,0.15); padding:10px 14px; border-radius:var(--r);">
+            <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+              <span style="background:rgba(251,146,60,0.1); color:var(--orange); font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; flex-shrink:0;">HÔM NAY</span>
+              <span style="color:var(--text0); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.text}</span>
+            </div>
+            <button class="btn btn-xs" onclick="quickCompleteTask('${t.id}')" style="border-color:var(--border3);">Xong</button>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      taskContainer.innerHTML = html;
+    }
   }
 }
 
-// ── RENDER PROJECTS ──
+// Function to check complete task immediately from dashboard
+function quickCompleteTask(id) {
+  const task = tasks.find(t => t.id === id);
+  if (task) {
+    task.done = true;
+    saveData();
+    syncToDrive();
+    showToast("✓ Đã đánh dấu hoàn thành công việc!");
+    renderDashboard();
+    renderUrgent();
+    renderToday();
+  }
+}
+
+// 2. PROJECTS LIST
+let currentSearchQuery = "";
 function renderProjects() {
   const tbody = document.getElementById('proj-tbody');
-  if(projects.length===0) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">Chưa có dự án</div>Nhấn "Tạo dự án" để thêm</div></td></tr>`;
+  document.getElementById('proj-count').textContent = `Hiển thị ${projects.length} dự án máy cơ khí`;
+  
+  let filtered = projects;
+  if(currentSearchQuery) {
+    const q = currentSearchQuery.toLowerCase();
+    filtered = projects.filter(p => p.code.toLowerCase().includes(q) || p.name.toLowerCase().includes(q) || p.customer.toLowerCase().includes(q));
+  }
+
+  if(!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:40px">Không tìm thấy dự án phù hợp</td></tr>';
     return;
   }
-  tbody.innerHTML = projects.map(p => {
-    const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
-    const color = avg >= 80 ? 'var(--green)' : avg >= 40 ? 'var(--accent)' : 'var(--amber)';
-    return `<tr>
-      <td class="tbl-code" style="cursor:pointer" onclick="goToPhaseDetail('${p.id}')">${p.id}</td>
-      <td style="font-weight:500;cursor:pointer;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" onclick="goToPhaseDetail('${p.id}')">${p.name}</td>
-      <td style="color:var(--text1)">${p.client}</td>
-      <td style="min-width:140px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${avg}%;background:${color}"></div></div>
-          <span style="font-size:11px;color:${color};font-family:monospace;font-weight:600;min-width:30px">${avg}%</span>
-        </div>
-      </td>
-      <td style="font-family:monospace;font-size:12px">${p.deadline}</td>
-      <td style="font-size:12px;color:var(--text1)">${p.val ? formatVND(p.val) : '—'}</td>
-      <td><span class="badge ${p.status==='Hoàn thành'?'badge-green':'badge-blue'}">${p.status}</span></td>
-      <td><button class="btn btn-xs btn-danger" onclick="deleteProject('${p.id}')">Xóa</button></td>
-    </tr>`;
+
+  tbody.innerHTML = filtered.map(p => {
+    const pct = getProjectProgress(p);
+    return `
+      <tr>
+        <td class="tbl-code" style="color:var(--accent);font-weight:600">${p.code}</td>
+        <td style="font-weight:500;color:var(--text0)">${p.name}</td>
+        <td>${p.customer}</td>
+        <td>
+          <div class="progress-label" style="margin-bottom:3px;font-size:11px">
+            <span style="font-family:'JetBrains Mono'">${pct}%</span>
+          </div>
+          <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--teal))"></div></div>
+        </td>
+        <td><span style="font-family:'JetBrains Mono'">${p.deadline || '---'}</span></td>
+        <td style="font-family:'JetBrains Mono';font-weight:500">${formatVND(p.value)}</td>
+        <td><span class="badge ${p.status==='Hoàn thành'?'badge-green':'badge-blue'}">${p.status}</span></td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-xs" onclick="selectedPhaseProjId='${p.id}';nav('phases')">Cấu hình</button>
+            <button class="btn btn-xs btn-danger" onclick="deleteProject('${p.id}')">Xóa</button>
+          </div>
+        </td>
+      </tr>
+    `;
   }).join('');
-  document.getElementById('proj-count').textContent = `${projects.length} dự án`;
+}
+
+function filterProj(val) {
+  currentSearchQuery = val;
+  renderProjects();
+}
+
+function saveNewProject() {
+  const code = document.getElementById('p-code').value.trim();
+  const name = document.getElementById('p-name').value.trim();
+  const cust = document.getElementById('p-customer').value.trim();
+  const dead = document.getElementById('p-deadline').value;
+  const val  = document.getElementById('p-value').value;
+  const desc = document.getElementById('p-desc').value.trim();
+
+  if(!code || !name) { showToast("Vui lòng điền Mã DA và Tên thiết bị", "error"); return; }
+
+  const phasesInit = {};
+  PHASES_LIST.forEach(ph => {
+    phasesInit[ph.id] = { status: 'Chờ chạy', pic: '', deadline: '' };
+  });
+
+  const p = {
+    id: 'P-' + Date.now(), code, name, customer: cust, deadline: dead, value: val, desc, status: 'Đang chạy',
+    phases: phasesInit
+  };
+
+  projects.push(p);
+  saveData();
+  syncToDrive();
+  closeModal('new-project');
+  showToast("🎉 Đã khởi tạo dự án cơ khí thành công");
+  renderProjects();
+  
+  // Clear form
+  document.getElementById('p-code').value = '';
+  document.getElementById('p-name').value = '';
+  document.getElementById('p-customer').value = '';
+  document.getElementById('p-deadline').value = '';
+  document.getElementById('p-value').value = '';
+  document.getElementById('p-desc').value = '';
 }
 
 function deleteProject(id) {
-  if(confirm(`Xác nhận xóa dự án ${id}?`)){
-    projects = projects.filter(p=>p.id!==id);
-    syncDataToDrive();
+  if(confirm("Bạn có chắc chắn muốn loại bỏ dự án này khỏi cơ sở dữ liệu hệ thống?")) {
+    projects = projects.filter(p => p.id !== id);
+    saveData();
+    syncToDrive();
+    renderProjects();
+    showToast("Đã loại bỏ dự án");
   }
 }
 
-function goToPhaseDetail(id){
-  document.getElementById('phase-proj-sel').value = id;
-  loadPhases(id);
-  const el = document.querySelectorAll('.nav-item')[2];
-  nav('phases', el);
-}
-
-// ── RENDER PHASES ──
-function loadPhases(pId) {
-  const cont = document.getElementById('phases-content');
-  if(!pId) {
-    cont.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📐</div><div class="empty-state-title">Chọn một dự án để bắt đầu</div></div>`;
+// 3. PHASE & TASK MANAGEMENT
+function renderPhases() {
+  const select = document.getElementById('phase-proj-select');
+  if(!projects.length) {
+    select.innerHTML = '<option>Chưa có dự án nào</option>';
+    document.getElementById('phase-content-area').innerHTML = '<div class="empty-state">Vui lòng tạo dự án trước</div>';
     return;
   }
-  const p = projects.find(x=>x.id===pId);
-  if(!p) return;
-  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
-  if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
-  if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
-  const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
 
-  cont.innerHTML = `
+  select.innerHTML = projects.map(p => `<option value="${p.id}" ${selectedPhaseProjId===p.id?'selected':''}>${p.code} - ${p.name}</option>`).join('');
+  
+  if(!selectedPhaseProjId) selectedPhaseProjId = projects[0].id;
+  const p = projects.find(proj => proj.id === selectedPhaseProjId);
+  if(!p) return;
+
+  let currentActivePhase = 'P1';
+  for(let i=0; i<PHASES_LIST.length; i++) {
+    const phId = PHASES_LIST[i].id;
+    if(p.phases[phId] && p.phases[phId].status === 'Đang chạy') {
+      currentActivePhase = phId;
+      break;
+    }
+  }
+
+  let html = `
+    <div class="card" style="padding:24px 20px 14px; margin-bottom:16px; background:var(--bg2)">
+      <div class="phase-timeline">
+  `;
+
+  html += PHASES_LIST.map(ph => {
+    const phData = p.phases[ph.id] || { status: 'Chờ chạy' };
+    let c = 'pending';
+    if(phData.status==='Hoàn thành') c = 'done';
+    if(phIdStateMatch(p, ph.id)) c = 'active-ph';
+    
+    return `
+      <div class="phase-step ${c==='active-ph'?'active-ph':''}" onclick="loadPhaseDetail('${ph.id}')">
+        <div class="phase-dot ${c}">${ph.id}</div>
+        <div class="phase-step-label">${ph.name}</div>
+      </div>
+    `;
+  }).join('');
+
+  html += `</div></div><div id="phase-detail-target"></div>`;
+  document.getElementById('phase-content-area').innerHTML = html;
+  
+  loadPhaseDetail(currentActivePhase);
+  renderBatchUpdateModal(p);
+}
+
+function phIdStateMatch(p, phId) {
+  const phData = p.phases[phId];
+  return phData && phData.status === 'Đang chạy';
+}
+
+function selectPhaseProj(id) {
+  selectedPhaseProjId = id;
+  renderPhases();
+}
+
+function loadPhaseDetail(phId) {
+  const p = projects.find(proj => proj.id === selectedPhaseProjId);
+  if(!p) return;
+  
+  const phName = PHASES_LIST.find(ph => ph.id === phId).name;
+  const phData = p.phases[phId] || { status: 'Chờ chạy', pic: '', deadline: '' };
+
+  let stBadge = 'badge-gray';
+  if(phData.status==='Đang chạy')  stBadge = 'badge-blue';
+  if(phData.status==='Hoàn thành') stBadge = 'badge-green';
+
+  const target = document.getElementById('phase-detail-target');
+  target.innerHTML = `
     <div class="phase-info-card">
       <div style="flex:1">
-        <div class="phase-info-name">${p.name}</div>
-        <div class="phase-info-meta">${p.id} · ${p.client} · Hạn bàn giao: ${p.deadline}</div>
-      </div>
-      <span class="badge ${p.status==='Hoàn thành'?'badge-green':'badge-blue'}">${p.status}</span>
-      <div style="width:160px">
-        <div class="progress-label" style="margin-bottom:5px"><span style="font-size:11px;color:var(--text1)">Tiến độ tổng</span><span style="font-size:12px;font-weight:600;color:var(--accent);font-family:monospace">${avg}%</span></div>
-        <div class="prog-wrap"><div class="prog-fill" style="width:${avg}%;background:var(--accent)"></div></div>
-      </div>
-    </div>
-    <div class="phase-timeline">
-      ${PH.map((ph,i) => {
-        const pct = p.phases[i]||0;
-        const cls = pct===100?'done':'active-ph';
-        return `<div class="phase-step" onclick="updatePhasePct('${pId}',${i})">
-          <div class="phase-dot ${cls}">${pct}%</div>
-          <div class="phase-step-label">${ph.icon} ${ph.name}</div>
-        </div>`;
-      }).join('')}
-    </div>
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Chi tiết từng giai đoạn</span>
-        <span style="font-size:11px;color:var(--text2)">Nhấn vào dot phía trên để cập nhật +20%</span>
-      </div>
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>GĐ</th>
-            <th>Tên công việc</th>
-            <th style="min-width:160px">Tiến độ</th>
-            <th>Trạng thái</th>
-            <th style="min-width:160px">
-              <div style="display:flex;align-items:center;gap:5px">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                PIC phụ trách
-              </div>
-            </th>
-            <th style="min-width:150px">
-              <div style="display:flex;align-items:center;gap:5px">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Deadline giai đoạn
-              </div>
-            </th>
-            <th style="min-width:160px">
-              <div style="display:flex;align-items:center;gap:5px">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Tài liệu giai đoạn
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          ${PH.map((ph,i) => {
-            const pct = p.phases[i]||0;
-            const color = pct===100?'var(--green)':pct>0?'var(--accent)':'var(--text2)';
-            const st = pct===100?'<span class="badge badge-green">Hoàn thành</span>':pct>0?'<span class="badge badge-blue">Đang làm</span>':'<span class="badge badge-gray">Chưa bắt đầu</span>';
-            const dl = p.phaseDeadlines[i] || '';
-            const dlDisplay = dl ? `<span style="font-family:monospace;font-size:11px;color:${isOverdue(dl)?'var(--red)':'var(--text1)'}">${formatDateVN(dl)}</span>` : '<span style="color:var(--text2);font-size:11px">Chưa đặt</span>';
-            const docCount = (p.phaseDocs[i]||[]).length;
-            const picEmail = p.phasePIC[i] || '';
-            const picMember = team.find(t=>t.email===picEmail);
-            const picDisplay = picMember
-              ? `<div style="display:flex;align-items:center;gap:5px">
-                  <div style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);border:1px solid rgba(79,142,247,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0">${picMember.name.slice(-1)}</div>
-                  <div><div style="font-size:12px;font-weight:500">${picMember.name}</div><div style="font-size:10px;color:var(--text2)">${picMember.role.split('/')[0].trim()}</div></div>
-                </div>`
-              : '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>';
-            return `<tr>
-              <td class="tbl-code">P${i+1}</td>
-              <td style="font-size:13px">${ph.icon} ${ph.name}</td>
-              <td>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
-                  <span style="font-size:11px;font-family:monospace;color:${color};min-width:28px">${pct}%</span>
-                </div>
-              </td>
-              <td>${st}</td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                  ${picDisplay}
-                  <button class="btn btn-xs btn-ghost" onclick="assignPIC('${pId}',${i})" style="padding:3px 6px;flex-shrink:0" title="Gán PIC">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                </div>
-              </td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px">
-                  ${dlDisplay}
-                  <button class="btn btn-xs btn-ghost" onclick="editPhaseDeadline('${pId}',${i})" title="Đặt deadline" style="padding:3px 6px;flex-shrink:0">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                </div>
-              </td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <label class="upload-phase-btn" title="Tải tài liệu lên giai đoạn P${i+1}">
-                    <input type="file" multiple style="display:none" onchange="uploadPhaseDoc('${pId}',${i},this)">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-                    Tải lên
-                  </label>
-                  ${docCount > 0 ? `<button class="btn btn-xs" style="background:var(--green-dim);border-color:rgba(52,211,153,0.2);color:var(--green)" onclick="viewPhaseDocs('${pId}',${i})">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    ${docCount} file
-                  </button>` : ''}
-                </div>
-              </td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-// ── PHASE DEADLINE HELPERS ──
-function formatDateVN(dateStr) {
-  if(!dateStr) return '';
-  const [y,m,d] = dateStr.split('-');
-  return `${d}/${m}/${y}`;
-}
-function isOverdue(dateStr) {
-  if(!dateStr) return false;
-  return new Date(dateStr) < new Date();
-}
-
-// ── PIC ASSIGNMENT ──
-function assignPIC(pId, idx) {
-  const p = projects.find(x=>x.id===pId);
-  if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
-  const current = p.phasePIC[idx] || '';
-  const overlay = document.getElementById('overlay');
-  overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = `👤  Gán PIC — P${idx+1}: ${PH[idx].name}`;
-  const teamOpts = team.length === 0
-    ? `<div style="color:var(--text2);font-size:12px;padding:8px 0">Chưa có nhân sự. Vui lòng thêm ở mục Nhân sự trước.</div>`
-    : `<select class="form-ctrl" id="pic-select">
-        <option value="">— Chọn người phụ trách —</option>
-        ${team.map(t=>`<option value="${t.email}" ${t.email===current?'selected':''}>${t.name} — ${t.role.split('/')[0].trim()} (${t.email})</option>`).join('')}
-      </select>`;
-  document.getElementById('modal-body').innerHTML = `
-    <div class="form-row"><label class="form-label">Người phụ trách (PIC)</label>${teamOpts}</div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-top:4px">
-      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-bottom:6px">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        <strong style="color:var(--text1)">Thông báo email tự động</strong>
-      </div>
-      <div style="font-size:11px;color:var(--text2);line-height:1.6">
-        ✔ Hệ thống sẽ gửi email thông báo gán việc cho PIC<br>
-        ✔ Nội dung gồm: Tên dự án, Giai đoạn, Deadline, Link tài liệu<br>
-        ✔ Email được gửi qua Google Apps Script (Gmail)
-      </div>
-      <label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="send-email-chk" checked style="accent-color:var(--accent)">
-        Gửi email thông báo cho PIC ngay bây giờ
-      </label>
-    </div>
-  `;
-  document.getElementById('modal-ft').innerHTML = `
-    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
-    ${current ? `<button class="btn btn-danger btn-sm" onclick="savePIC('${pId}',${idx},'')">Bỏ phân công</button>` : ''}
-    <button class="btn btn-accent" onclick="savePIC('${pId}',${idx},document.getElementById('pic-select')?.value||'')">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      Xác nhận gán PIC
-    </button>
-  `;
-}
-
-function savePIC(pId, idx, email) {
-  const p = projects.find(x=>x.id===pId);
-  if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
-  const oldEmail = p.phasePIC[idx];
-  p.phasePIC[idx] = email;
-
-  const sendEmail = document.getElementById('send-email-chk')?.checked;
-  const member = team.find(t=>t.email===email);
-
-  closeModal();
-  loadPhases(pId);
-  syncDataToDrive();
-
-  if(email && member && sendEmail) {
-    sendEmailNotification({
-      type: 'assign_pic',
-      to: email,
-      toName: member.name,
-      proj: p,
-      phaseIdx: idx
-    });
-  } else if(email && member) {
-    toast(`Đã gán PIC: ${member.name} → P${idx+1}`);
-  } else if(!email) {
-    toast(`Đã bỏ phân công P${idx+1}`);
-  }
-}
-
-function sendEmailNotification({ type, to, toName, proj, phaseIdx }) {
-  const ph = PH[phaseIdx];
-  const deadline = proj.phaseDeadlines?.[phaseIdx] || 'Chưa đặt';
-  const deadlineText = deadline !== 'Chưa đặt' ? formatDateVN(deadline) : 'Chưa đặt';
-
-  const payload = {
-    action: 'send_email',
-    to,
-    subject: `[MechaProject] Bạn được gán phụ trách: ${proj.id} — P${phaseIdx+1}: ${ph.name}`,
-    body: `Xin chào ${toName},\n\nBạn được phân công phụ trách giai đoạn sau:\n\n` +
-      `📁 Dự án: ${proj.id} — ${proj.name}\n` +
-      `👷 Khách hàng: ${proj.client}\n` +
-      `📐 Giai đoạn: P${phaseIdx+1} — ${ph.name}\n` +
-      `📅 Deadline giai đoạn: ${deadlineText}\n` +
-      `📅 Hạn bàn giao dự án: ${proj.deadline}\n\n` +
-      `Vui lòng đăng nhập MechaProject để xem chi tiết và cập nhật tiến độ.\n\nTrân trọng,\nHệ thống MechaProject`,
-    htmlBody: `
-      <div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
-        <div style="background:linear-gradient(135deg,#3a7de0,#6366f1);padding:22px 24px 18px">
-          <div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-top:3px">Hệ thống quản lý dự án cơ khí</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span class="phase-info-name" style="color:var(--text0)">Giai đoạn ${phId}: ${phName}</span>
+          <span class="badge ${stBadge}">${phData.status}</span>
         </div>
-        <div style="padding:22px 24px">
-          <div style="font-size:15px;font-weight:600;margin-bottom:16px">Xin chào ${toName},</div>
-          <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px">Bạn vừa được phân công phụ trách giai đoạn kỹ thuật sau:</p>
-          <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:16px 18px;margin-bottom:18px">
-            <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px">
-              <span style="color:#5c6578;font-weight:600">Dự án</span><span style="color:#eef0f4">${proj.id} — ${proj.name}</span>
-              <span style="color:#5c6578;font-weight:600">Khách hàng</span><span style="color:#eef0f4">${proj.client}</span>
-              <span style="color:#5c6578;font-weight:600">Giai đoạn</span><span style="color:#4f8ef7;font-weight:600">P${phaseIdx+1} — ${ph.name}</span>
-              <span style="color:#5c6578;font-weight:600">Deadline GĐ</span><span style="color:${deadline!=='Chưa đặt'?'#fbbf24':'#5c6578'};font-weight:600">${deadlineText}</span>
-              <span style="color:#5c6578;font-weight:600">Hạn bàn giao</span><span style="color:#eef0f4">${proj.deadline}</span>
-            </div>
-          </div>
-          <p style="font-size:12px;color:#5c6578">Vui lòng đăng nhập MechaProject để cập nhật tiến độ và tải tài liệu giai đoạn.</p>
+        <div class="phase-info-meta">
+          <span>Kỹ sư phụ trách (PIC): <strong style="color:var(--accent)">${phData.pic || 'Chưa gán'}</strong></span>
+          <span style="margin-left:16px">Hạn hoàn thành: <strong style="color:var(--text1)">${phData.deadline || 'Chưa đặt'}</strong></span>
         </div>
-        <div style="padding:14px 24px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject — Hệ thống tự động · Không reply email này</div>
-      </div>`
-  };
-
-  fetch(DRIVE_API_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  })
-  .then(r => r.json())
-  .then(res => {
-    if(res.status === 'success') toast(`✉ Đã gửi email thông báo tới ${toName} (${to})`);
-    else toast(`Gán PIC thành công. Lưu ý: email chưa gửi được (${res.message||''})`);
-  })
-  .catch(() => toast(`Đã gán PIC: ${toName}. Email sẽ gửi sau khi kết nối Drive ổn định`));
-}
-
-function editPhaseDeadline(pId, idx) {
-  const p = projects.find(x=>x.id===pId);
-  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
-  const current = p.phaseDeadlines[idx] || '';
-
-  // Open modal with date input
-  const overlay = document.getElementById('overlay');
-  overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = `📅  Deadline — P${idx+1}: ${PH[idx].name}`;
-  document.getElementById('modal-body').innerHTML = `
-    <div class="form-row">
-      <label class="form-label">Ngày hoàn thành giai đoạn</label>
-      <input class="form-ctrl" type="date" id="ph-deadline-input" value="${current}">
+      </div>
+      <button class="btn btn-sm" onclick="triggerAssignPIC('${phId}')">Bàn giao & Gán PIC</button>
     </div>
-    <div style="font-size:12px;color:var(--text2);margin-top:4px">Deadline dự án tổng: <strong style="color:var(--text1)">${p.deadline}</strong></div>
-  `;
-  document.getElementById('modal-ft').innerHTML = `
-    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
-    ${current ? `<button class="btn btn-danger btn-sm" onclick="savePhaseDeadline('${pId}',${idx},'')">Xóa deadline</button>` : ''}
-    <button class="btn btn-accent" onclick="savePhaseDeadline('${pId}',${idx},document.getElementById('ph-deadline-input').value)">Lưu</button>
   `;
 }
 
-function savePhaseDeadline(pId, idx, val) {
-  const p = projects.find(x=>x.id===pId);
-  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
-  p.phaseDeadlines[idx] = val;
-  closeModal();
-  loadPhases(pId);
-  syncDataToDrive();
-  toast(val ? `Đã đặt deadline P${idx+1}: ${formatDateVN(val)}` : `Đã xóa deadline P${idx+1}`);
+function triggerAssignPIC(phId) {
+  const p = projects.find(proj => proj.id === selectedPhaseProjId);
+  if(!p) return;
+  document.getElementById('pic-proj-id').value = p.id;
+  document.getElementById('pic-phase-id').value = phId;
+  
+  const phData = p.phases[phId] || { pic: '', deadline: '' };
+  document.getElementById('pic-phase-deadline').value = phData.deadline || '';
+  
+  openModal('assign-pic');
 }
 
-// ── PHASE DOC UPLOAD ──
-function uploadPhaseDoc(pId, idx, input) {
-  const p = projects.find(x=>x.id===pId);
-  if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
-  if(!p.phaseDocs[idx]) p.phaseDocs[idx] = [];
+function savePIC() {
+  const projId = document.getElementById('pic-proj-id').value;
+  const phId   = document.getElementById('pic-phase-id').value;
+  const pic    = document.getElementById('pic-user-select').value;
+  const dead   = document.getElementById('pic-phase-deadline').value;
+  const sendChk = document.getElementById('send-email-chk').checked;
 
-  const files = Array.from(input.files);
-  if(!files.length) return;
+  const p = projects.find(proj => proj.id === projId);
+  if(!p) return;
 
-  let uploaded = 0;
-  showLoading(`Đang tải lên ${files.length} tệp cho P${idx+1}...`);
+  if(!p.phases[phId]) p.phases[phId] = { status: 'Chờ chạy' };
+  p.phases[phId].pic = pic;
+  p.phases[phId].deadline = dead;
+  if(p.phases[phId].status === 'Chờ chạy') p.phases[phId].status = 'Đang chạy';
 
-  function next(i) {
-    if(i >= files.length) {
-      hideLoading();
-      loadPhases(pId);
-      syncDataToDrive();
-      toast(`Đã tải lên ${files.length} tài liệu cho P${idx+1}!`);
-      return;
+  // Trigger Email Integration
+  if(sendChk) {
+    const engineer = team.find(t => t.name === pic);
+    if(engineer && engineer.email) {
+      sendPICEmailNotification(engineer.email, p, phId, dead);
+    } else {
+      showToast("Không tìm thấy email kỹ sư, chỉ lưu cục bộ", "error");
     }
-    const file = files[i];
-    showLoading(`Đang tải lên (${i+1}/${files.length}): ${file.name}`);
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const payload = {
-        action: "upload_file",
-        proj: pId,
-        filename: file.name,
-        mimeType: file.type || "application/octet-stream",
-        fileData: e.target.result.split(',')[1],
-        folderIntent: `phase_p${idx+1}`
-      };
-      fetch(DRIVE_API_URL, { method: "POST", body: JSON.stringify(payload) })
-        .then(r => r.json())
-        .then(res => {
-          const docEntry = {
-            name: file.name,
-            type: file.name.split('.').pop().toUpperCase(),
-            size: (file.size/1024/1024).toFixed(2)+' MB',
-            date: new Date().toISOString().slice(0,10),
-            fileId: res.fileId || null,
-            driveLink: res.driveLink || null
-          };
-          p.phaseDocs[idx].push(docEntry);
-          // Also add to global docs
-          docs.unshift({
-            proj: pId, name: file.name,
-            type: file.name.split('.').pop().toUpperCase(),
-            phase: PH[idx].name,
-            folder: 'f1',
-            date: new Date().toISOString().slice(0,10),
-            size: docEntry.size,
-            fileId: docEntry.fileId,
-            driveLink: docEntry.driveLink
-          });
-          next(i+1);
-        })
-        .catch(err => { hideLoading(); alert("Lỗi tải lên: " + err); });
-    };
-    reader.readAsDataURL(file);
   }
-  next(0);
+
+  saveData();
+  syncToDrive();
+  closeModal('assign-pic');
+  renderPhases();
+  showToast("Đã phân công bàn giao kỹ sư thành công");
 }
 
-function viewPhaseDocs(pId, idx) {
-  const p = projects.find(x=>x.id===pId);
-  const docList = (p.phaseDocs && p.phaseDocs[idx]) || [];
-  const overlay = document.getElementById('overlay');
-  overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = `📂  Tài liệu P${idx+1}: ${PH[idx].name}`;
-  document.getElementById('modal-body').innerHTML = docList.length === 0
-    ? `<div class="empty-state">Chưa có tài liệu nào</div>`
-    : `<table class="tbl" style="margin-top:0">
-        <thead><tr><th>Tên file</th><th>Loại</th><th>Dung lượng</th><th>Ngày</th><th>Tải xuống</th></tr></thead>
-        <tbody>
-          ${docList.map((d,di) => {
-            const dlBtn = d.fileId
-              ? `<a href="https://drive.google.com/uc?export=download&id=${d.fileId}" target="_blank" class="download-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải</a>`
-              : d.driveLink
-              ? `<a href="${d.driveLink}" target="_blank" class="download-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải</a>`
-              : `<span style="color:var(--text2);font-size:11px">Chờ sync</span>`;
-            return `<tr>
-              <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.name}</td>
-              <td><span class="file-type ${getFileTypeCls(d.type)}">${d.type}</span></td>
-              <td class="tbl-code">${d.size}</td>
-              <td class="tbl-code">${d.date}</td>
-              <td>${dlBtn}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>`;
-  document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Đóng</button>`;
-}
-
-function updatePhasePct(pId, idx) {
-  const p = projects.find(x=>x.id===pId);
-  p.phases[idx] = p.phases[idx] === 100 ? 0 : (p.phases[idx]||0) + 20;
-  loadPhases(pId);
-  syncDataToDrive();
-}
-
-// ── RENDER GANTT ──
-function renderGantt() {
-  const wrap = document.getElementById('gantt-wrap');
-  if(projects.length===0){ wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">Không có dữ liệu tiến độ</div></div>`; return; }
-  wrap.innerHTML = projects.map(p => {
-    const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
-    return `<div class="gantt-row">
-      <div class="gantt-row-hd">
-        <span class="gantt-row-name"><span style="color:var(--text2);font-family:monospace;font-size:11px">${p.id}</span> — ${p.name}</span>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:11px;color:var(--text2)">Hạn: ${p.deadline}</span>
-          <span class="gantt-row-pct" style="color:${avg>=80?'var(--green)':avg>=40?'var(--accent)':'var(--amber)'}">${avg}%</span>
-        </div>
+function sendPICEmailNotification(email, proj, phId, phDeadline) {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    const phName = PHASES_LIST.find(ph => ph.id === phId).name;
+    const bodyHtml = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;border:1px solid var(--border);background:#111318;color:#eef0f4;padding:22px;border-radius:12px">
+        <h2 style="color:#4f8ef7;margin-top:0;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:10px">MechaProject — Bàn giao công việc mới</h2>
+        <p>Chào kỹ sư phụ trách, bạn vừa được chỉ định làm <strong>PIC chính</strong> cho giai đoạn thiết bị cơ khí sau:</p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0">
+          <tr><td style="padding:6px 0;color:#9aa3b5;width:120px">Mã dự án:</td><td style="padding:6px 0;font-weight:bold">${proj.code}</td></tr>
+          <tr><td style="padding:6px 0;color:#9aa3b5">Tên máy/Thiết bị:</td><td style="padding:6px 0">${proj.name}</td></tr>
+          <tr><td style="padding:6px 0;color:#9aa3b5">Khách hàng:</td><td style="padding:6px 0">${proj.customer}</td></tr>
+          <tr><td style="padding:6px 0;color:#9aa3b5;font-weight:bold">Giai đoạn:</td><td style="padding:6px 0;color:#4f8ef7;font-weight:bold">Giai đoạn ${phId} — ${phName}</td></tr>
+          <tr><td style="padding:6px 0;color:#9aa3b5">Hạn hoàn thành:</td><td style="padding:6px 0;color:#fbbf24;font-weight:bold">${phDeadline || 'Chưa chỉ định'}</td></tr>
+          <tr><td style="padding:6px 0;color:#9aa3b5">Hạn tổng dự án:</td><td style="padding:6px 0">${proj.deadline}</td></tr>
+        </table>
+        <p style="font-size:12px;color:#5c6578;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">* Đây là hệ thống thông tin tự động của PTITECH, vui lòng triển khai đúng sơ đồ công nghệ.</p>
       </div>
-      <div class="gantt-bar"><div class="gantt-fill" style="width:${avg}%"></div></div>
-    </div>`;
+    `;
+    google.script.run
+      .withSuccessHandler(() => showToast("📧 Đã gửi email thông báo nhiệm vụ tới PIC"))
+      .withFailureHandler((e) => console.error("Lỗi gửi mail: ", e))
+      .sendEmailBackend(email, `[MechaProject] Bàn giao nhiệm vụ phụ trách: ${proj.code} - Phase ${phId}`, bodyHtml);
+  }
+}
+
+function renderBatchUpdateModal(proj) {
+  const container = document.getElementById('batch-update-body');
+  if(!container) return;
+
+  container.innerHTML = PHASES_LIST.map(ph => {
+    const phData = proj.phases[ph.id] || { status: 'Chờ chạy' };
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12.5px;font-weight:500;color:var(--text1)">${ph.id} - ${ph.name}</span>
+        <select class="form-ctrl" style="max-width:140px;padding:4px 8px;font-size:12px" onchange="updatePhaseStatusBatch('${proj.id}','${ph.id}',this.value)">
+          <option value="Chờ chạy" ${phData.status==='Chờ chạy'?'selected':''}>Chờ chạy</option>
+          <option value="Đang chạy" ${phData.status==='Đang chạy'?'selected':''}>Đang chạy</option>
+          <option value="Hoàn thành" ${phData.status==='Hoàn thành'?'selected':''}>Hoàn thành</option>
+        </select>
+      </div>
+    `;
   }).join('');
 }
 
-// ── RENDER ISSUES ──
-function renderIssues() {
-  const container = document.getElementById('issues-container');
-  if(issues.length===0){
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div><div class="empty-state-title">Không có sự cố nào</div>Hệ thống hoạt động ổn định</div>`;
+function updatePhaseStatusBatch(projId, phId, status) {
+  const p = projects.find(proj => proj.id === projId);
+  if(!p) return;
+  if(!p.phases[phId]) p.phases[phId] = { pic: '', deadline: '' };
+  p.phases[phId].status = status;
+  
+  // Tự động kiểm tra hoàn thành dự án tổng nếu Phase cuối cùng (P8) hoàn thành
+  if(phId === 'P8' && status === 'Hoàn thành') {
+    p.status = 'Hoàn thành';
+  } else {
+    p.status = 'Đang chạy';
+  }
+  
+  saveData();
+  syncToDrive();
+  renderPhases();
+}
+
+// 4. GANTT TIMELINE CHART
+function renderGantt() {
+  const c = document.getElementById('gantt-container');
+  if(!projects.length) {
+    c.innerHTML = '<div class="empty-state">Không có dự án cơ khí nào để lập biểu đồ Gantt</div>';
     return;
   }
+
+  c.innerHTML = projects.map(p => {
+    const pct = getProjectProgress(p);
+    return `
+      <div class="gantt-row" style="margin-bottom:18px">
+        <div class="gantt-row-hd" style="margin-bottom:6px">
+          <div>
+            <strong style="color:var(--accent);font-size:13px">${p.code}</strong> 
+            <span style="color:var(--text1);margin-left:8px;font-size:12.5px">${p.name} (${p.customer})</span>
+          </div>
+          <span class="gantt-row-pct" style="color:var(--teal)">${pct}% hoàn thành</span>
+        </div>
+        <div class="gantt-bar" style="height:12px;background:var(--bg3);border-radius:6px"><div class="gantt-fill" style="width:${pct}%;height:100%;border-radius:6px"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+// 5. ISSUES & NCR REPORT
+function renderIssues() {
+  const container = document.getElementById('issues-list-container');
+  document.getElementById('b-issue').textContent = issues.filter(i=>i.status==='Mở').length || '';
+
+  if(!issues.length) {
+    container.innerHTML = '<div class="empty-state">Chưa phát hiện hoặc lập báo cáo vấn đề kỹ thuật nào</div>';
+    return;
+  }
+
   container.innerHTML = issues.map(i => `
     <div class="issue-row">
-      <div style="display:flex;align-items:flex-start;gap:10px">
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <strong style="font-family:monospace;font-size:11px;color:var(--red)">${i.id}</strong>
-            <span class="badge badge-amber">${i.priority||'Cao'}</span>
-            <span style="font-size:11px;color:var(--text2)">${i.proj}</span>
-          </div>
-          <div style="font-size:13px">${i.title}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div>
+          <span class="badge badge-red" style="margin-right:8px;font-size:10px">NCR LỖI</span>
+          <strong style="color:var(--text0);font-size:13.5px">${i.title}</strong>
         </div>
-        <button class="btn btn-xs btn-ghost" style="color:var(--green);border-color:rgba(52,211,153,0.2)" onclick="closeIssue('${i.id}')">Đóng NCR</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge ${i.status==='Mở'?'badge-red':'badge-green'}">${i.status}</span>
+          <span style="font-size:11px;color:var(--text2);font-family:'JetBrains Mono'">${i.date || ''}</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text1);margin-bottom:8px;padding-left:4px">
+        Dự án liên đới: <span style="color:var(--accent);font-weight:500">${i.projectCode}</span> | Mức độ: <span style="color:var(--amber)">${i.severity}</span>
+      </div>
+      <div style="font-size:12.5px;color:var(--text2);background:var(--bg1);padding:10px 12px;border-radius:6px;line-height:1.5;margin-bottom:8px">
+        ${i.desc}
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:6px">
+        ${i.status==='Mở'?`<button class="btn btn-xs btn-green" onclick="closeIssue('${i.id}')">Đóng lỗi / Đã khắc phục</button>`:''}
+        <button class="btn btn-xs btn-danger" onclick="deleteIssue('${i.id}')">Xóa</button>
       </div>
     </div>
   `).join('');
 }
 
-function closeIssue(id) {
-  issues = issues.filter(i=>i.id!==id);
-  syncDataToDrive();
-}
+function saveNewIssue() {
+  const pCode = document.getElementById('issue-proj-select').value;
+  const title = document.getElementById('issue-title').value.trim();
+  const sever = document.getElementById('issue-severity').value;
+  const desc  = document.getElementById('issue-desc').value.trim();
 
-// ── RENDER FOLDERS ──
-function renderFolders() {
-  const list = document.getElementById('folder-list');
-  list.innerHTML = folders.map(f => {
-    const count = f.id==='all' ? docs.length : docs.filter(d=>d.folder===f.id).length;
-    return `<div class="folder-item ${f.id===currentFolder?'active':''}" onclick="currentFolder='${f.id}';renderFolders();renderDocs();">
-      <span style="flex:1">${f.name}</span><span class="folder-count">${count}</span>
-    </div>`;
-  }).join('');
-}
+  if(!title) { showToast("Vui lòng điền tiêu đề báo cáo NCR", "error"); return; }
 
-// ── RENDER DOCS (with download button) ──
-function renderDocs() {
-  const tbody = document.getElementById('docs-tbody');
-  const titleEl = document.getElementById('docs-panel-title');
-  const countEl = document.getElementById('docs-count-badge');
-  const filtered = currentFolder==='all' ? docs : docs.filter(d=>d.folder===currentFolder);
-  
-  const folderName = folders.find(f=>f.id===currentFolder)?.name || 'Tất cả';
-  titleEl.textContent = folderName;
-  countEl.textContent = `${filtered.length} file`;
-
-  if(filtered.length===0){
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">Thư mục trống</div>Tải lên tài liệu để bắt đầu</div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = filtered.map(d => {
-    const ext = (d.type||d.name.split('.').pop()||'').toUpperCase();
-    const typeCls = getFileTypeCls(d.type||d.name.split('.').pop());
-    const downloadHtml = d.fileId
-      ? `<a href="https://drive.google.com/uc?export=download&id=${d.fileId}" target="_blank" class="download-btn">
-           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-           Tải xuống
-         </a>`
-      : d.driveLink
-      ? `<a href="${d.driveLink}" target="_blank" class="download-btn">
-           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-           Tải xuống
-         </a>`
-      : `<button class="download-btn" onclick="downloadDoc('${d.name}')" style="opacity:0.6;cursor:default" disabled>
-           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-           Tải xuống
-         </button>`;
-    return `<tr>
-      <td class="tbl-code">${d.proj}</td>
-      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${d.name}">${d.name}</td>
-      <td><span class="file-type ${typeCls}">${ext}</span></td>
-      <td style="font-size:12px;color:var(--text1)">${d.phase}</td>
-      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${d.date}</td>
-      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${d.size}</td>
-      <td>${downloadHtml}</td>
-    </tr>`;
-  }).join('');
-}
-
-function downloadDoc(name) {
-  toast(`File "${name}" chưa có liên kết Drive trực tiếp`);
-}
-
-// ── RENDER TEAM ──
-function renderTeam() {
-  const tbody = document.getElementById('team-tbody');
-  if(team.length===0){
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-title">Chưa có nhân sự</div>Thêm kỹ sư để phân công giai đoạn</div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = team.map((t,i) => `<tr>
-    <td style="font-weight:600">${t.name}</td>
-    <td>
-      <a href="mailto:${t.email}" style="color:var(--accent);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        ${t.email}
-      </a>
-    </td>
-    <td style="color:var(--text1);font-size:12px">${t.role}</td>
-    <td>${(t.projects||[]).map(p=>`<span class="badge badge-gray" style="margin-right:4px">${p}</span>`).join('') || '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>'}</td>
-    <td><span class="badge ${t.status==='Bận'?'badge-amber':'badge-green'}">${t.status}</span></td>
-    <td>
-      <div style="display:flex;gap:5px">
-        <button class="btn btn-xs btn-ghost" onclick="editMember(${i})">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Sửa
-        </button>
-        <button class="btn btn-xs btn-danger" onclick="deleteMember(${i})">Xóa</button>
-      </div>
-    </td>
-  </tr>`).join('');
-}
-
-function editMember(idx) {
-  const t = team[idx];
-  const overlay = document.getElementById('overlay');
-  overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = `✏️  Sửa thông tin nhân sự`;
-  document.getElementById('modal-body').innerHTML = `
-    <div class="form-row"><label class="form-label">Họ tên *</label><input class="form-ctrl" id="em-name" value="${t.name}"></div>
-    <div class="form-row"><label class="form-label">Email *</label><input class="form-ctrl" type="email" id="em-email" value="${t.email}"></div>
-    <div class="form-row"><label class="form-label">Vai trò chuyên môn</label><input class="form-ctrl" id="em-role" value="${t.role}"></div>
-    <div class="form-row"><label class="form-label">Trạng thái</label>
-      <select class="form-ctrl" id="em-status">
-        <option ${t.status==='Sẵn sàng'?'selected':''}>Sẵn sàng</option>
-        <option ${t.status==='Bận'?'selected':''}>Bận</option>
-        <option ${t.status==='Nghỉ phép'?'selected':''}>Nghỉ phép</option>
-      </select>
-    </div>
-  `;
-  document.getElementById('modal-ft').innerHTML = `
-    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
-    <button class="btn btn-accent" onclick="saveMember(${idx})">Lưu thay đổi</button>
-  `;
-}
-
-function saveMember(idx) {
-  const name = document.getElementById('em-name').value.trim();
-  const email = document.getElementById('em-email').value.trim();
-  if(!name || !email){ toast('Vui lòng điền tên và email'); return; }
-  team[idx] = {...team[idx], name, email, role: document.getElementById('em-role').value.trim(), status: document.getElementById('em-status').value};
-  closeModal(); renderTeam(); syncDataToDrive();
-  toast('Đã cập nhật thông tin nhân sự');
-}
-
-function deleteMember(idx) {
-  if(!confirm(`Xóa "${team[idx].name}" khỏi danh sách?`)) return;
-  team.splice(idx,1); renderTeam(); syncDataToDrive();
-}
-
-function addMember() {
-  const name = document.getElementById('nm-name').value.trim();
-  const email = document.getElementById('nm-email').value.trim();
-  if(!name || !email){ toast('Vui lòng điền tên và email'); return; }
-  team.push({name, email, role: document.getElementById('nm-role').value.trim(), projects:[], status: document.getElementById('nm-status').value});
-  closeModal(); renderTeam(); syncDataToDrive();
-  toast(`Đã thêm ${name} vào danh sách nhân sự`);
-}
-
-function filterProj(v) {
-  const q = v.toLowerCase();
-  document.querySelectorAll('#proj-tbody tr').forEach(r=>{
-    r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-}
-
-// ── MODAL ──
-function openModal(type) {
-  const overlay = document.getElementById('overlay');
-  overlay.classList.add('open');
-  const hd = document.getElementById('modal-hd-title');
-  if(type==='new-project'){
-    hd.textContent = '➕  Tạo dự án mới';
-    document.getElementById('modal-body').innerHTML = `
-      <div class="form-grid">
-        <div class="form-row"><label class="form-label">Mã DA *</label><input class="form-ctrl" id="f-id" placeholder="TL-2025-001"></div>
-        <div class="form-row"><label class="form-label">Trạng thái</label><select class="form-ctrl" id="f-status"><option>Đang thực hiện</option><option>Chờ triển khai</option><option>Hoàn thành</option></select></div>
-      </div>
-      <div class="form-row"><label class="form-label">Tên thiết bị / Máy *</label><input class="form-ctrl" id="f-name" placeholder="Máy hàn tự động, Băng tải, ..."></div>
-      <div class="form-row"><label class="form-label">Khách hàng *</label><input class="form-ctrl" id="f-client" placeholder="Tên khách hàng hoặc công ty"></div>
-      <div class="form-grid">
-        <div class="form-row"><label class="form-label">Giá trị hợp đồng (VNĐ)</label><input class="form-ctrl" type="number" id="f-val" placeholder="0"></div>
-        <div class="form-row"><label class="form-label">Hạn bàn giao</label><input class="form-ctrl" type="date" id="f-deadline"></div>
-      </div>
-    `;
-    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveProject()">Xác nhận tạo</button>`;
-  } else if(type==='new-issue') {
-    hd.textContent = '⚠️  Thêm NCR / Sự cố kỹ thuật';
-    document.getElementById('modal-body').innerHTML = `
-      <div class="form-grid">
-        <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fi-proj" list="proj-list-opts" placeholder="TL-2025-001"><datalist id="proj-list-opts">${projects.map(p=>`<option value="${p.id}">`).join('')}</datalist></div>
-        <div class="form-row"><label class="form-label">Mức độ ưu tiên</label><select class="form-ctrl" id="fi-prio"><option>Cao</option><option>Trung bình</option><option>Thấp</option></select></div>
-      </div>
-      <div class="form-row"><label class="form-label">Nội dung sự cố *</label><textarea class="form-ctrl" id="fi-title" placeholder="Mô tả chi tiết vấn đề kỹ thuật..."></textarea></div>
-    `;
-    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveIssue()">Lưu NCR</button>`;
-  } else if(type==='new-member') {
-    hd.textContent = '👤  Thêm nhân sự mới';
-    document.getElementById('modal-body').innerHTML = `
-      <div class="form-row"><label class="form-label">Họ tên *</label><input class="form-ctrl" id="nm-name" placeholder="Nguyễn Văn X"></div>
-      <div class="form-row"><label class="form-label">Email *</label><input class="form-ctrl" type="email" id="nm-email" placeholder="ten@company.com"></div>
-      <div class="form-row"><label class="form-label">Vai trò chuyên môn</label><input class="form-ctrl" id="nm-role" placeholder="Mechanical Designer, PLC Engineer..."></div>
-      <div class="form-row"><label class="form-label">Trạng thái</label>
-        <select class="form-ctrl" id="nm-status"><option>Sẵn sàng</option><option>Bận</option><option>Nghỉ phép</option></select>
-      </div>
-    `;
-    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="addMember()">Thêm vào danh sách</button>`;
-  } else if(type==='new-doc') {
-    hd.textContent = '📎  Tải lên tài liệu / Thư mục';
-    document.getElementById('modal-body').innerHTML = `
-      <div class="form-grid">
-        <div class="form-row"><label class="form-label">Mã dự án</label><input class="form-ctrl" id="fd-proj" list="proj-list-opts2" placeholder="TL-2025-001"><datalist id="proj-list-opts2">${projects.map(p=>`<option value="${p.id}">`).join('')}</datalist></div>
-        <div class="form-row"><label class="form-label">Phân loại thư mục</label><select class="form-ctrl" id="fd-folder"><option value="f1">Bản vẽ 2D/3D</option><option value="f2">Sơ đồ mạch điện</option><option value="f3">BOM vật tư</option><option value="f4">Tài liệu & CO/CQ</option></select></div>
-      </div>
-      <div class="form-row">
-        <label class="form-label">Chế độ tải lên</label>
-        <div style="display:flex; gap:20px; font-size:13px">
-          <label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="radio" name="up-mode" value="file" checked onclick="toggleUploadMode('file')"> File lẻ</label>
-          <label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="radio" name="up-mode" value="folder" onclick="toggleUploadMode('folder')"> Trọn thư mục</label>
-        </div>
-      </div>
-      <div class="form-row"><label class="form-label">Chọn tệp *</label><input class="form-ctrl" type="file" id="fd-file-input" multiple></div>
-    `;
-    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveDocWithFile()">Xác nhận Upload</button>`;
-  }
-}
-
-function closeModal() { document.getElementById('overlay').classList.remove('open'); }
-
-function saveProject() {
-  const id = document.getElementById('f-id').value.trim();
-  const name = document.getElementById('f-name').value.trim();
-  const client = document.getElementById('f-client').value.trim();
-  if(!id || !name || !client){ toast('Vui lòng điền đủ thông tin bắt buộc'); return; }
-  projects.unshift({id, name, client, val: document.getElementById('f-val').value||0, deadline: document.getElementById('f-deadline').value||'—', status: document.getElementById('f-status').value, phases:[0,0,0,0,0,0,0,0], phaseDeadlines:Array(8).fill(''), phasePIC:Array(8).fill(''), phaseDocs:Array(8).fill(null).map(()=>[])});
-  closeModal(); syncDataToDrive();
-}
-
-function saveIssue() {
-  const proj = document.getElementById('fi-proj').value;
-  const title = document.getElementById('fi-title').value.trim();
-  if(!title){ toast('Vui lòng nhập nội dung sự cố'); return; }
-  issues.unshift({id: 'NCR-'+Date.now().toString().slice(-4), proj, title, priority: document.getElementById('fi-prio').value, status:'Mở'});
-  closeModal(); syncDataToDrive();
-}
-
-function saveDocWithFile() {
-  const proj = document.getElementById('fd-proj').value.trim();
-  const fileInput = document.getElementById('fd-file-input');
-  if (!fileInput.files || fileInput.files.length === 0) { toast('Vui lòng chọn file trước khi tải lên'); return; }
-  const files = Array.from(fileInput.files);
-  let idx = 0;
-
-  showLoading(`Chuẩn bị tải lên ${files.length} tệp...`);
-
-  function uploadNext() {
-    if (idx >= files.length) {
-      hideLoading(); closeModal(); syncDataToDrive();
-      toast(`Đã tải lên ${files.length} tài liệu thành công!`);
-      return;
-    }
-    const file = files[idx];
-    const relativePath = file.webkitRelativePath || file.name;
-    showLoading(`Đang tải lên (${idx+1}/${files.length}): ${file.name}`);
-    document.getElementById('loading-sub').textContent = `${(file.size/1024/1024).toFixed(2)} MB`;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const payload = {
-        action: "upload_file", proj, filename: relativePath,
-        mimeType: file.type || "application/octet-stream",
-        fileData: e.target.result.split(',')[1],
-        folderIntent: document.getElementById('fd-folder').value
-      };
-      fetch(DRIVE_API_URL, { method: "POST", body: JSON.stringify(payload) })
-        .then(res => res.json())
-        .then(res => {
-          if(res.status === "success") {
-            docs.unshift({
-              proj, name: relativePath,
-              type: file.name.split('.').pop().toUpperCase() || 'UNKNOWN',
-              phase: 'Thiết kế', folder: document.getElementById('fd-folder').value,
-              date: new Date().toISOString().slice(0,10),
-              size: (file.size/1024/1024).toFixed(2)+' MB',
-              fileId: res.fileId || null,
-              driveLink: res.driveLink || null
-            });
-            idx++; uploadNext();
-          } else { hideLoading(); alert(`Lỗi tệp ${file.name}: ${res.message}`); }
-        })
-        .catch(err => { hideLoading(); alert("Lỗi kết nối: " + err); });
-    };
-    reader.readAsDataURL(file);
-  }
-  uploadNext();
-}
-
-function toggleUploadMode(mode) {
-  const input = document.getElementById('fd-file-input');
-  if(mode==='folder') { input.setAttribute('webkitdirectory',''); input.setAttribute('directory',''); input.multiple = true; }
-  else { input.removeAttribute('webkitdirectory'); input.removeAttribute('directory'); input.multiple = false; }
-}
-
-// ── DRIVE API ──
-function fetchDataFromDrive() {
-  showLoading("Đang nạp dữ liệu từ Google Drive...");
-  document.getElementById('drive-status-text').textContent = 'Đang kết nối...';
-  document.getElementById('drive-dot').style.background = 'var(--amber)';
-  
-  if(DRIVE_API_URL.includes("DÁN_URL")) {
-    hideLoading(); alert("Vui lòng cấu hình URL Web App Google Apps Script."); return;
-  }
-  fetch(DRIVE_API_URL)
-    .then(res => res.json())
-    .then(data => {
-      projects = data.projects || [];
-      issues = data.issues || [];
-      docs = data.docs || [];
-      if(data.team  && data.team.length  > 0) team  = data.team;
-      if(data.tasks && data.tasks.length > 0) tasks = data.tasks;
-      renderAll(); hideLoading();
-      document.getElementById('drive-status-text').textContent = 'Drive đã kết nối';
-      document.getElementById('drive-dot').style.background = 'var(--green)';
-      toast("Đã đồng bộ dữ liệu từ Drive!");
-    })
-    .catch(err => {
-      console.error(err); hideLoading();
-      document.getElementById('drive-status-text').textContent = 'Lỗi kết nối';
-      document.getElementById('drive-dot').style.background = 'var(--red)';
-      toast("Không thể kết nối Drive");
-    });
-}
-
-function syncDataToDrive() {
-  showLoading("Đang đồng bộ lên Google Drive...");
-  const payload = { projects, issues, docs, team, tasks };
-  fetch(DRIVE_API_URL, { method: "POST", mode: "no-cors", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload) })
-    .then(() => { hideLoading(); toast("Đã lưu dữ liệu lên Drive!"); renderAll(); })
-    .catch(err => { hideLoading(); alert("Lỗi đồng bộ: " + err); });
-}
-
-function showLoading(text) {
-  const el = document.getElementById('global-loading');
-  el.style.opacity = '1'; el.style.pointerEvents = 'all';
-  document.getElementById('loading-text').textContent = text;
-  document.getElementById('loading-sub').textContent = '';
-}
-function hideLoading() {
-  const el = document.getElementById('global-loading');
-  el.style.opacity = '0'; el.style.pointerEvents = 'none';
-}
-
-function toast(msg) {
-  const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show');
-  setTimeout(()=>el.classList.remove('show'), 2800);
-}
-
-// ── MANUAL TASKS (Yêu cầu gấp / Cần xử lý hôm nay) ──────
-let tasks = []; // { id, type:'urgent'|'today', title, pic, proj, deadline, note, done, createdAt }
-
-function openTaskModal(type, editId) {
-  const isEdit = !!editId;
-  const task   = isEdit ? tasks.find(t=>t.id===editId) : null;
-  const typeLabel  = (task ? task.type : type) === 'urgent' ? '🚨 Yêu cầu gấp' : '📅 Cần xử lý hôm nay';
-  const accentColor= (task ? task.type : type) === 'urgent' ? 'var(--red)' : 'var(--orange)';
-
-  const overlay = document.getElementById('overlay');
-  overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = (isEdit ? '✏️ Sửa' : '➕ Thêm') + ' — ' + typeLabel;
-
-  // Build project options
-  const projOpts = '<option value="">— Không liên quan dự án —</option>'
-    + projects.map(p=>`<option value="${p.id}" ${task&&task.proj===p.id?'selected':''}>${p.id} — ${p.name}</option>`).join('');
-
-  // Build PIC options
-  const picOpts = '<option value="">— Chọn người xử lý —</option>'
-    + team.map(t=>`<option value="${t.email}" ${task&&task.pic===t.email?'selected':''}>${t.name} (${t.email})</option>`).join('');
-
-  document.getElementById('modal-body').innerHTML = `
-    <div class="form-row">
-      <label class="form-label">Nội dung công việc *</label>
-      <input class="form-ctrl" id="tk-title" placeholder="Mô tả ngắn gọn việc cần làm..." value="${task?task.title:''}">
-    </div>
-    <div class="form-grid">
-      <div class="form-row">
-        <label class="form-label">Người yêu cầu</label>
-        <select class="form-ctrl" id="tk-requester">
-          <option value="">— Chọn người yêu cầu —</option>
-          ${team.map(t=>`<option value="${t.email}" ${task&&task.requester===t.email?'selected':''}>${t.name}</option>`).join('')}
-        </select>
-      </div>
-      <div class="form-row">
-        <label class="form-label">Người xử lý (PIC)</label>
-        <select class="form-ctrl" id="tk-pic">${picOpts}</select>
-      </div>
-    </div>
-    <div class="form-grid">
-      <div class="form-row">
-        <label class="form-label">Dự án liên quan</label>
-        <select class="form-ctrl" id="tk-proj">${projOpts}</select>
-      </div>
-      <div class="form-row">
-        <label class="form-label">Nhãn</label>
-        <select class="form-ctrl" id="tk-type">
-          <option value="urgent" ${(task?task.type:type)==='urgent'?'selected':''}>🚨 Yêu cầu gấp</option>
-          <option value="today"  ${(task?task.type:type)==='today' ?'selected':''}>📅 Cần xử lý hôm nay</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <label class="form-label">Deadline</label>
-      <input class="form-ctrl" type="datetime-local" id="tk-deadline" value="${task&&task.deadline?task.deadline:''}">
-    </div>
-    <div class="form-row">
-      <label class="form-label">Ghi chú thêm</label>
-      <textarea class="form-ctrl" id="tk-note" rows="2" placeholder="Chi tiết, yêu cầu kỹ thuật...">${task?task.note:''}</textarea>
-    </div>
-  `;
-  document.getElementById('modal-ft').innerHTML = `
-    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
-    ${isEdit ? `<button class="btn btn-danger btn-sm" onclick="deleteTask('${editId}')">Xóa</button>` : ''}
-    <button class="btn btn-sm" style="background:${accentColor};border-color:${accentColor};color:#fff" onclick="saveTask(${isEdit?`'${editId}'`:'null'})">
-      ${isEdit ? 'Lưu thay đổi' : 'Thêm công việc'}
-    </button>
-  `;
-}
-
-function saveTask(editId) {
-  const title = document.getElementById('tk-title').value.trim();
-  if(!title){ toast('Vui lòng nhập nội dung công việc'); return; }
-
-  const task = {
-    id:        editId || 'TK-' + Date.now(),
-    type:      document.getElementById('tk-type').value,
-    title,
-    requester: document.getElementById('tk-requester').value,
-    pic:       document.getElementById('tk-pic').value,
-    proj:      document.getElementById('tk-proj').value,
-    deadline:  document.getElementById('tk-deadline').value,
-    note:      document.getElementById('tk-note').value.trim(),
-    done:      editId ? (tasks.find(t=>t.id===editId)||{}).done||false : false,
-    createdAt: editId ? (tasks.find(t=>t.id===editId)||{}).createdAt||new Date().toISOString() : new Date().toISOString()
+  const issue = {
+    id: 'I-' + Date.now(), projectCode: pCode, title, severity: sever, desc, status: 'Mở',
+    date: new Date().toISOString().split('T')[0]
   };
 
-  if(editId) {
-    const idx = tasks.findIndex(t=>t.id===editId);
-    tasks[idx] = task;
-  } else {
-    tasks.unshift(task);
+  issues.unshift(issue);
+  saveData();
+  syncToDrive();
+  closeModal('new-issue');
+  renderIssues();
+  showToast("⚠️ Đã ban hành thông báo lỗi kỹ thuật NCR");
+
+  document.getElementById('issue-title').value = '';
+  document.getElementById('issue-desc').value = '';
+}
+
+function closeIssue(id) {
+  const i = issues.find(issue => issue.id === id);
+  if(i) {
+    i.status = 'Đã đóng';
+    saveData();
+    syncToDrive();
+    renderIssues();
+    showToast("✓ Đã xác nhận khắc phục xong lỗi kỹ thuật");
   }
-  closeModal();
-  renderUrgent(); renderToday(); updateTaskBadges();
-  syncDataToDrive();
-  toast(editId ? 'Đã cập nhật công việc' : 'Đã thêm công việc đột xuất');
 }
 
-function deleteTask(id) {
-  if(!confirm('Xóa công việc này?')) return;
-  tasks = tasks.filter(t=>t.id!==id);
-  closeModal(); renderUrgent(); renderToday(); updateTaskBadges(); syncDataToDrive();
-  toast('Đã xóa công việc');
+function deleteIssue(id) {
+  if(confirm("Xóa vĩnh viễn báo cáo NCR này?")) {
+    issues = issues.filter(i => i.id !== id);
+    saveData();
+    syncToDrive();
+    renderIssues();
+    showToast("Đã xóa báo cáo");
+  }
 }
 
-function toggleTaskDone(id) {
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  t.done = !t.done;
-  renderUrgent(); renderToday(); updateTaskBadges(); syncDataToDrive();
-}
-
-function updateTaskBadges() {
-  const urgentOpen = tasks.filter(t=>t.type==='urgent'&&!t.done).length;
-  const todayOpen  = tasks.filter(t=>t.type==='today' &&!t.done).length;
-  document.getElementById('b-urgent').textContent = urgentOpen || '';
-  document.getElementById('b-today').textContent  = todayOpen  || '';
-}
-
-function taskCardHtml(t) {
-  const isUrgent   = t.type === 'urgent';
-  const accentClr  = isUrgent ? 'var(--red)' : 'var(--orange)';
-  const accentBg   = isUrgent ? 'var(--red-dim)' : 'rgba(251,146,60,0.08)';
-  const accentBdr  = isUrgent ? 'rgba(248,113,113,0.22)' : 'rgba(251,146,60,0.22)';
-  const label      = isUrgent ? '🚨 Gấp' : '📅 Hôm nay';
-  const member     = team.find(m=>m.email===t.pic);
-  const requester  = team.find(m=>m.email===t.requester);
-  const proj       = projects.find(p=>p.id===t.proj);
-  const doneSty    = t.done ? 'opacity:0.45;' : '';
-
-  let dlStr = '';
-  if(t.deadline) {
-    const d = new Date(t.deadline);
-    const now = new Date();
-    const diffMin = Math.round((d-now)/60000);
-    if(diffMin < 0)       dlStr = `<span style="color:var(--red);font-weight:700">Quá hạn ${Math.abs(diffMin)<60?Math.abs(diffMin)+'ph':Math.round(Math.abs(diffMin)/60)+'h'}</span>`;
-    else if(diffMin < 60) dlStr = `<span style="color:var(--orange);font-weight:700">Còn ${diffMin} phút</span>`;
-    else if(diffMin < 1440) dlStr = `<span style="color:var(--amber)">Còn ${Math.round(diffMin/60)}h</span>`;
-    else {
-      const dd = d.getDate().toString().padStart(2,'0');
-      const mm = (d.getMonth()+1).toString().padStart(2,'0');
-      const hh = d.getHours().toString().padStart(2,'0');
-      const mi = d.getMinutes().toString().padStart(2,'0');
-      dlStr = `<span style="color:var(--text1)">${dd}/${mm} ${hh}:${mi}</span>`;
-    }
+// 6. DOCUMENTS LIBRARY
+function renderFolders() {
+  const fContainer = document.getElementById('folder-list');
+  if(!projects.length) {
+    fContainer.innerHTML = '<div style="font-size:12px;color:var(--text2);padding:8px">Trống</div>';
+    document.getElementById('docs-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:30px">Chưa có hệ thống cây thư mục dự án</td></tr>';
+    return;
   }
 
-  return `
-  <div style="${doneSty}background:${accentBg};border:1px solid ${accentBdr};border-left:3px solid ${accentClr};border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
-    <!-- Checkbox -->
-    <div style="flex-shrink:0;margin-top:2px">
-      <div onclick="toggleTaskDone('${t.id}')" style="width:18px;height:18px;border-radius:4px;border:2px solid ${t.done?accentClr:'var(--border3)'};background:${t.done?accentClr:'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s">
-        ${t.done?'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':''}
-      </div>
+  if(!selectedFolderProjId) selectedFolderProjId = projects[0].id;
+
+  fContainer.innerHTML = projects.map(p => `
+    <div class="folder-item ${selectedFolderProjId===p.id?'active':''}" onclick="selectFolder('${p.id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2z"/></svg>
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.code}</span>
+      <span class="folder-count">3</span>
     </div>
-    <!-- Content -->
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-        <span class="badge" style="background:${accentBg};color:${accentClr};border:1px solid ${accentBdr}">${label}</span>
-        <span style="font-size:13px;font-weight:600;${t.done?'text-decoration:line-through;color:var(--text2)':''}">${t.title}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:14px;font-size:11px;color:var(--text2);flex-wrap:wrap">
-        ${requester ? `<span style="color:var(--text1)">📨 YC: <strong>${requester.name}</strong></span>` : ''}
-        ${member    ? `<span>👷 XL: ${member.name}</span>` : '<span style="color:var(--text2)">👷 Chưa gán</span>'}
-        ${proj      ? `<span>📁 ${proj.id} — ${proj.name}</span>` : ''}
-        ${dlStr     ? `<span>⏰ ${dlStr}</span>` : ''}
-        ${t.note    ? `<span style="color:var(--text2)">📝 ${t.note}</span>` : ''}
-      </div>
-    </div>
-    <!-- Actions -->
-    <div style="display:flex;gap:5px;flex-shrink:0">
-      <button class="btn btn-xs btn-ghost" onclick="openTaskModal('${t.type}','${t.id}')">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      </button>
-    </div>
-  </div>`;
+  `).join('');
+
+  renderFolderFiles();
 }
 
+function selectFolder(projId) {
+  selectedFolderProjId = projId;
+  renderFolders();
+}
+
+function renderFolderFiles() {
+  const p = projects.find(proj => proj.id === selectedFolderProjId);
+  if(!p) return;
+
+  document.getElementById('doc-table-title').textContent = `Thư mục tài liệu của máy: ${p.name}`;
+  const tbody = document.getElementById('docs-tbody');
+
+  // Bản vẽ kỹ thuật Mockup mô phỏng
+  const mockFiles = [
+    { name: `Bản vẽ tổng thể Layout_${p.code}.dwg`, type: 'DWG', size: '14.2 MB', date: '2026-06-15' },
+    { name: `Danh mục linh kiện mua thương mại_BOM_${p.code}.xlsx`, type: 'XLSX', size: '2.4 MB', date: '2026-06-18' },
+    { name: `Tài liệu hướng dẫn vận hành thiết bị Washer Machine.pdf`, type: 'PDF', size: '8.1 MB', date: '2026-06-20' }
+  ];
+
+  tbody.innerHTML = mockFiles.map(f => {
+    let cls = 'file-type-default';
+    if(f.type==='DWG') cls = 'file-type-dwg';
+    if(f.type==='PDF') cls = 'file-type-pdf';
+    if(f.type==='XLSX') cls = 'file-type-xlsx';
+
+    return `
+      <tr>
+        <td style="font-weight:500;color:var(--text0)">📄 ${f.name}</td>
+        <td><span class="file-type ${cls}">${f.type}</span></td>
+        <td style="font-family:'JetBrains Mono'">${f.size}</td>
+        <td style="font-family:'JetBrains Mono';color:var(--text2)">${f.date}</td>
+        <td style="text-align:right">
+          <a class="download-btn" href="#" onclick="event.preventDefault();showToast('Mở cổng tải tài liệu qua Google Drive Link...')" title="Tải xuống từ kho lưu trữ đám mây">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Drive Down
+          </a>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// 7. TEAM
+function renderTeam() {
+  const tbody = document.getElementById('team-tbody');
+  tbody.innerHTML = team.map(t => `
+    <tr>
+      <td style="font-weight:600;color:var(--text0)">💼 ${t.name}</td>
+      <td><span class="badge badge-gray">${t.role}</span></td>
+      <td style="font-family:'JetBrains Mono';color:var(--accent)">${t.email}</td>
+      <td style="font-family:'JetBrains Mono'">${t.phone || '---'}</td>
+      <td><button class="btn btn-xs btn-danger" onclick="deleteTeamMember('${t.name}')">Gỡ</button></td>
+    </tr>
+  `).join('');
+}
+
+function saveNewTeamMember() {
+  const name = document.getElementById('t-name').value.trim();
+  const role = document.getElementById('t-role').value.trim();
+  const email = document.getElementById('t-email').value.trim();
+  const phone = document.getElementById('t-phone').value.trim();
+
+  if(!name || !email) { showToast("Cần nhập Tên và Email kỹ sư", "error"); return; }
+
+  team.push({ name, role, email, phone });
+  saveData();
+  syncToDrive();
+  closeModal('new-team-modal');
+  renderTeam();
+  showToast("Đã ghi nhận nhân sự mới");
+
+  document.getElementById('t-name').value = '';
+  document.getElementById('t-role').value = '';
+  document.getElementById('t-email').value = '';
+  document.getElementById('t-phone').value = '';
+}
+
+function deleteTeamMember(name) {
+  if(confirm(`Gỡ bỏ nhân sự ${name} khỏi danh sách phòng ban kỹ thuật?`)) {
+    team = team.filter(t => t.name !== name);
+    saveData();
+    syncToDrive();
+    renderTeam();
+    showToast("Đã gỡ nhân sự");
+  }
+}
+
+// 8. 🔴 UPDATED INTERFACE & LOGIC FOR URGENT & TODAY TASKS WITH EMAIL INTEGRATION
 function renderUrgent() {
-  const el    = document.getElementById('urgent-container');
-  const open  = tasks.filter(t=>t.type==='urgent'&&!t.done);
-  const done  = tasks.filter(t=>t.type==='urgent'&&t.done);
+  const el = document.getElementById('urgent-container');
+  const open = tasks.filter(t => t.type === 'urgent' && !t.done);
+  const done = tasks.filter(t => t.type === 'urgent' && t.done);
   document.getElementById('b-urgent').textContent = open.length || '';
 
-  if(tasks.filter(t=>t.type==='urgent').length === 0) {
-    el.innerHTML = `<div class="empty-state" style="padding:60px 24px">
-      <div style="font-size:32px;margin-bottom:12px">✅</div>
-      <div class="empty-state-title">Không có yêu cầu gấp nào</div>
-      <div style="margin-top:6px">Nhấn <strong style="color:var(--red)">+ Thêm việc gấp</strong> để tạo công việc đột xuất</div>
-    </div>`; return;
+  if(tasks.filter(t => t.type === 'urgent').length === 0) {
+    el.innerHTML = `
+      <div class="empty-state" style="padding:60px 24px">
+        <div style="font-size:32px;margin-bottom:12px">🔥</div>
+        <div class="empty-state-title">Chưa có yêu cầu gấp nào phát sinh</div>
+        <div style="margin-top:6px">Nhập nội dung và ấn nút để lên danh sách cảnh báo</div>
+      </div>`; 
+    return;
   }
 
   let html = '';
   if(open.length)  html += open.map(taskCardHtml).join('');
-  if(done.length)  html += `<div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin:18px 0 8px;padding:0 4px">✓ Đã hoàn thành (${done.length})</div>`
-    + done.map(taskCardHtml).join('');
+  if(done.length)  html += `<div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin:18px 0 8px;padding:0 4px">✓ Đã giải quyết xong (${done.length})</div>` + done.map(taskCardHtml).join('');
   el.innerHTML = html;
 }
 
 function renderToday() {
-  const el   = document.getElementById('today-container');
-  const open = tasks.filter(t=>t.type==='today'&&!t.done);
-  const done = tasks.filter(t=>t.type==='today'&&t.done);
+  const el = document.getElementById('today-container');
+  const open = tasks.filter(t => t.type === 'today' && !t.done);
+  const done = tasks.filter(t => t.type === 'today' && t.done);
   document.getElementById('b-today').textContent = open.length || '';
 
-  if(tasks.filter(t=>t.type==='today').length === 0) {
-    el.innerHTML = `<div class="empty-state" style="padding:60px 24px">
-      <div style="font-size:32px;margin-bottom:12px">📋</div>
-      <div class="empty-state-title">Chưa có việc nào hôm nay</div>
-      <div style="margin-top:6px">Nhấn <strong style="color:var(--orange)">+ Thêm việc hôm nay</strong> để tạo công việc đột xuất</div>
-    </div>`; return;
+  if(tasks.filter(t => t.type === 'today').length === 0) {
+    el.innerHTML = `
+      <div class="empty-state" style="padding:60px 24px">
+        <div style="font-size:32px;margin-bottom:12px">📋</div>
+        <div class="empty-state-title">Chưa có việc nào hôm nay</div>
+        <div style="margin-top:6px">Nhấn <strong>+ Thêm việc hôm nay</strong> để tạo công việc đột xuất</div>
+      </div>`; 
+    return;
   }
 
   let html = '';
   if(open.length)  html += open.map(taskCardHtml).join('');
-  if(done.length)  html += `<div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin:18px 0 8px;padding:0 4px">✓ Đã hoàn thành (${done.length})</div>`
-    + done.map(taskCardHtml).join('');
+  if(done.length)  html += `<div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin:18px 0 8px;padding:0 4px">✓ Đã hoàn thành (${done.length})</div>` + done.map(taskCardHtml).join('');
   el.innerHTML = html;
+}
+
+function taskCardHtml(t) {
+  return `
+    <div class="card" style="margin-bottom:8px; background:var(--bg2); border:1px solid ${t.done?'var(--border)':(t.type==='urgent'?'rgba(248,113,113,0.15)':'rgba(251,146,60,0.15)')}">
+      <div style="padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+          <input type="checkbox" ${t.done?'checked':''} onclick="toggleTask('${t.id}')" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+          <span style="font-size:13px; color:${t.done?'var(--text2)':'var(--text0)'}; text-decoration:${t.done?'line-through':'none'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.text}</span>
+        </div>
+        <button class="btn btn-xs btn-danger" style="padding:2px 6px" onclick="deleteTask('${t.id}')">Xóa</button>
+      </div>
+    </div>
+  `;
+}
+
+// --- UPDATED CORE FUNCTION FOR ADDING TASKS WITH EMAIL CAPABILITY ---
+function addTask(type) {
+  const inputId = type === 'urgent' ? 'urgent-input' : 'today-input';
+  const chkId   = type === 'urgent' ? 'urgent-send-email' : 'today-send-email';
+  
+  const input = document.getElementById(inputId);
+  const chk   = document.getElementById(chkId);
+  const text  = input.value.trim();
+  
+  if(!text) return;
+
+  const isSendMail = chk ? chk.checked : false;
+  const taskId = 'T-' + Date.now();
+
+  const newTask = {
+    id: taskId,
+    type: type,
+    text: text,
+    done: false,
+    date: new Date().toISOString()
+  };
+
+  tasks.push(newTask);
+  input.value = '';
+  if(chk) chk.checked = false; // reset checkbox form
+
+  // Trigger Email Flow if user selected the checkbox
+  if(isSendMail) {
+    const targetEmail = prompt("Nhập địa chỉ email người nhận thông báo công việc khẩn cấp:", "");
+    if(targetEmail && targetEmail.trim() !== "") {
+      sendTaskEmailNotificationBackend(targetEmail.trim(), type === 'urgent' ? '🔥 YÊU CẦU GẤP' : '📋 VIỆC TRONG NGÀY', text);
+    } else {
+      showToast("Đã hủy bỏ gửi email hoặc địa chỉ trống.", "error");
+    }
+  }
+
+  saveData();
+  syncToDrive();
+  
+  if(type === 'urgent') renderUrgent();
+  if(type === 'today')  renderToday();
+  showToast("Đã tạo đầu việc ưu tiên khẩn cấp thành công");
+}
+
+function sendTaskEmailNotificationBackend(email, level, taskContent) {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    const emailBody = `
+      <div style="font-family:Arial,sans-serif; max-width:600px; border:1px solid #262d3d; background:#111318; color:#eef0f4; padding:20px; border-radius:8px;">
+        <h2 style="color:#4f8ef7; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-top:0;">
+          MechaProject — Thông báo công việc ưu tiên mới
+        </h2>
+        <p>Chào kỹ sư, bạn có một đầu việc phát sinh khẩn cấp cần triển khai ngay lập tức:</p>
+        <table style="width:100%; border-collapse:collapse; margin:15px 0;">
+          <tr>
+            <td style="padding:8px; color:#9aa3b5; font-weight:bold; width:120px; border-bottom:1px solid rgba(255,255,255,0.05);">Phân loại công việc:</td>
+            <td style="padding:8px; color:${level.includes('GẤP') ? '#f87171' : '#fb923c'}; font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.05);">${level}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px; color:#9aa3b5; font-weight:bold; vertical-align:top;">Nội dung công việc:</td>
+            <td style="padding:8px; background:rgba(255,255,255,0.02); border-radius:4px; line-height:1.5; color:#eef0f4;">${taskContent}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px; color:#9aa3b5; font-weight:bold; border-top:1px solid rgba(255,255,255,0.05);">Thời gian thiết lập:</td>
+            <td style="padding:8px; color:#5c6578; border-top:1px solid rgba(255,255,255,0.05);">${new Date().toLocaleString('vi-VN')}</td>
+          </tr>
+        </table>
+        <p style="font-size:12px; color:#5c6578; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; margin-bottom:0;">
+          * Đây là email thông báo tự động từ hệ thống quản lý MechaProject. Vui lòng không phản hồi lại hòm thư này.
+        </p>
+      </div>
+    `;
+
+    google.script.run
+      .withSuccessHandler(() => showToast("📧 Hệ thống đã gửi mail thông báo việc khẩn tới PIC!"))
+      .withFailureHandler((err) => showToast("❌ Gửi mail qua GAS thất bại: " + err, "error"))
+      .sendEmailBackend(email, `[MechaProject] Cảnh báo ưu tiên hệ thống: ${level}`, emailBody);
+  } else {
+    // Local Testing mock up
+    console.log("Mock Send Task Email to:", email, level, taskContent);
+    showToast("📧 [Chạy Thử local] Đã kích hoạt lệnh gửi mail cho: " + email);
+  }
+}
+
+function toggleTask(id) {
+  const t = tasks.find(task => task.id === id);
+  if(t) {
+    t.done = !t.done;
+    saveData();
+    syncToDrive();
+    renderUrgent();
+    renderToday();
+    showToast("Đã cập nhật trạng thái công việc");
+  }
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveData();
+  syncToDrive();
+  renderUrgent();
+  renderToday();
+  showToast("Đã gỡ công việc");
 }
 
 function renderAll() {
   renderDashboard(); renderProjects(); renderGantt(); renderIssues();
-  renderFolders(); renderDocs(); renderTeam(); renderUrgent(); renderToday();
-  const sel = document.getElementById('phase-proj-sel');
-  if(sel) sel.innerHTML = '<option value="">— Chọn dự án —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
+  renderFolders(); renderTeam(); renderUrgent(); renderToday();
 }
-
-window.onload = () => { fetchDataFromDrive(); };
 </script>
 </body>
 </html>
