@@ -864,6 +864,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
               <th>Vai trò chuyên môn</th>
               <th>Dự án tham gia</th>
               <th>Trạng thái</th>
+              <th>Phân quyền</th>
               <th>Thao tác</th>
             </tr>
           </thead>
@@ -1002,10 +1003,27 @@ const folders = [
   {id:'f4', name:'📖 Tài liệu hướng dẫn & CO/CQ'}
 ];
 
+// ── PERMISSION LEVELS ── 0=none 1=view 2=edit 3=full
+const MODULES = ['dashboard','projects','phases','gantt','issues','docs','team','chat','urgent','today'];
+const MODULE_LABELS = {
+  dashboard:'Dashboard', projects:'Dự án', phases:'Giai đoạn & CV',
+  gantt:'Tiến độ Gantt', issues:'NCR & Vấn đề', docs:'Tài liệu',
+  team:'Nhân sự', chat:'Chat', urgent:'Yêu cầu gấp', today:'Xử lý hôm nay'
+};
+const PERM_LABELS = ['Không xem','Chỉ xem','Xem + Sửa','Toàn quyền'];
+const PERM_COLORS = ['var(--text2)','var(--amber)','var(--accent)','var(--green)'];
+
+// Mặc định role templates
+const ROLE_TEMPLATES = {
+  admin:    { dashboard:3, projects:3, phases:3, gantt:3, issues:3, docs:3, team:3, chat:3, urgent:3, today:3 },
+  engineer: { dashboard:1, projects:1, phases:2, gantt:1, issues:2, docs:2, team:1, chat:3, urgent:3, today:3 },
+  viewer:   { dashboard:1, projects:1, phases:1, gantt:1, issues:1, docs:1, team:0, chat:1, urgent:0, today:0 }
+};
+
 let team = [
-  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer / PM', projects:['TL-2025-001'], status:'Bận'},
-  {name:'Trần Văn B', email:'b@company.com', role:'Senior Mechanical Designer', projects:['TL-2025-002'], status:'Sẵn sàng'},
-  {name:'Lê Văn C', email:'c@company.com', role:'Automation & Electrical Engineer', projects:['TL-2025-001'], status:'Bận'}
+  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer / PM', projects:['TL-2025-001'], status:'Bận', roleTemplate:'admin',    perms: {...ROLE_TEMPLATES.admin}},
+  {name:'Trần Văn B',   email:'b@company.com', role:'Senior Mechanical Designer',     projects:['TL-2025-002'], status:'Sẵn sàng', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
+  {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}}
 ];
 
 let tasks = []; // công việc đột xuất: { id, type, title, requester, pic, proj, deadline, note, done, createdAt }
@@ -1024,6 +1042,10 @@ const PAGE_TITLES = {
 };
 
 function nav(viewId, el) {
+  if(!canView(viewId)) {
+    toast('⛔ Bạn không có quyền truy cập mục này');
+    return;
+  }
   document.querySelectorAll('.nav-item').forEach(i=>{
     i.classList.remove('active');
     i.classList.remove('active-red');
@@ -1659,30 +1681,123 @@ function downloadDoc(name) {
 function renderTeam() {
   const tbody = document.getElementById('team-tbody');
   if(team.length===0){
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-title">Chưa có nhân sự</div>Thêm kỹ sư để phân công giai đoạn</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-title">Chưa có nhân sự</div>Thêm kỹ sư để phân công giai đoạn</div></td></tr>`;
     return;
   }
-  tbody.innerHTML = team.map((t,i) => `<tr>
-    <td style="font-weight:600">${t.name}</td>
-    <td>
-      <a href="mailto:${t.email}" style="color:var(--accent);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px">
+  tbody.innerHTML = team.map((t,i) => {
+    const tmpl = t.roleTemplate || 'engineer';
+    const tmplLabel = tmpl==='admin'?'Admin':tmpl==='viewer'?'Khách hàng':'Kỹ sư';
+    const tmplColor = tmpl==='admin'?'badge-red':tmpl==='viewer'?'badge-gray':'badge-blue';
+    return `<tr>
+      <td style="font-weight:600">${t.name}</td>
+      <td><a href="mailto:${t.email}" style="color:var(--accent);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-        ${t.email}
-      </a>
-    </td>
-    <td style="color:var(--text1);font-size:12px">${t.role}</td>
-    <td>${(t.projects||[]).map(p=>`<span class="badge badge-gray" style="margin-right:4px">${p}</span>`).join('') || '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>'}</td>
-    <td><span class="badge ${t.status==='Bận'?'badge-amber':'badge-green'}">${t.status}</span></td>
-    <td>
-      <div style="display:flex;gap:5px">
-        <button class="btn btn-xs btn-ghost" onclick="editMember(${i})">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          Sửa
-        </button>
-        <button class="btn btn-xs btn-danger" onclick="deleteMember(${i})">Xóa</button>
-      </div>
-    </td>
-  </tr>`).join('');
+        ${t.email}</a></td>
+      <td style="color:var(--text1);font-size:12px">${t.role}</td>
+      <td>${(t.projects||[]).map(p=>`<span class="badge badge-gray" style="margin-right:4px">${p}</span>`).join('') || '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>'}</td>
+      <td><span class="badge ${t.status==='Bận'?'badge-amber':'badge-green'}">${t.status}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="badge ${tmplColor}">${tmplLabel}</span>
+          ${isAdmin() ? `<button class="btn btn-xs btn-ghost" onclick="openPermModal(${i})" title="Cài phân quyền chi tiết">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Phân quyền
+          </button>` : ''}
+        </div>
+      </td>
+      <td>
+        <div style="display:flex;gap:5px">
+          ${isAdmin()||currentUser?.email===t.email ? `<button class="btn btn-xs btn-ghost" onclick="editMember(${i})">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa
+          </button>` : ''}
+          ${isAdmin() ? `<button class="btn btn-xs btn-danger" onclick="deleteMember(${i})">Xóa</button>` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openPermModal(idx) {
+  const t = team[idx];
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('open');
+  document.getElementById('modal-hd-title').textContent = `🔒 Phân quyền — ${t.name}`;
+
+  const tmplBtns = ['admin','engineer','viewer'].map(tmpl => {
+    const labels = {admin:'👑 Admin',engineer:'🔧 Kỹ sư',viewer:'👁 Khách hàng'};
+    const colors = {admin:'var(--red)',engineer:'var(--accent)',viewer:'var(--text2)'};
+    const active = t.roleTemplate===tmpl;
+    return `<button class="btn btn-sm ${active?'btn-accent':''}" style="${active?'':'background:var(--bg3);'}border-color:${colors[tmpl]}44;color:${active?'#fff':colors[tmpl]}" onclick="applyTemplate(${idx},'${tmpl}')">
+      ${labels[tmpl]}
+    </button>`;
+  }).join('');
+
+  const permRows = MODULES.map(mod => {
+    const cur = (t.perms||{})[mod] ?? 1;
+    const cells = [0,1,2,3].map(lv => {
+      const active = cur===lv;
+      return `<label style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid ${active?PERM_COLORS[lv]:'var(--border)'};background:${active?PERM_COLORS[lv]+'18':'transparent'};transition:all .12s">
+        <input type="radio" name="perm-${mod}" value="${lv}" ${active?'checked':''} style="display:none">
+        <span style="font-size:16px">${['🚫','👁','✏️','⚡'][lv]}</span>
+        <span style="font-size:9px;font-weight:700;color:${active?PERM_COLORS[lv]:'var(--text2)'};white-space:nowrap">${PERM_LABELS[lv]}</span>
+      </label>`;
+    }).join('');
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 12px;font-size:12px;font-weight:500;color:var(--text1);white-space:nowrap">${MODULE_LABELS[mod]}</td>
+      <td style="padding:4px 8px">
+        <div style="display:flex;gap:4px">${cells}</div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('modal-body').innerHTML = `
+    <div style="margin-bottom:14px">
+      <label class="form-label">Áp dụng template nhanh</label>
+      <div style="display:flex;gap:8px;margin-top:6px">${tmplBtns}</div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Hoặc tùy chỉnh từng mục bên dưới:</div>
+    <div style="border:1px solid var(--border);border-radius:var(--r2);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:var(--bg1)">
+          <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">Mục</th>
+          <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em">
+            <div style="display:flex;gap:24px;padding-left:4px">
+              ${['🚫 Không','👁 Xem','✏️ Sửa','⚡ Toàn quyền'].map(l=>`<span style="min-width:62px;text-align:center">${l}</span>`).join('')}
+            </div>
+          </th>
+        </tr></thead>
+        <tbody>${permRows}</tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('modal-ft').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
+    <button class="btn btn-accent" onclick="savePerms(${idx})">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Lưu phân quyền
+    </button>
+  `;
+}
+
+function applyTemplate(idx, tmpl) {
+  team[idx].roleTemplate = tmpl;
+  team[idx].perms = {...ROLE_TEMPLATES[tmpl]};
+  closeModal();
+  openPermModal(idx);
+}
+
+function savePerms(idx) {
+  const t = team[idx];
+  if(!t.perms) t.perms = {};
+  MODULES.forEach(mod => {
+    const checked = document.querySelector(`input[name="perm-${mod}"]:checked`);
+    if(checked) t.perms[mod] = parseInt(checked.value);
+  });
+  closeModal();
+  renderTeam();
+  syncDataToDrive();
+  applyPermissions();
+  toast(`Đã lưu phân quyền cho ${t.name}`);
 }
 
 function editMember(idx) {
@@ -1726,7 +1841,7 @@ function addMember() {
   const name = document.getElementById('nm-name').value.trim();
   const email = document.getElementById('nm-email').value.trim();
   if(!name || !email){ toast('Vui lòng điền tên và email'); return; }
-  team.push({name, email, role: document.getElementById('nm-role').value.trim(), projects:[], status: document.getElementById('nm-status').value});
+  team.push({name, email, role: document.getElementById('nm-role').value.trim(), projects:[], status: document.getElementById('nm-status').value, roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}});
   closeModal(); renderTeam(); syncDataToDrive();
   toast(`Đã thêm ${name} vào danh sách nhân sự`);
 }
@@ -2349,6 +2464,46 @@ function renderToday() {
 // ── CURRENT USER ────────────────────────────────────────────
 let currentUser = null;
 
+// ── PERMISSION HELPERS ──────────────────────────────────────
+function getPerm(module) {
+  if(!currentUser) return 0;
+  const member = team.find(t=>t.email===currentUser.email);
+  if(!member || !member.perms) return 0;
+  return member.perms[module] ?? 0;
+}
+function canView(module)  { return getPerm(module) >= 1; }
+function canEdit(module)  { return getPerm(module) >= 2; }
+function canFull(module)  { return getPerm(module) >= 3; }
+function isAdmin()        { return canFull('team'); }
+
+function applyPermissions() {
+  // Ẩn/hiện nav items
+  const navMap = {
+    dashboard:'dashboard', projects:'projects', phases:'phases',
+    gantt:'gantt', issues:'issues', docs:'docs', team:'team',
+    chat:'chat', urgent:'urgent', today:'today'
+  };
+  Object.entries(navMap).forEach(([mod, navId]) => {
+    const el = document.querySelector(`.nav-item[onclick*="nav('${navId}'"]`);
+    if(el) el.style.display = canView(mod) ? '' : 'none';
+  });
+
+  // Ẩn nút thêm/sửa/xóa dựa theo quyền
+  const editButtons = [
+    { sel:"button[onclick*=\"openModal('new-project')\"]",    mod:'projects' },
+    { sel:"button[onclick*=\"openModal('new-issue')\"]",      mod:'issues'   },
+    { sel:"button[onclick*=\"openModal('new-doc')\"]",        mod:'docs'     },
+    { sel:"button[onclick*=\"openModal('new-member')\"]",     mod:'team'     },
+    { sel:"button[onclick*=\"openTaskModal('urgent')\"]",     mod:'urgent'   },
+    { sel:"button[onclick*=\"openTaskModal('today')\"]",      mod:'today'    },
+  ];
+  editButtons.forEach(({sel,mod}) => {
+    document.querySelectorAll(sel).forEach(el => {
+      el.style.display = canEdit(mod) ? '' : 'none';
+    });
+  });
+}
+
 // ── LOGIN ────────────────────────────────────────────────────
 function initLoginScreen() {
   const sel = document.getElementById('login-user');
@@ -2392,6 +2547,7 @@ function applyLogin(user) {
   av.textContent=user.name.slice(-1).toUpperCase(); av.style.background=c+'22'; av.style.color=c;
   document.getElementById('topbar-user-name').textContent=user.name;
   chatSenderEmail=user.email;
+  setTimeout(applyPermissions, 100);
   toast(`Xin chào, ${user.name}! 👋`);
 }
 
