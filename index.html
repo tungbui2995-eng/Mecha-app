@@ -1372,10 +1372,10 @@ let team = [
   {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'}
 ];
 
-let tasks = []; // công việc đột xuất: { id, type, title, requester, pic, proj, deadline, note, done, createdAt }
-let warehouseStock  = []; // { id, code, name, unit, qty, minQty, location, supplier, note }
-let warehouseOrders = []; // { id, items: [{stockId, stockName, stockCode, qty, unit}], proj, orderer, ordererEmail, date, note, status, warehouseManager, confirmedAt, confirmedBy }
-let warehouseTxns   = []; // { id, type:'import'|'export', stockId, stockName, stockCode, qty, unit, proj, creator, creatorEmail, date, note, images[], status:'pending'|'confirmed'|'rejected', confirmedBy, confirmedAt, rejectReason }
+let tasks = []; // công việc đột xuất
+let warehouseStock  = [];
+let warehouseOrders = []; // { id, items: [{stockId, stockName, stockCode, qty, unit}], proj, orderer, ordererEmail, date, note, status, warehouseManagerEmail, confirmedBy, confirmedAt }
+let warehouseTxns   = [];
 
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
@@ -1990,7 +1990,7 @@ function renderFolders() {
   }).join('');
 }
 
-// ── RENDER DOCS (with download button) ──
+// ── RENDER DOCS ──
 function renderDocs() {
   const tbody = document.getElementById('docs-tbody');
   const titleEl = document.getElementById('docs-panel-title');
@@ -2289,10 +2289,10 @@ function openModal(type, data) {
     openModal_editStock(data);
   }
   else if(type==='new-txn') {
-    openModal_newTxn(data); // data = 'import' | 'export'
+    openModal_newTxn(data);
   }
   else if(type==='view-txn') {
-    openModal_viewTxn(data); // data = txn id
+    openModal_viewTxn(data);
   }
 }
 
@@ -2394,7 +2394,6 @@ function fetchDataFromDrive() {
       issues = data.issues || [];
       docs = data.docs || [];
       if(data.team  && data.team.length  > 0) {
-        // Merge team, giữ mật khẩu nếu có
         data.team.forEach(t => {
           const existing = team.find(m=>m.email===t.email);
           if(existing) Object.assign(existing, t);
@@ -2405,7 +2404,6 @@ function fetchDataFromDrive() {
       if(data.chatRooms) chatRooms = data.chatRooms;
       if(data.warehouseStock)  warehouseStock  = data.warehouseStock;
       if(data.warehouseOrders) {
-        // Convert old format (single item) to new format (items array)
         warehouseOrders = data.warehouseOrders.map(o => {
           if(o.items) return o;
           return {
@@ -2645,7 +2643,6 @@ function taskCardHtml(t) {
   </div>`;
 }
 
-// ── GỬI EMAIL THÔNG BÁO TASK ──
 function sendTaskEmail(taskId) {
   const t = tasks.find(x=>x.id===taskId);
   if(!t) return;
@@ -2711,7 +2708,6 @@ function sendTaskEmail(taskId) {
     .catch(()=>toast('Lỗi kết nối khi gửi email'));
 }
 
-// ── XÁC NHẬN NHẬN VIỆC → GỬI MAIL CHO NGƯỜI YÊU CẦU ──
 function confirmTask(taskId) {
   const t = tasks.find(x=>x.id===taskId);
   if(!t) return;
@@ -2802,7 +2798,6 @@ function confirmTask(taskId) {
   .catch(()=>toast(`✓ Đã xác nhận. Email sẽ gửi khi kết nối ổn định`));
 }
 
-// ── RENDER DASHBOARD TASK LISTS ──
 function renderDashTasks() {
   const urgentOpen = tasks.filter(t=>t.type==='urgent'&&!t.done);
   const todayOpen  = tasks.filter(t=>t.type==='today' &&!t.done);
@@ -3078,7 +3073,6 @@ function filterStock(q) {
 
 // ── ORDER TABS ──
 
-// Giỏ hàng: { stockId, qty }
 let orderCart = [];
 
 function renderOrderSearchResults(query) {
@@ -3327,11 +3321,10 @@ function renderOrders() {
   document.getElementById('b-warehouse-order').textContent = pending||'';
   document.getElementById('b-warehouse-order').style.display = pending ? '' : 'none';
 
-  // Cập nhật count trên lịch sử
   document.getElementById('order-history-count').textContent = warehouseOrders.length;
 
   if(warehouseOrders.length===0) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">🛒</div><div class="empty-state-title">Chưa có phiếu order nào</div>Nhấn "Tìm vật tư" và thêm vào giỏ để tạo phiếu</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">🛒</div><div class="empty-state-title">Chưa có phiếu order nào</div>Nhấn "Tìm vật tư" và thêm vào giỏ để tạo phiếu</div></td></tr>`;
     return;
   }
 
@@ -3352,6 +3345,7 @@ function renderOrders() {
       <td style="font-size:12px">${o.orderer}</td>
       <td style="font-family:monospace;font-size:11px;color:var(--text2)">${o.date}</td>
       <td style="font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.note||''}</td>
+      <td style="font-size:11px;color:var(--text2)">${o.warehouseManagerEmail || '—'}</td>
       <td><span class="badge ${stCls}">${stLabel}</span>${o.confirmedAt?`<div style="font-size:10px;color:var(--text2);margin-top:3px">${o.confirmedBy||''} · ${o.confirmedAt}</div>`:''}</td>
       <td>
         <div style="display:flex;flex-direction:column;gap:4px">
@@ -3365,6 +3359,7 @@ function renderOrders() {
               Từ chối
             </button>` : ''}
           ${!isPending ? `<span style="font-size:11px;color:var(--text2)">Đã xử lý</span>` : ''}
+          ${isPending && !canManage ? `<span style="font-size:11px;color:var(--text2)">Chờ duyệt</span>` : ''}
         </div>
       </td>
     </tr>`;
@@ -3372,7 +3367,6 @@ function renderOrders() {
 }
 
 function renderOrderHistory() {
-  // Hiển thị lịch sử order dạng danh sách nhanh bên trái
   const el = document.getElementById('order-history-list');
   if(!el) return;
   if(warehouseOrders.length===0) {
