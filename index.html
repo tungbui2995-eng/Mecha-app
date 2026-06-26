@@ -1047,6 +1047,9 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         <div class="wh-tab" id="wh-tab-order" onclick="switchWhTab('order')">
           🛒 Order từ kho <span class="nav-badge red" id="b-wh-pending" style="display:none;margin-left:4px">0</span>
         </div>
+        <div class="wh-tab" id="wh-tab-txn" onclick="switchWhTab('txn')">
+          📋 Xuất / Nhập hàng <span class="nav-badge" id="b-wh-txn-pending" style="display:none;margin-left:4px;background:var(--amber-dim);color:var(--amber)">0</span>
+        </div>
       </div>
 
       <!-- TAB: STOCK -->
@@ -1122,6 +1125,65 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
           </div>
         </div>
       </div>
+
+      <!-- TAB: XUẤT / NHẬP -->
+      <div id="wh-panel-txn" style="display:none">
+        <div class="section-hd">
+          <div class="section-hd-left">
+            <h2>📋 Quản lý Xuất / Nhập hàng hóa</h2>
+            <p>Phiếu xuất kho, nhập kho — có ảnh bằng chứng và xác nhận thủ kho</p>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-green" onclick="openModal('new-txn','import')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="21" x2="12" y2="3"/></svg>
+              Tạo phiếu Nhập kho
+            </button>
+            <button class="btn btn-sm btn-danger" style="background:var(--red-dim);border-color:rgba(248,113,113,0.3);color:var(--red)" onclick="openModal('new-txn','export')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 7 12 3 8 7"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+              Tạo phiếu Xuất kho
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+          <div class="search-input-wrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="form-ctrl search-input" placeholder="Tìm mã phiếu, vật tư..." oninput="filterTxn(this.value)" style="max-width:200px">
+          </div>
+          <select class="form-ctrl" style="max-width:130px;padding:7px 10px" onchange="filterTxnType(this.value)">
+            <option value="">Tất cả loại</option>
+            <option value="import">📥 Nhập kho</option>
+            <option value="export">📤 Xuất kho</option>
+          </select>
+          <select class="form-ctrl" style="max-width:150px;padding:7px 10px" onchange="filterTxnStatus(this.value)">
+            <option value="">Tất cả trạng thái</option>
+            <option value="pending">⏳ Chờ xác nhận</option>
+            <option value="confirmed">✅ Đã xác nhận</option>
+            <option value="rejected">❌ Từ chối</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <table class="tbl" id="txn-table">
+            <thead>
+              <tr>
+                <th>Mã phiếu</th>
+                <th>Loại</th>
+                <th>Vật tư</th>
+                <th>SL</th>
+                <th>Dự án</th>
+                <th>Người tạo</th>
+                <th>Ngày</th>
+                <th>Ảnh đính kèm</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="txn-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- AI CHATBOT VIEW -->
@@ -1134,7 +1196,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
             <div style="font-size:11px;color:var(--text2);line-height:1.6">
               Trợ lý AI hiểu ngữ cảnh dự án của bạn. Có thể hỏi về tiến độ, nhân sự, vật tư, kỹ thuật cơ khí và nhiều hơn.
             </div>
-            <div class="ai-model-badge" style="margin-top:10px">Claude Sonnet 4.6</div>
+            <div class="ai-model-badge" style="margin-top:10px">⚡ Groq · Llama 3.3 70B</div>
           </div>
 
           <div class="ai-info-card">
@@ -1244,6 +1306,7 @@ let team = [
 let tasks = []; // công việc đột xuất: { id, type, title, requester, pic, proj, deadline, note, done, createdAt }
 let warehouseStock  = []; // { id, code, name, unit, qty, minQty, location, supplier, note }
 let warehouseOrders = []; // { id, stockId, stockName, qty, unit, proj, orderer, ordererEmail, date, note, status, warehouseManager, confirmedAt }
+let warehouseTxns   = []; // { id, type:'import'|'export', stockId, stockName, stockCode, qty, unit, proj, creator, creatorEmail, date, note, images[], status:'pending'|'confirmed'|'rejected', confirmedBy, confirmedAt, rejectReason }
 
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
@@ -2159,6 +2222,12 @@ function openModal(type, data) {
   else if(type==='new-order') {
     openModal_newOrder();
   }
+  else if(type==='new-txn') {
+    openModal_newTxn(data); // data = 'import' | 'export'
+  }
+  else if(type==='view-txn') {
+    openModal_viewTxn(data); // data = txn id
+  }
 }
 
 function closeModal() { document.getElementById('overlay').classList.remove('open'); }
@@ -2263,6 +2332,7 @@ function fetchDataFromDrive() {
       if(data.chatRooms) chatRooms = data.chatRooms;
       if(data.warehouseStock)  warehouseStock  = data.warehouseStock;
       if(data.warehouseOrders) warehouseOrders = data.warehouseOrders;
+      if(data.warehouseTxns)   warehouseTxns   = data.warehouseTxns;
       renderAll(); initChat(); hideLoading();
       initLoginScreen();
       document.getElementById('drive-status-text').textContent = 'Drive đã kết nối';
@@ -2279,7 +2349,7 @@ function fetchDataFromDrive() {
 
 function syncDataToDrive() {
   showLoading("Đang đồng bộ lên Google Drive...");
-  const payload = { projects, issues, docs, team, tasks, chatRooms, warehouseStock, warehouseOrders };
+  const payload = { projects, issues, docs, team, tasks, chatRooms, warehouseStock, warehouseOrders, warehouseTxns };
   fetch(DRIVE_API_URL, { method: "POST", mode: "no-cors", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload) })
     .then(() => { hideLoading(); toast("Đã lưu dữ liệu lên Drive!"); renderAll(); })
     .catch(err => { hideLoading(); alert("Lỗi đồng bộ: " + err); });
@@ -2865,10 +2935,12 @@ function switchWhTab(tab) {
   whCurrentTab = tab;
   document.getElementById('wh-panel-stock').style.display = tab==='stock' ? '' : 'none';
   document.getElementById('wh-panel-order').style.display = tab==='order' ? '' : 'none';
+  document.getElementById('wh-panel-txn').style.display   = tab==='txn'   ? '' : 'none';
   document.querySelectorAll('.wh-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('wh-tab-'+tab).classList.add('active');
   if(tab==='stock') renderStock();
-  else renderOrders();
+  else if(tab==='order') renderOrders();
+  else renderTxns();
 }
 
 function stockLevelClass(qty, min) {
@@ -3223,9 +3295,388 @@ function sendOrderRequestEmail(order, mgr, stock) {
   }).catch(()=>{});
 }
 
+// ── XUẤT / NHẬP KHO ─────────────────────────────────────────
+let txnFilterText = '';
+let txnFilterType = '';
+let txnFilterStatus = '';
+
+function filterTxn(v)       { txnFilterText   = v.toLowerCase(); renderTxns(); }
+function filterTxnType(v)   { txnFilterType   = v; renderTxns(); }
+function filterTxnStatus(v) { txnFilterStatus = v; renderTxns(); }
+
+function renderTxns() {
+  const tbody = document.getElementById('txn-tbody');
+  if(!tbody) return;
+
+  // Badge pending
+  const pending = warehouseTxns.filter(t=>t.status==='pending').length;
+  const b = document.getElementById('b-wh-txn-pending');
+  if(b){ b.textContent=pending; b.style.display=pending?'':'none'; }
+
+  let list = [...warehouseTxns].reverse();
+  if(txnFilterText)   list = list.filter(t=>(t.id+t.stockName+t.stockCode).toLowerCase().includes(txnFilterText));
+  if(txnFilterType)   list = list.filter(t=>t.type===txnFilterType);
+  if(txnFilterStatus) list = list.filter(t=>t.status===txnFilterStatus);
+
+  if(list.length===0) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">Chưa có phiếu xuất/nhập nào</div></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(t => {
+    const isImport = t.type==='import';
+    const typeHtml = isImport
+      ? `<span class="badge" style="background:var(--green-dim);color:var(--green)">📥 Nhập kho</span>`
+      : `<span class="badge" style="background:var(--red-dim);color:var(--red)">📤 Xuất kho</span>`;
+
+    const stCls   = t.status==='confirmed'?'badge-green':t.status==='rejected'?'badge-red':'badge-amber';
+    const stLabel = t.status==='confirmed'?'✅ Đã xác nhận':t.status==='rejected'?'❌ Từ chối':'⏳ Chờ xác nhận';
+
+    const imgHtml = (t.images||[]).length > 0
+      ? `<div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${t.images.slice(0,3).map(img=>
+            `<img src="${img.url||img.base64||''}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid var(--border);cursor:pointer" onclick="openModal('view-txn','${t.id}')" title="${img.name||''}">`
+          ).join('')}
+          ${t.images.length>3?`<div style="width:36px;height:36px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text2)">+${t.images.length-3}</div>`:''}
+        </div>`
+      : `<span style="font-size:11px;color:var(--text2)">Không có</span>`;
+
+    const proj = projects.find(p=>p.id===t.proj);
+    const canConfirm = isAdmin() && t.status==='pending';
+
+    return `<tr>
+      <td class="tbl-code" style="cursor:pointer;color:var(--accent)" onclick="openModal('view-txn','${t.id}')">${t.id}</td>
+      <td>${typeHtml}</td>
+      <td style="font-size:12px;font-weight:500">${t.stockCode||''} ${t.stockName}</td>
+      <td style="font-family:monospace;font-weight:700;color:${isImport?'var(--green)':'var(--red)'}">${isImport?'+':'-'}${t.qty} ${t.unit}</td>
+      <td style="font-size:12px;color:var(--text2)">${proj?proj.id:'—'}</td>
+      <td style="font-size:12px">${t.creator}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${t.date}</td>
+      <td>${imgHtml}</td>
+      <td>
+        <span class="badge ${stCls}">${stLabel}</span>
+        ${t.confirmedBy?`<div style="font-size:10px;color:var(--text2);margin-top:2px">${t.confirmedBy}</div>`:''}
+        ${t.rejectReason?`<div style="font-size:10px;color:var(--red);margin-top:2px">${t.rejectReason}</div>`:''}
+      </td>
+      <td>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <button class="btn btn-xs btn-ghost" onclick="openModal('view-txn','${t.id}')">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Xem
+          </button>
+          ${canConfirm?`
+          <button class="btn btn-xs btn-green" onclick="confirmTxn('${t.id}','confirmed')">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Xác nhận
+          </button>
+          <button class="btn btn-xs btn-danger" onclick="promptRejectTxn('${t.id}')">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Từ chối
+          </button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function confirmTxn(txnId, action, rejectReason) {
+  const t = warehouseTxns.find(x=>x.id===txnId);
+  if(!t) return;
+  const isImport = t.type==='import';
+  const now = new Date();
+  const timeStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
+  t.status = action;
+  t.confirmedBy = currentUser?.name || 'Thủ kho';
+  t.confirmedAt = timeStr;
+  if(rejectReason) t.rejectReason = rejectReason;
+
+  // Cập nhật tồn kho
+  if(action==='confirmed') {
+    const stock = warehouseStock.find(s=>s.id===t.stockId);
+    if(stock) {
+      if(isImport) stock.qty = (stock.qty||0) + (t.qty||0);
+      else         stock.qty = Math.max(0, (stock.qty||0) - (t.qty||0));
+    }
+  }
+
+  closeModal(); renderTxns(); renderStock(); syncDataToDrive();
+  toast(action==='confirmed' ? `✅ Đã xác nhận phiếu ${txnId}` : `❌ Đã từ chối phiếu ${txnId}`);
+
+  // Gửi email báo người tạo phiếu
+  const creator = team.find(m=>m.email===t.creatorEmail);
+  if(creator) sendTxnResultEmail(t, action, creator, timeStr, rejectReason);
+}
+
+function promptRejectTxn(txnId) {
+  const t = warehouseTxns.find(x=>x.id===txnId);
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('open');
+  document.getElementById('modal-hd-title').textContent = `❌ Từ chối phiếu ${txnId}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="background:var(--red-dim);border:1px solid rgba(248,113,113,0.25);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:13px">
+      <strong>${t?.type==='import'?'📥 Nhập':'📤 Xuất'} kho:</strong> ${t?.stockName} × ${t?.qty} ${t?.unit}
+    </div>
+    <div class="form-row">
+      <label class="form-label">Lý do từ chối *</label>
+      <textarea class="form-ctrl" id="reject-reason" rows="3" placeholder="Nhập lý do từ chối phiếu này..."></textarea>
+    </div>
+  `;
+  document.getElementById('modal-ft').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
+    <button class="btn btn-danger" onclick="doRejectTxn('${txnId}')">❌ Xác nhận từ chối</button>
+  `;
+}
+
+function doRejectTxn(txnId) {
+  const reason = document.getElementById('reject-reason').value.trim();
+  if(!reason){ toast('Vui lòng nhập lý do từ chối'); return; }
+  confirmTxn(txnId, 'rejected', reason);
+}
+
+function sendTxnResultEmail(txn, action, recipient, timeStr, rejectReason) {
+  const approved = action === 'confirmed';
+  const isImport = txn.type === 'import';
+  const barColor = approved ? '#34d399,#059669' : '#f87171,#dc2626';
+  const statusLabel = approved ? '✅ ĐÃ XÁC NHẬN' : '❌ BỊ TỪ CHỐI';
+  const proj = projects.find(p=>p.id===txn.proj);
+
+  const htmlBody = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
+      <div style="background:linear-gradient(135deg,${barColor});padding:22px 24px 18px">
+        <div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject — Kho vật tư</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.9);margin-top:4px">
+          ${isImport?'📥 Phiếu Nhập kho':'📤 Phiếu Xuất kho'} — ${statusLabel}
+        </div>
+      </div>
+      <div style="padding:22px 24px">
+        <div style="font-size:15px;font-weight:600;margin-bottom:16px">Xin chào ${recipient.name},</div>
+        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px">
+          Phiếu ${isImport?'nhập':'xuất'} kho của bạn đã được <strong style="color:${approved?'#34d399':'#f87171'}">${approved?'XÁC NHẬN':'TỪ CHỐI'}</strong> bởi thủ kho:
+        </p>
+        <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:16px 18px;margin-bottom:18px">
+          <table style="font-size:13px;border-collapse:collapse;width:100%">
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0;white-space:nowrap">Mã phiếu</td><td style="color:#4f8ef7;font-weight:700">${txn.id}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Loại</td><td style="color:${isImport?'#34d399':'#f87171'};font-weight:600">${isImport?'📥 Nhập kho':'📤 Xuất kho'}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Vật tư</td><td style="color:#eef0f4;font-weight:700">${txn.stockName}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Số lượng</td><td style="color:#fbbf24;font-weight:700">${txn.qty} ${txn.unit}</td></tr>
+            ${proj?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Dự án</td><td style="color:#4f8ef7">${proj.id} — ${proj.name}</td></tr>`:''}
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Kết quả</td><td style="color:${approved?'#34d399':'#f87171'};font-weight:700">${statusLabel}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Thủ kho</td><td style="color:#eef0f4">${txn.confirmedBy}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Thời gian</td><td style="color:#eef0f4">${timeStr}</td></tr>
+            ${rejectReason?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Lý do</td><td style="color:#f87171">${rejectReason}</td></tr>`:''}
+            ${txn.note?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ghi chú</td><td style="color:#9aa3b5">${txn.note}</td></tr>`:''}
+          </table>
+        </div>
+        <p style="font-size:12px;color:#5c6578">${approved?(isImport?'Vật tư đã được cập nhật vào kho.':'Vui lòng đến kho nhận vật tư.'):'Liên hệ thủ kho để biết thêm chi tiết.'}</p>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Kho vật tư · Không reply email này</div>
+    </div>`;
+
+  fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
+    action:'send_email', to: recipient.email,
+    subject: `[MechaProject Kho] ${statusLabel}: ${txn.stockName} × ${txn.qty} ${txn.unit}`,
+    body: `${statusLabel}\nPhiếu: ${txn.id}\nVật tư: ${txn.stockName}\nSố lượng: ${txn.qty} ${txn.unit}\nThủ kho: ${txn.confirmedBy}\n${rejectReason?'Lý do: '+rejectReason:''}`,
+    htmlBody
+  })}).then(r=>r.json()).then(res=>{
+    if(res.status==='success') toast(`✉ Đã báo kết quả tới ${recipient.name}`);
+  }).catch(()=>{});
+}
+
+function openModal_newTxn(txnType) {
+  const isImport = txnType==='import';
+  const label = isImport ? '📥 Tạo phiếu Nhập kho' : '📤 Tạo phiếu Xuất kho';
+  const color = isImport ? 'var(--green)' : 'var(--red)';
+  const stockOpts = '<option value="">— Chọn vật tư —</option>' + warehouseStock.map(s=>`<option value="${s.id}">${s.code} — ${s.name} (Tồn: ${s.qty} ${s.unit})</option>`).join('');
+  const projOpts  = '<option value="">— Không liên quan —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modal-hd-title').textContent = label;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row">
+      <label class="form-label">Vật tư *</label>
+      <select class="form-ctrl" id="txn-stock" onchange="onTxnStockChange(this.value)">${stockOpts}</select>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label class="form-label">Số lượng *</label><input class="form-ctrl" type="number" id="txn-qty" value="1" min="1"></div>
+      <div class="form-row"><label class="form-label">Đơn vị</label><input class="form-ctrl" id="txn-unit" readonly style="opacity:.7"></div>
+    </div>
+    <div class="form-row"><label class="form-label">Dự án liên quan</label><select class="form-ctrl" id="txn-proj">${projOpts}</select></div>
+    <div class="form-row"><label class="form-label">Ghi chú / Lý do</label><textarea class="form-ctrl" id="txn-note" rows="2" placeholder="${isImport?'Nguồn hàng, nhà cung cấp, lô hàng...':'Mục đích sử dụng, lắp máy nào...'}"></textarea></div>
+    <div class="form-row">
+      <label class="form-label">📸 Ảnh bằng chứng (hoá đơn, biên bản, ảnh hàng hoá)</label>
+      <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg3);border:2px dashed var(--border2);border-radius:var(--r2);cursor:pointer;transition:all .15s" id="txn-img-label"
+        onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
+        <input type="file" id="txn-images" multiple accept="image/*" style="display:none" onchange="previewTxnImages(this)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--text1)">Nhấn để chọn ảnh</div>
+          <div style="font-size:10px;color:var(--text2)">JPG, PNG, WEBP — Nhiều ảnh cùng lúc</div>
+        </div>
+      </label>
+      <div id="txn-img-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+    </div>
+  `;
+  document.getElementById('modal-ft').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
+    <button class="btn btn-sm" style="background:${color};border-color:${color};color:#fff" onclick="submitTxn('${txnType}')">
+      ${label}
+    </button>
+  `;
+}
+
+function onTxnStockChange(stockId) {
+  const s = warehouseStock.find(x=>x.id===stockId);
+  document.getElementById('txn-unit').value = s ? s.unit : '';
+}
+
+let txnImageData = []; // [{name, base64, url}]
+
+function previewTxnImages(input) {
+  txnImageData = [];
+  const preview = document.getElementById('txn-img-preview');
+  preview.innerHTML = '';
+  const files = Array.from(input.files);
+
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      txnImageData.push({ name: file.name, base64: e.target.result, size: file.size });
+      preview.innerHTML = txnImageData.map((img,i) => `
+        <div style="position:relative">
+          <img src="${img.base64}" style="width:72px;height:72px;object-fit:cover;border-radius:var(--r);border:1px solid var(--border)">
+          <div onclick="removeTxnImg(${i})" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;font-weight:700">×</div>
+          <div style="font-size:9px;color:var(--text2);text-align:center;margin-top:2px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${img.name}</div>
+        </div>`).join('');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removeTxnImg(idx) {
+  txnImageData.splice(idx,1);
+  const preview = document.getElementById('txn-img-preview');
+  preview.innerHTML = txnImageData.map((img,i) => `
+    <div style="position:relative">
+      <img src="${img.base64}" style="width:72px;height:72px;object-fit:cover;border-radius:var(--r);border:1px solid var(--border)">
+      <div onclick="removeTxnImg(${i})" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;font-weight:700">×</div>
+    </div>`).join('');
+}
+
+async function submitTxn(txnType) {
+  const stockId = document.getElementById('txn-stock').value;
+  const qty     = parseInt(document.getElementById('txn-qty').value)||0;
+  if(!stockId) { toast('Vui lòng chọn vật tư'); return; }
+  if(qty <= 0)  { toast('Số lượng phải lớn hơn 0'); return; }
+  if(!currentUser) { toast('Vui lòng đăng nhập'); return; }
+
+  const stock = warehouseStock.find(s=>s.id===stockId);
+  const now = new Date();
+  const dateStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()}`;
+
+  showLoading(txnImageData.length > 0 ? `Đang tải ${txnImageData.length} ảnh lên Drive...` : 'Đang lưu phiếu...');
+
+  // Upload ảnh lên Drive nếu có
+  const uploadedImages = [];
+  for(let i=0; i<txnImageData.length; i++) {
+    const img = txnImageData[i];
+    showLoading(`Đang tải ảnh (${i+1}/${txnImageData.length}): ${img.name}`);
+    try {
+      const res = await fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
+        action:'upload_file', proj:'warehouse-txn', folderIntent:'evidence',
+        filename: img.name, mimeType:'image/jpeg',
+        fileData: img.base64.split(',')[1]
+      })}).then(r=>r.json());
+      uploadedImages.push({ name: img.name, base64: img.base64, fileId: res.fileId||null, url: res.fileId?`https://drive.google.com/uc?id=${res.fileId}`:img.base64 });
+    } catch(e) {
+      uploadedImages.push({ name: img.name, base64: img.base64, url: img.base64 });
+    }
+  }
+
+  const txn = {
+    id: (txnType==='import'?'IMP':'EXP')+'-'+Date.now(),
+    type: txnType, stockId, stockName: stock.name, stockCode: stock.code,
+    qty, unit: stock.unit,
+    proj:         document.getElementById('txn-proj').value,
+    creator:      currentUser.name, creatorEmail: currentUser.email,
+    date: dateStr, note: document.getElementById('txn-note').value.trim(),
+    images: uploadedImages, status:'pending',
+    confirmedBy:'', confirmedAt:'', rejectReason:''
+  };
+  warehouseTxns.push(txn);
+  txnImageData = [];
+  hideLoading(); closeModal();
+  renderTxns(); syncDataToDrive();
+  toast(`📋 Đã tạo phiếu ${txn.id} — chờ thủ kho xác nhận`);
+}
+
+function openModal_viewTxn(txnId) {
+  const t = warehouseTxns.find(x=>x.id===txnId);
+  if(!t) return;
+  const isImport = t.type==='import';
+  const color = isImport ? 'var(--green)' : 'var(--red)';
+  const stLabel = t.status==='confirmed'?'✅ Đã xác nhận':t.status==='rejected'?'❌ Từ chối':'⏳ Chờ xác nhận';
+  const stColor = t.status==='confirmed'?'var(--green)':t.status==='rejected'?'var(--red)':'var(--amber)';
+  const proj = projects.find(p=>p.id===t.proj);
+  const canConfirm = isAdmin() && t.status==='pending';
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modal-hd-title').textContent = `${isImport?'📥':'📤'} Chi tiết phiếu — ${t.id}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Loại phiếu</div>
+        <div style="font-size:13px;font-weight:700;color:${color}">${isImport?'📥 Nhập kho':'📤 Xuất kho'}</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Trạng thái</div>
+        <div style="font-size:13px;font-weight:700;color:${stColor}">${stLabel}</div>
+      </div>
+    </div>
+    <table style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:14px">
+      ${[
+        ['Vật tư', `<strong>${t.stockCode} — ${t.stockName}</strong>`],
+        ['Số lượng', `<span style="color:${color};font-weight:700;font-family:monospace">${isImport?'+':'-'}${t.qty} ${t.unit}</span>`],
+        proj ? ['Dự án', `<span style="color:var(--accent)">${proj.id} — ${proj.name}</span>`] : null,
+        ['Người tạo', t.creator],
+        ['Ngày tạo', t.date],
+        t.note ? ['Ghi chú', t.note] : null,
+        t.confirmedBy ? ['Thủ kho', t.confirmedBy] : null,
+        t.confirmedAt ? ['Thời gian xác nhận', t.confirmedAt] : null,
+        t.rejectReason ? ['Lý do từ chối', `<span style="color:var(--red)">${t.rejectReason}</span>`] : null,
+      ].filter(Boolean).map(([k,v])=>`
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:8px 12px 8px 0;color:var(--text2);font-weight:600;white-space:nowrap;min-width:130px">${k}</td>
+          <td style="padding:8px 0">${v}</td>
+        </tr>`).join('')}
+    </table>
+    ${(t.images||[]).length>0?`
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">📸 Ảnh bằng chứng (${t.images.length} ảnh)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${t.images.map(img=>`
+          <a href="${img.url||img.base64}" target="_blank" style="display:block">
+            <img src="${img.url||img.base64}" style="width:90px;height:90px;object-fit:cover;border-radius:var(--r);border:1px solid var(--border);transition:transform .15s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform=''">
+          </a>`).join('')}
+      </div>
+    </div>`:'<div style="font-size:12px;color:var(--text2)">Không có ảnh đính kèm</div>'}
+  `;
+  document.getElementById('modal-ft').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Đóng</button>
+    ${canConfirm?`
+    <button class="btn btn-danger btn-sm" onclick="closeModal();promptRejectTxn('${t.id}')">❌ Từ chối</button>
+    <button class="btn btn-green btn-sm" onclick="closeModal();confirmTxn('${t.id}','confirmed')">✅ Xác nhận thủ kho</button>`:''}
+  `;
+}
+
 function renderWarehouse() {
   if(whCurrentTab==='stock') renderStock();
-  else renderOrders();
+  else if(whCurrentTab==='order') renderOrders();
+  else renderTxns();
+  // Update txn pending badge
+  const pending = warehouseTxns.filter(t=>t.status==='pending').length;
+  const b = document.getElementById('b-wh-txn-pending');
+  if(b){ b.textContent=pending; b.style.display=pending?'':'none'; }
 }
 
 // ── CHAT SYSTEM ─────────────────────────────────────────────
@@ -3484,7 +3935,7 @@ function sendChatFiles(input) {
 }
 
 function syncChatToDrive() {
-  const payload = { projects, issues, docs, team, tasks, chatRooms, warehouseStock, warehouseOrders };
+  const payload = { projects, issues, docs, team, tasks, chatRooms, warehouseStock, warehouseOrders, warehouseTxns };
   fetch(DRIVE_API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }).catch(()=>{});
 }
 
@@ -3623,6 +4074,10 @@ function renderAIMessages() {
   el.scrollTop = el.scrollHeight;
 }
 
+// ── GROQ API CONFIG ──────────────────────────────────────────
+const GROQ_API_KEY = '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';
+const GROQ_MODEL   = 'llama-3.3-70b-versatile'; // Model mạnh nhất của Groq, miễn phí
+
 async function sendAIMessage() {
   const input = document.getElementById('ai-input');
   const text = input.value.trim();
@@ -3638,21 +4093,29 @@ async function sendAIMessage() {
   if(sendBtn) sendBtn.disabled = true;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: buildSystemPrompt(),
-        messages: aiMessages.slice(-20) // giữ 20 tin gần nhất
+        model: GROQ_MODEL,
+        max_tokens: 1500,
+        temperature: 0.7,
+        messages: [
+          { role: 'system', content: buildSystemPrompt() },
+          ...aiMessages.slice(-20)
+        ]
       })
     });
+
     const data = await response.json();
-    const reply = data?.content?.[0]?.text || 'Xin lỗi, tôi không nhận được phản hồi. Vui lòng thử lại.';
+    if(data.error) throw new Error(data.error.message);
+    const reply = data?.choices?.[0]?.message?.content || 'Xin lỗi, tôi không nhận được phản hồi. Vui lòng thử lại.';
     aiMessages.push({ role:'assistant', content:reply });
   } catch(err) {
-    aiMessages.push({ role:'assistant', content:'⚠️ Lỗi kết nối API. Vui lòng kiểm tra kết nối mạng và thử lại.' });
+    aiMessages.push({ role:'assistant', content:`⚠️ Lỗi: ${err.message||'Không kết nối được Groq API. Kiểm tra lại mạng.'}` });
   }
 
   aiLoading = false;
