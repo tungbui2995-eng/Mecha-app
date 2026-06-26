@@ -232,7 +232,7 @@ body {
 .card-title { font-size: 13px; font-weight: 600; flex: 1; }
 .card-body { padding: 16px; }
 
-/* ── TABLES (cải thiện hiển thị) ── */
+/* ── TABLES ── */
 .tbl-wrap { overflow-x: auto; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
 .tbl th {
@@ -546,6 +546,30 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
   .two-col { grid-template-columns: 1fr; }
   .docs-layout { grid-template-columns: 1fr; }
   .chat-layout { grid-template-columns: 1fr; }
+}
+
+/* ── ORDER CART SPECIFIC ── */
+.order-cart-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.order-cart-item:last-child { border-bottom: none; }
+.order-cart-qty {
+  display: flex; align-items: center; gap: 6px;
+}
+.order-cart-qty button {
+  width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text0); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; transition: background .15s;
+}
+.order-cart-qty button:hover { background: var(--bg4); }
+.cart-summary {
+  background: var(--bg3); border-radius: var(--r);
+  padding: 8px 12px; margin-top: 8px;
+  display: flex; justify-content: space-between; font-size: 12px;
+  color: var(--text1);
 }
 </style>
 </head>
@@ -1092,11 +1116,11 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         </div>
       </div>
 
-      <!-- TAB: ORDER -->
+      <!-- TAB: ORDER (MỚI: search → add → tạo phiếu gộp) -->
       <div id="wh-panel-order" style="display:none">
         <div class="two-col" style="gap:16px;align-items:flex-start">
 
-          <!-- LEFT: Search + add to cart -->
+          <!-- CỘT TRÁI: Tìm kiếm + lịch sử -->
           <div>
             <div class="card" style="margin-bottom:12px">
               <div class="card-header">
@@ -1112,7 +1136,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
               </div>
             </div>
 
-            <!-- Order history -->
             <div class="card">
               <div class="card-header">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
@@ -1123,13 +1146,14 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
             </div>
           </div>
 
-          <!-- RIGHT: Cart + submit -->
+          <!-- CỘT PHẢI: Giỏ hàng + form tạo phiếu -->
           <div>
             <div class="card" style="position:sticky;top:0">
               <div class="card-header">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 <span class="card-title">Giỏ hàng</span>
                 <span class="nav-badge" id="cart-badge" style="display:none">0</span>
+                <button class="btn btn-xs btn-ghost" onclick="clearCart()" style="color:var(--red)">Xóa tất cả</button>
               </div>
               <div id="order-cart" style="min-height:80px;padding:10px 14px">
                 <div class="empty-state" style="padding:20px" id="cart-empty">
@@ -1138,7 +1162,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
                 </div>
               </div>
 
-              <!-- Order info -->
+              <!-- Form tạo phiếu (hiện khi có ít nhất 1 item trong giỏ) -->
               <div id="order-form-area" style="display:none;padding:0 14px 14px">
                 <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px"></div>
                 <div class="form-row">
@@ -1342,15 +1366,15 @@ const ROLE_TEMPLATES = {
 };
 
 let team = [
-  {name:'Tùng', email:'tungbui2995@gmail.com', role:'Lead Mechanical Engineer / PM', projects:[], status:'Sẵn sàng', roleTemplate:'admin',    perms: {...ROLE_TEMPLATES.admin}},
-  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer', projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
-  {name:'Trần Văn B',   email:'b@company.com', role:'Senior Mechanical Designer',     projects:['TL-2025-002'], status:'Sẵn sàng', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
-  {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}}
+  {name:'Tùng', email:'tungbui2995@gmail.com', role:'Lead Mechanical Engineer / PM', projects:[], status:'Sẵn sàng', roleTemplate:'admin',    perms:{...ROLE_TEMPLATES.admin}, password:'1234'},
+  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer', projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'},
+  {name:'Trần Văn B',   email:'b@company.com', role:'Senior Mechanical Designer',     projects:['TL-2025-002'], status:'Sẵn sàng', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'},
+  {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'}
 ];
 
 let tasks = []; // công việc đột xuất: { id, type, title, requester, pic, proj, deadline, note, done, createdAt }
 let warehouseStock  = []; // { id, code, name, unit, qty, minQty, location, supplier, note }
-let warehouseOrders = []; // { id, stockId, stockName, qty, unit, proj, orderer, ordererEmail, date, note, status, warehouseManager, confirmedAt }
+let warehouseOrders = []; // { id, items: [{stockId, stockName, stockCode, qty, unit}], proj, orderer, ordererEmail, date, note, status, warehouseManager, confirmedAt, confirmedBy }
 let warehouseTxns   = []; // { id, type:'import'|'export', stockId, stockName, stockCode, qty, unit, proj, creator, creatorEmail, date, note, images[], status:'pending'|'confirmed'|'rejected', confirmedBy, confirmedAt, rejectReason }
 
 const PAGE_TITLES = {
@@ -2183,7 +2207,7 @@ function addMember() {
   const name = document.getElementById('nm-name').value.trim();
   const email = document.getElementById('nm-email').value.trim();
   if(!name || !email){ toast('Vui lòng điền tên và email'); return; }
-  team.push({name, email, role: document.getElementById('nm-role').value.trim(), projects:[], status: document.getElementById('nm-status').value, roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}});
+  team.push({name, email, role: document.getElementById('nm-role').value.trim(), projects:[], status: document.getElementById('nm-status').value, roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'});
   closeModal(); renderTeam(); syncDataToDrive();
   toast(`Đã thêm ${name} vào danh sách nhân sự`);
 }
@@ -2263,9 +2287,6 @@ function openModal(type, data) {
   }
   else if(type==='edit-stock') {
     openModal_editStock(data);
-  }
-  else if(type==='new-order') {
-    openModal_newOrder();
   }
   else if(type==='new-txn') {
     openModal_newTxn(data); // data = 'import' | 'export'
@@ -2372,11 +2393,27 @@ function fetchDataFromDrive() {
       projects = data.projects || [];
       issues = data.issues || [];
       docs = data.docs || [];
-      if(data.team  && data.team.length  > 0) team  = data.team;
+      if(data.team  && data.team.length  > 0) {
+        // Merge team, giữ mật khẩu nếu có
+        data.team.forEach(t => {
+          const existing = team.find(m=>m.email===t.email);
+          if(existing) Object.assign(existing, t);
+          else team.push(t);
+        });
+      }
       if(data.tasks && data.tasks.length > 0) tasks = data.tasks;
       if(data.chatRooms) chatRooms = data.chatRooms;
       if(data.warehouseStock)  warehouseStock  = data.warehouseStock;
-      if(data.warehouseOrders) warehouseOrders = data.warehouseOrders;
+      if(data.warehouseOrders) {
+        // Convert old format (single item) to new format (items array)
+        warehouseOrders = data.warehouseOrders.map(o => {
+          if(o.items) return o;
+          return {
+            ...o,
+            items: o.stockId ? [{ stockId: o.stockId, stockName: o.stockName, stockCode: o.stockCode || '', qty: o.qty, unit: o.unit || '' }] : []
+          };
+        });
+      }
       if(data.warehouseTxns)   warehouseTxns   = data.warehouseTxns;
       renderAll(); initChat(); hideLoading();
       initLoginScreen();
@@ -2899,10 +2936,11 @@ function emergencyAdminLogin() {
     name: 'Admin (Khẩn cấp)',
     role: 'System Administrator',
     color: '#f87171',
-    perms: {...ROLE_TEMPLATES.admin}
+    perms: {...ROLE_TEMPLATES.admin},
+    password:'admin1234'
   };
   if(!team.find(t=>t.email===adminUser.email)) {
-    team.push({...adminUser, projects:[], status:'Sẵn sàng', roleTemplate:'admin', password:'admin1234'});
+    team.push({...adminUser, projects:[], status:'Sẵn sàng', roleTemplate:'admin'});
   }
   applyLogin(adminUser);
   toast('⚠️ Đăng nhập khẩn cấp. Vào Nhân sự → Phân quyền để cài lại cho từng người.');
@@ -2984,7 +3022,7 @@ function switchWhTab(tab) {
   document.querySelectorAll('.wh-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('wh-tab-'+tab).classList.add('active');
   if(tab==='stock') renderStock();
-  else if(tab==='order') renderOrders();
+  else if(tab==='order') { renderOrders(); renderOrderSearchResults(''); renderOrderHistory(); }
   else renderTxns();
 }
 
@@ -3024,6 +3062,262 @@ function renderStock() {
   }).join('');
 }
 
+function deleteStock(idx) {
+  showConfirm({
+    title:'Xóa vật tư', icon:'🗑️', iconBg:'var(--red-dim)',
+    msg:`Xác nhận xóa <strong>${warehouseStock[idx].name}</strong> khỏi kho?`,
+    okText:'Xóa', okClass:'btn-danger',
+    onOk:()=>{ warehouseStock.splice(idx,1); renderStock(); syncDataToDrive(); toast('Đã xóa vật tư'); }
+  });
+}
+
+function filterStock(q) {
+  const rows = document.querySelectorAll('#stock-tbody tr');
+  rows.forEach(r => r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none');
+}
+
+// ── ORDER TABS ──
+
+// Giỏ hàng: { stockId, qty }
+let orderCart = [];
+
+function renderOrderSearchResults(query) {
+  const container = document.getElementById('order-search-results');
+  if(!container) return;
+  if(!query.trim()) {
+    container.innerHTML = `<div style="font-size:12px;color:var(--text2);padding:8px 0">Nhập từ khóa để tìm vật tư</div>`;
+    return;
+  }
+  const q = query.toLowerCase();
+  const results = warehouseStock.filter(s => 
+    s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+  );
+  if(results.length===0) {
+    container.innerHTML = `<div style="font-size:12px;color:var(--text2);padding:8px 0">Không tìm thấy vật tư nào</div>`;
+    return;
+  }
+  container.innerHTML = results.map(s => {
+    const inCart = orderCart.find(item=>item.stockId===s.id);
+    const qtyInCart = inCart ? inCart.qty : 0;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <div>
+        <span style="font-weight:500">${s.code}</span> — ${s.name} 
+        <span style="color:var(--text2)">(Tồn: ${s.qty} ${s.unit})</span>
+        ${qtyInCart > 0 ? `<span class="badge badge-blue" style="margin-left:6px">Đã thêm ${qtyInCart}</span>` : ''}
+      </div>
+      <button class="btn btn-xs btn-accent" onclick="addToCart('${s.id}')" ${qtyInCart > 0 ? 'style="opacity:0.6" disabled' : ''}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Thêm vào giỏ
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function searchOrderStock(value) {
+  renderOrderSearchResults(value);
+}
+
+function addToCart(stockId) {
+  const existing = orderCart.find(item => item.stockId === stockId);
+  if(existing) {
+    existing.qty += 1;
+  } else {
+    orderCart.push({ stockId, qty: 1 });
+  }
+  renderCart();
+  renderOrderSearchResults(document.getElementById('order-search').value);
+  toast('Đã thêm vào giỏ');
+}
+
+function removeFromCart(stockId) {
+  orderCart = orderCart.filter(item => item.stockId !== stockId);
+  renderCart();
+  renderOrderSearchResults(document.getElementById('order-search').value);
+}
+
+function clearCart() {
+  if(orderCart.length===0) return;
+  showConfirm({
+    title:'Xóa giỏ hàng',
+    icon:'🛒',
+    iconBg:'var(--red-dim)',
+    msg:'Xác nhận xóa tất cả vật tư trong giỏ?',
+    okText:'Xóa tất cả',
+    okClass:'btn-danger',
+    onOk:()=>{ orderCart=[]; renderCart(); toast('Đã xóa giỏ hàng'); }
+  });
+}
+
+function renderCart() {
+  const container = document.getElementById('order-cart');
+  const empty = document.getElementById('cart-empty');
+  const badge = document.getElementById('cart-badge');
+  const formArea = document.getElementById('order-form-area');
+
+  if(orderCart.length===0) {
+    container.innerHTML = `<div class="empty-state" style="padding:20px" id="cart-empty">
+      <div style="font-size:20px;margin-bottom:4px">🛒</div>
+      <div style="font-size:12px;color:var(--text2)">Tìm và thêm vật tư vào giỏ</div>
+    </div>`;
+    badge.style.display = 'none';
+    formArea.style.display = 'none';
+    return;
+  }
+
+  let html = '';
+  let totalQty = 0;
+  orderCart.forEach((item, idx) => {
+    const stock = warehouseStock.find(s=>s.id===item.stockId);
+    if(!stock) return;
+    totalQty += item.qty;
+    html += `<div class="order-cart-item">
+      <div style="flex:1;min-width:0">
+        <span style="font-weight:500">${stock.code}</span> — ${stock.name}
+      </div>
+      <div class="order-cart-qty">
+        <button onclick="changeCartQty('${item.stockId}',-1)">−</button>
+        <span style="min-width:24px;text-align:center;font-weight:700">${item.qty}</span>
+        <button onclick="changeCartQty('${item.stockId}',1)">+</button>
+        <span style="color:var(--text2);font-size:11px;margin-left:4px">${stock.unit}</span>
+      </div>
+      <button class="btn btn-xs btn-danger" onclick="removeFromCart('${item.stockId}')" style="margin-left:8px">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  });
+
+  html += `<div class="cart-summary">
+    <span>Tổng: <strong>${orderCart.length}</strong> loại · <strong>${totalQty}</strong> đơn vị</span>
+  </div>`;
+
+  container.innerHTML = html;
+  badge.textContent = orderCart.length;
+  badge.style.display = '';
+
+  // Show form
+  formArea.style.display = '';
+  populateOrderFormSelects();
+}
+
+function changeCartQty(stockId, delta) {
+  const item = orderCart.find(i=>i.stockId===stockId);
+  if(!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  renderCart();
+}
+
+function populateOrderFormSelects() {
+  // Projects
+  const projSel = document.getElementById('cart-proj');
+  if(projSel) {
+    const current = projSel.value;
+    projSel.innerHTML = '<option value="">— Không liên quan dự án —</option>'
+      + projects.map(p=>`<option value="${p.id}" ${p.id===current?'selected':''}>${p.id} — ${p.name}</option>`).join('');
+  }
+  // Managers
+  const mgrSel = document.getElementById('cart-manager');
+  if(mgrSel) {
+    const current = mgrSel.value;
+    mgrSel.innerHTML = '<option value="">— Chọn quản lý kho —</option>'
+      + team.map(t=>`<option value="${t.email}" ${t.email===current?'selected':''}>${t.name} (${t.email})</option>`).join('');
+  }
+}
+
+function submitCartOrder() {
+  if(orderCart.length===0){ toast('Giỏ hàng trống'); return; }
+  const manager = document.getElementById('cart-manager').value;
+  if(!manager){ toast('Vui lòng chọn người nhận duyệt (quản lý kho)'); return; }
+  if(!currentUser){ toast('Vui lòng đăng nhập'); return; }
+
+  // Build items array
+  const items = orderCart.map(item => {
+    const stock = warehouseStock.find(s=>s.id===item.stockId);
+    return {
+      stockId: item.stockId,
+      stockName: stock?stock.name:'',
+      stockCode: stock?stock.code:'',
+      qty: item.qty,
+      unit: stock?stock.unit:''
+    };
+  });
+
+  const now = new Date();
+  const dateStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()}`;
+  const order = {
+    id: 'ORD-'+Date.now(),
+    items: items,
+    proj: document.getElementById('cart-proj').value,
+    orderer: currentUser.name,
+    ordererEmail: currentUser.email,
+    warehouseManagerEmail: manager,
+    date: dateStr,
+    note: document.getElementById('cart-note').value.trim(),
+    status: 'pending',
+    confirmedBy: '',
+    confirmedAt: ''
+  };
+
+  warehouseOrders.push(order);
+  orderCart = [];
+  renderCart();
+  renderOrders();
+  renderOrderHistory();
+  syncDataToDrive();
+  toast(`📤 Đã gửi phiếu order ${order.id} — đang thông báo quản lý kho...`);
+
+  // Send email to manager
+  const mgr = team.find(t=>t.email===manager);
+  if(mgr) sendOrderRequestEmail(order, mgr);
+}
+
+function sendOrderRequestEmail(order, mgr) {
+  const proj = projects.find(p=>p.id===order.proj);
+  const itemRows = order.items.map(it => `
+    <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">${it.stockCode}</td>
+        <td style="color:#eef0f4">${it.stockName}</td>
+        <td style="color:#fbbf24;font-weight:700">${it.qty} ${it.unit}</td></tr>
+  `).join('');
+
+  const htmlBody = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
+      <div style="background:linear-gradient(135deg,#4f8ef7,#6366f1);padding:22px 24px 18px">
+        <div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject — Kho vật tư</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.9);margin-top:4px">🛒 Có phiếu order mới cần duyệt</div>
+      </div>
+      <div style="padding:22px 24px">
+        <div style="font-size:15px;font-weight:600;margin-bottom:16px">Xin chào ${mgr.name},</div>
+        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px"><strong style="color:#eef0f4">${order.orderer}</strong> vừa tạo phiếu yêu cầu xuất kho cần bạn xem xét:</p>
+        <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:16px 18px;margin-bottom:18px">
+          <table style="font-size:13px;border-collapse:collapse;width:100%">
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0;white-space:nowrap">Mã phiếu</td><td style="color:#4f8ef7;font-weight:700">${order.id}</td></tr>
+            ${proj?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Dự án</td><td style="color:#4f8ef7">${proj.id} — ${proj.name}</td></tr>`:''}
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Người order</td><td style="color:#eef0f4">${order.orderer}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ngày tạo</td><td style="color:#eef0f4">${order.date}</td></tr>
+            ${order.note?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ghi chú</td><td style="color:#9aa3b5">${order.note}</td></tr>`:''}
+          </table>
+          <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--text1)">📦 Danh sách vật tư:</div>
+          <table style="font-size:13px;border-collapse:collapse;width:100%;margin-top:6px">
+            <tr><th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 8px 4px 0">Mã</th>
+                <th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 8px 4px 0">Tên</th>
+                <th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 0">SL</th></tr>
+            ${itemRows}
+          </table>
+        </div>
+        <p style="font-size:12px;color:#5c6578">Vui lòng đăng nhập MechaProject → Kho vật tư → Order từ kho để Xác nhận hoặc Từ chối.</p>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Kho vật tư · Không reply email này</div>
+    </div>`;
+
+  fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
+    action:'send_email', to: mgr.email,
+    subject: `[MechaProject Kho] Phiếu order mới cần duyệt: ${order.id}`,
+    body: `Phiếu order mới: ${order.id}\nVật tư: ${order.items.map(i=>i.stockName+' × '+i.qty+' '+i.unit).join('; ')}\nNgười order: ${order.orderer}`,
+    htmlBody
+  })}).then(r=>r.json()).then(res=>{
+    if(res.status==='success') toast(`✉ Đã gửi email thông báo tới ${mgr.name}`);
+  }).catch(()=>{});
+}
+
 function renderOrders() {
   const tbody = document.getElementById('order-tbody');
   if(!tbody) return;
@@ -3033,8 +3327,11 @@ function renderOrders() {
   document.getElementById('b-warehouse-order').textContent = pending||'';
   document.getElementById('b-warehouse-order').style.display = pending ? '' : 'none';
 
+  // Cập nhật count trên lịch sử
+  document.getElementById('order-history-count').textContent = warehouseOrders.length;
+
   if(warehouseOrders.length===0) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">🛒</div><div class="empty-state-title">Chưa có phiếu order nào</div>Nhấn "Tạo phiếu order" để bắt đầu</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">🛒</div><div class="empty-state-title">Chưa có phiếu order nào</div>Nhấn "Tìm vật tư" và thêm vào giỏ để tạo phiếu</div></td></tr>`;
     return;
   }
 
@@ -3042,13 +3339,15 @@ function renderOrders() {
     const stCls = o.status==='approved'?'badge-green':o.status==='rejected'?'badge-red':'badge-amber';
     const stLabel = o.status==='approved'?'✅ Đã duyệt':o.status==='rejected'?'❌ Từ chối':'⏳ Chờ duyệt';
     const proj = projects.find(p=>p.id===o.proj);
+    const itemsSummary = o.items.map(i=>`${i.stockName} × ${i.qty} ${i.unit}`).join('; ');
+    const shortSummary = itemsSummary.length > 60 ? itemsSummary.slice(0,60)+'…' : itemsSummary;
     const canManage = isAdmin() || (currentUser && currentUser.email === o.warehouseManagerEmail);
     const isPending = o.status==='pending';
 
     return `<tr>
       <td class="tbl-code">${o.id}</td>
-      <td style="font-weight:500;font-size:13px">${o.stockName}</td>
-      <td style="font-family:monospace;font-weight:700;color:var(--accent)">${o.qty} ${o.unit}</td>
+      <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${itemsSummary}">${shortSummary}</td>
+      <td style="font-family:monospace;font-weight:700;color:var(--accent)">${o.items.reduce((s,i)=>s+i.qty,0)}</td>
       <td style="font-size:12px">${proj?proj.id+' — '+proj.name:'—'}</td>
       <td style="font-size:12px">${o.orderer}</td>
       <td style="font-family:monospace;font-size:11px;color:var(--text2)">${o.date}</td>
@@ -3072,18 +3371,27 @@ function renderOrders() {
   }).join('');
 }
 
-function filterStock(q) {
-  const rows = document.querySelectorAll('#stock-tbody tr');
-  rows.forEach(r => r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none');
-}
-
-function deleteStock(idx) {
-  showConfirm({
-    title:'Xóa vật tư', icon:'🗑️', iconBg:'var(--red-dim)',
-    msg:`Xác nhận xóa <strong>${warehouseStock[idx].name}</strong> khỏi kho?`,
-    okText:'Xóa', okClass:'btn-danger',
-    onOk:()=>{ warehouseStock.splice(idx,1); renderStock(); syncDataToDrive(); toast('Đã xóa vật tư'); }
-  });
+function renderOrderHistory() {
+  // Hiển thị lịch sử order dạng danh sách nhanh bên trái
+  const el = document.getElementById('order-history-list');
+  if(!el) return;
+  if(warehouseOrders.length===0) {
+    el.innerHTML = `<div class="empty-state" style="padding:20px"><div style="font-size:12px;color:var(--text2)">Chưa có order</div></div>`;
+    return;
+  }
+  const list = [...warehouseOrders].reverse().slice(0,10);
+  el.innerHTML = list.map(o => {
+    const stColor = o.status==='approved'?'var(--green)':o.status==='rejected'?'var(--red)':'var(--amber)';
+    const stIcon = o.status==='approved'?'✅':o.status==='rejected'?'❌':'⏳';
+    const itemsShort = o.items.map(i=>`${i.stockCode||i.stockName}×${i.qty}`).join(', ');
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-family:monospace;font-weight:600;color:var(--accent)">${o.id}</span>
+        <span style="color:var(--text2);margin-left:6px">${itemsShort.length>30?itemsShort.slice(0,30)+'…':itemsShort}</span>
+      </div>
+      <span style="color:${stColor};font-weight:600">${stIcon}</span>
+    </div>`;
+  }).join('');
 }
 
 function confirmOrder(orderId, action) {
@@ -3094,7 +3402,7 @@ function confirmOrder(orderId, action) {
     title: action==='approved' ? '✅ Xác nhận xuất kho' : '❌ Từ chối phiếu order',
     icon:  action==='approved' ? '✅' : '❌',
     iconBg: action==='approved' ? 'var(--green-dim)' : 'var(--red-dim)',
-    msg: `${actionLabel} phiếu <strong>${orderId}</strong>: <strong>${o.stockName}</strong> × ${o.qty} ${o.unit}?`,
+    msg: `${actionLabel} phiếu <strong>${orderId}</strong> với ${o.items.length} vật tư?`,
     okText: actionLabel, okClass: action==='approved' ? 'btn-green' : 'btn-danger',
     onOk: () => {
       const now = new Date();
@@ -3104,11 +3412,13 @@ function confirmOrder(orderId, action) {
       o.confirmedAt = timeStr;
 
       if(action==='approved') {
-        const stock = warehouseStock.find(s=>s.id===o.stockId);
-        if(stock) stock.qty = Math.max(0, (stock.qty||0) - (o.qty||0));
+        o.items.forEach(item => {
+          const stock = warehouseStock.find(s=>s.id===item.stockId);
+          if(stock) stock.qty = Math.max(0, (stock.qty||0) - (item.qty||0));
+        });
       }
 
-      renderOrders(); renderStock(); syncDataToDrive();
+      renderOrders(); renderStock(); renderOrderHistory(); syncDataToDrive();
       toast(action==='approved' ? `✅ Đã xác nhận phiếu ${orderId}` : `❌ Đã từ chối phiếu ${orderId}`);
 
       const ordererMember = team.find(t=>t.email===o.ordererEmail);
@@ -3123,6 +3433,12 @@ function sendOrderResultEmail(o, action, recipient, timeStr) {
   const barColor = approved ? '#34d399,#059669' : '#f87171,#dc2626';
   const proj = projects.find(p=>p.id===o.proj);
 
+  const itemRows = o.items.map(it => `
+    <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">${it.stockCode}</td>
+        <td style="color:#eef0f4">${it.stockName}</td>
+        <td style="color:#fbbf24;font-weight:700">${it.qty} ${it.unit}</td></tr>
+  `).join('');
+
   const htmlBody = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
       <div style="background:linear-gradient(135deg,${barColor});padding:22px 24px 18px">
@@ -3131,17 +3447,22 @@ function sendOrderResultEmail(o, action, recipient, timeStr) {
       </div>
       <div style="padding:22px 24px">
         <div style="font-size:15px;font-weight:600;margin-bottom:16px">Xin chào ${recipient.name},</div>
-        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px">Phiếu order vật tư của bạn vừa được <strong style="color:${approved?'#34d399':'#f87171'}">${approved?'XÁC NHẬN':'TỪ CHỐI'}</strong>:</p>
+        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px">Phiếu order của bạn vừa được <strong style="color:${approved?'#34d399':'#f87171'}">${approved?'XÁC NHẬN':'TỪ CHỐI'}</strong>:</p>
         <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:16px 18px;margin-bottom:18px">
           <table style="font-size:13px;border-collapse:collapse;width:100%">
             <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0;white-space:nowrap">Mã phiếu</td><td style="color:#4f8ef7;font-weight:700">${o.id}</td></tr>
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Vật tư</td><td style="color:#eef0f4;font-weight:700">${o.stockName}</td></tr>
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Số lượng</td><td style="color:#eef0f4">${o.qty} ${o.unit}</td></tr>
             ${proj?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Dự án</td><td style="color:#4f8ef7">${proj.id} — ${proj.name}</td></tr>`:''}
             <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Kết quả</td><td style="color:${approved?'#34d399':'#f87171'};font-weight:700">${statusLabel}</td></tr>
             <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Duyệt bởi</td><td style="color:#eef0f4">${o.confirmedBy}</td></tr>
             <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Thời gian</td><td style="color:#eef0f4">${timeStr}</td></tr>
             ${o.note?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ghi chú</td><td style="color:#9aa3b5">${o.note}</td></tr>`:''}
+          </table>
+          <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--text1)">📦 Danh sách vật tư:</div>
+          <table style="font-size:13px;border-collapse:collapse;width:100%;margin-top:6px">
+            <tr><th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 8px 4px 0">Mã</th>
+                <th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 8px 4px 0">Tên</th>
+                <th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 0">SL</th></tr>
+            ${itemRows}
           </table>
         </div>
         <p style="font-size:12px;color:#5c6578">${approved?'Vui lòng đến kho nhận vật tư trong giờ hành chính.':'Liên hệ quản lý kho để biết thêm chi tiết.'}</p>
@@ -3151,8 +3472,8 @@ function sendOrderResultEmail(o, action, recipient, timeStr) {
 
   fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
     action:'send_email', to: recipient.email,
-    subject: `[MechaProject Kho] ${statusLabel}: ${o.stockName} × ${o.qty} ${o.unit}`,
-    body: `${statusLabel}\n\nPhiếu: ${o.id}\nVật tư: ${o.stockName}\nSố lượng: ${o.qty} ${o.unit}\nDuyệt bởi: ${o.confirmedBy}\nThời gian: ${timeStr}`,
+    subject: `[MechaProject Kho] ${statusLabel}: ${o.id}`,
+    body: `${statusLabel}\nPhiếu: ${o.id}\nKết quả: ${statusLabel}\nDuyệt bởi: ${o.confirmedBy}`,
     htmlBody
   })}).then(r=>r.json()).then(res=>{
     if(res.status==='success') toast(`✉ Đã gửi kết quả tới ${recipient.name}`);
@@ -3229,117 +3550,6 @@ function saveStock(idx) {
   toast(idx!==undefined?'Đã cập nhật vật tư':'Đã thêm vật tư vào kho');
 }
 
-function openModal_newOrder() {
-  const stockOpts = '<option value="">— Chọn vật tư —</option>'
-    + warehouseStock.map(s=>`<option value="${s.id}">${s.code} — ${s.name} (Tồn: ${s.qty} ${s.unit})</option>`).join('');
-  const projOpts = '<option value="">— Không liên quan dự án —</option>'
-    + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
-  const managerOpts = '<option value="">— Chọn quản lý kho —</option>'
-    + team.map(t=>`<option value="${t.email}">${t.name} (${t.email})</option>`).join('');
-
-  document.getElementById('modal-hd-title').textContent = '🛒 Tạo phiếu order vật tư';
-  document.getElementById('modal-body').innerHTML = `
-    <div class="form-row"><label class="form-label">Vật tư cần order *</label>
-      <select class="form-ctrl" id="or-stock" onchange="updateOrderUnit(this.value)">${stockOpts}</select>
-    </div>
-    <div class="form-grid">
-      <div class="form-row"><label class="form-label">Số lượng *</label><input class="form-ctrl" type="number" id="or-qty" value="1" min="1"></div>
-      <div class="form-row"><label class="form-label">Đơn vị</label><input class="form-ctrl" id="or-unit" readonly style="opacity:.7"></div>
-    </div>
-    <div class="form-row"><label class="form-label">Dự án liên quan</label><select class="form-ctrl" id="or-proj">${projOpts}</select></div>
-    <div class="form-row"><label class="form-label">Người nhận duyệt (Quản lý kho) *</label>
-      <select class="form-ctrl" id="or-manager">${managerOpts}</select>
-    </div>
-    <div class="form-row"><label class="form-label">Ghi chú / Lý do</label>
-      <textarea class="form-ctrl" id="or-note" rows="2" placeholder="Dùng cho công đoạn nào, lắp máy gì..."></textarea>
-    </div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:11px;color:var(--text2)">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="vertical-align:middle;margin-right:5px"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-      Sau khi tạo, hệ thống sẽ <strong style="color:var(--text1)">tự động gửi email</strong> thông báo cho quản lý kho xem xét và duyệt phiếu.
-    </div>
-  `;
-  document.getElementById('modal-ft').innerHTML = `
-    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
-    <button class="btn btn-accent" onclick="submitOrder()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      Gửi phiếu order
-    </button>
-  `;
-}
-
-function updateOrderUnit(stockId) {
-  const s = warehouseStock.find(x=>x.id===stockId);
-  document.getElementById('or-unit').value = s ? s.unit : '';
-}
-
-function submitOrder() {
-  const stockId  = document.getElementById('or-stock').value;
-  const qty      = parseInt(document.getElementById('or-qty').value)||0;
-  const manager  = document.getElementById('or-manager').value;
-  if(!stockId){ toast('Vui lòng chọn vật tư'); return; }
-  if(qty<=0)  { toast('Số lượng phải lớn hơn 0'); return; }
-  if(!manager){ toast('Vui lòng chọn quản lý kho'); return; }
-  if(!currentUser){ toast('Vui lòng đăng nhập'); return; }
-
-  const stock = warehouseStock.find(s=>s.id===stockId);
-  const now = new Date();
-  const dateStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()}`;
-  const order = {
-    id: 'ORD-'+Date.now(),
-    stockId, stockName: stock.name, stockCode: stock.code,
-    qty, unit: stock.unit,
-    proj:  document.getElementById('or-proj').value,
-    orderer: currentUser.name, ordererEmail: currentUser.email,
-    warehouseManagerEmail: manager,
-    date: dateStr, note: document.getElementById('or-note').value.trim(),
-    status: 'pending', confirmedBy:'', confirmedAt:''
-  };
-  warehouseOrders.push(order);
-  closeModal(); renderOrders(); syncDataToDrive();
-  toast('📤 Đã gửi phiếu order — đang thông báo quản lý kho...');
-
-  const mgr = team.find(t=>t.email===manager);
-  if(mgr) sendOrderRequestEmail(order, mgr, stock);
-}
-
-function sendOrderRequestEmail(order, mgr, stock) {
-  const proj = projects.find(p=>p.id===order.proj);
-  const htmlBody = `
-    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
-      <div style="background:linear-gradient(135deg,#4f8ef7,#6366f1);padding:22px 24px 18px">
-        <div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject — Kho vật tư</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.9);margin-top:4px">🛒 Có phiếu order mới cần duyệt</div>
-      </div>
-      <div style="padding:22px 24px">
-        <div style="font-size:15px;font-weight:600;margin-bottom:16px">Xin chào ${mgr.name},</div>
-        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px"><strong style="color:#eef0f4">${order.orderer}</strong> vừa tạo phiếu yêu cầu xuất kho cần bạn xem xét:</p>
-        <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:16px 18px;margin-bottom:18px">
-          <table style="font-size:13px;border-collapse:collapse;width:100%">
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0;white-space:nowrap">Mã phiếu</td><td style="color:#4f8ef7;font-weight:700">${order.id}</td></tr>
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Vật tư</td><td style="color:#eef0f4;font-weight:700">${order.stockCode} — ${order.stockName}</td></tr>
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Số lượng</td><td style="color:#fbbf24;font-weight:700">${order.qty} ${order.unit}</td></tr>
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Tồn kho</td><td style="color:${stock.qty<order.qty?'#f87171':'#34d399'}">${stock.qty} ${order.unit} ${stock.qty<order.qty?'⚠️ Không đủ tồn':''}</td></tr>
-            ${proj?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Dự án</td><td style="color:#4f8ef7">${proj.id} — ${proj.name}</td></tr>`:''}
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Người order</td><td style="color:#eef0f4">${order.orderer}</td></tr>
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ngày tạo</td><td style="color:#eef0f4">${order.date}</td></tr>
-            ${order.note?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ghi chú</td><td style="color:#9aa3b5">${order.note}</td></tr>`:''}
-          </table>
-        </div>
-        <p style="font-size:12px;color:#5c6578">Vui lòng đăng nhập MechaProject → Kho vật tư → Order từ kho để Xác nhận hoặc Từ chối.</p>
-      </div>
-      <div style="padding:14px 24px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Kho vật tư · Không reply email này</div>
-    </div>`;
-
-  fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
-    action:'send_email', to: mgr.email,
-    subject: `[MechaProject Kho] Phiếu order mới cần duyệt: ${order.stockName} × ${order.qty} ${order.unit}`,
-    body: `Phiếu order mới: ${order.id}\nVật tư: ${order.stockName}\nSố lượng: ${order.qty} ${order.unit}\nNgười order: ${order.orderer}\nVui lòng đăng nhập MechaProject để duyệt.`,
-    htmlBody
-  })}).then(r=>r.json()).then(res=>{
-    if(res.status==='success') toast(`✉ Đã gửi email thông báo tới ${mgr.name}`);
-  }).catch(()=>{});
-}
-
 // ── XUẤT / NHẬP KHO ─────────────────────────────────────────
 let txnFilterText = '';
 let txnFilterType = '';
@@ -3353,7 +3563,6 @@ function renderTxns() {
   const tbody = document.getElementById('txn-tbody');
   if(!tbody) return;
 
-  // Badge pending
   const pending = warehouseTxns.filter(t=>t.status==='pending').length;
   const b = document.getElementById('b-wh-txn-pending');
   if(b){ b.textContent=pending; b.style.display=pending?'':'none'; }
@@ -3436,7 +3645,6 @@ function confirmTxn(txnId, action, rejectReason) {
   t.confirmedAt = timeStr;
   if(rejectReason) t.rejectReason = rejectReason;
 
-  // Cập nhật tồn kho
   if(action==='confirmed') {
     const stock = warehouseStock.find(s=>s.id===t.stockId);
     if(stock) {
@@ -3448,7 +3656,6 @@ function confirmTxn(txnId, action, rejectReason) {
   closeModal(); renderTxns(); renderStock(); syncDataToDrive();
   toast(action==='confirmed' ? `✅ Đã xác nhận phiếu ${txnId}` : `❌ Đã từ chối phiếu ${txnId}`);
 
-  // Gửi email báo người tạo phiếu
   const creator = team.find(m=>m.email===t.creatorEmail);
   if(creator) sendTxnResultEmail(t, action, creator, timeStr, rejectReason);
 }
@@ -3575,7 +3782,7 @@ function onTxnStockChange(stockId) {
   document.getElementById('txn-unit').value = s ? s.unit : '';
 }
 
-let txnImageData = []; // [{name, base64, url}]
+let txnImageData = [];
 
 function previewTxnImages(input) {
   txnImageData = [];
@@ -3621,7 +3828,6 @@ async function submitTxn(txnType) {
 
   showLoading(txnImageData.length > 0 ? `Đang tải ${txnImageData.length} ảnh lên Drive...` : 'Đang lưu phiếu...');
 
-  // Upload ảnh lên Drive nếu có
   const uploadedImages = [];
   for(let i=0; i<txnImageData.length; i++) {
     const img = txnImageData[i];
@@ -3716,9 +3922,8 @@ function openModal_viewTxn(txnId) {
 
 function renderWarehouse() {
   if(whCurrentTab==='stock') renderStock();
-  else if(whCurrentTab==='order') renderOrders();
+  else if(whCurrentTab==='order') { renderOrders(); renderOrderSearchResults(''); renderOrderHistory(); }
   else renderTxns();
-  // Update txn pending badge
   const pending = warehouseTxns.filter(t=>t.status==='pending').length;
   const b = document.getElementById('b-wh-txn-pending');
   if(b){ b.textContent=pending; b.style.display=pending?'':'none'; }
@@ -3984,9 +4189,8 @@ function syncChatToDrive() {
   fetch(DRIVE_API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }).catch(()=>{});
 }
 
-// ── RENDER ALL ──
 // ── AI CHATBOT ──────────────────────────────────────────────
-let aiMessages = []; // {role:'user'|'assistant', content}
+let aiMessages = [];
 let aiLoading = false;
 
 const AI_PROMPTS = [
@@ -4097,7 +4301,6 @@ function renderAIMessages() {
     const isUser = m.role === 'user';
     const initial = currentUser?.name?.slice(-1)?.toUpperCase() || 'U';
     const color = currentUser?.color || 'var(--accent)';
-    // Format markdown-like
     let html = m.content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/`([^`]+)`/g, '<code style="background:var(--bg0);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>')
@@ -4119,9 +4322,8 @@ function renderAIMessages() {
   el.scrollTop = el.scrollHeight;
 }
 
-// ── GROQ API CONFIG ──────────────────────────────────────────
 const GROQ_API_KEY = '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';
-const GROQ_MODEL   = 'llama-3.3-70b-versatile'; // Model mạnh nhất của Groq, miễn phí
+const GROQ_MODEL   = 'llama-3.3-70b-versatile';
 
 async function sendAIMessage() {
   const input = document.getElementById('ai-input');
