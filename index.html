@@ -119,8 +119,6 @@ body {
   border-left-color: var(--red) !important; font-weight: 500;
 }
 .nav-item.active-red .nav-icon { opacity: 1; }
-
-/* ── NAV BADGE ── */
 .nav-badge {
   margin-left: auto; font-size: 10px; font-weight: 700;
   background: var(--accent-dim); color: var(--accent);
@@ -234,15 +232,16 @@ body {
 .card-title { font-size: 13px; font-weight: 600; flex: 1; }
 .card-body { padding: 16px; }
 
-/* ── TABLES ── */
-.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* ── TABLES (cải thiện hiển thị) ── */
+.tbl-wrap { overflow-x: auto; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
 .tbl th {
   text-align: left; padding: 10px 14px; font-size: 10px; font-weight: 700;
   letter-spacing: .1em; color: var(--text2); text-transform: uppercase;
   border-bottom: 1px solid var(--border); background: var(--bg1);
   white-space: nowrap;
 }
-.tbl td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.tbl td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
 .tbl tr:last-child td { border-bottom: none; }
 .tbl tbody tr { transition: background .1s; }
 .tbl tbody tr:hover td { background: var(--bg3); }
@@ -502,6 +501,14 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 }
 .phase-info-name { font-size: 14px; font-weight: 600; }
 .phase-info-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* ── Responsive cho bảng ── */
+@media (max-width: 768px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .docs-layout { grid-template-columns: 1fr; }
+  .chat-layout { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -725,7 +732,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         <div class="card-body" id="dash-gantt-mini"></div>
       </div>
 
-      <!-- CÔNG VIỆC ĐỘT XUẤT TRÊN DASHBOARD -->
       <div class="two-col" style="margin-top:14px">
         <div class="card">
           <div class="card-header">
@@ -762,21 +768,23 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         </button>
       </div>
       <div class="card">
-        <table class="tbl">
-          <thead>
-            <tr>
-              <th>Mã DA</th>
-              <th>Tên thiết bị / Máy</th>
-              <th>Khách hàng</th>
-              <th style="min-width:140px">Tiến độ</th>
-              <th>Hạn bàn giao</th>
-              <th>Giá trị</th>
-              <th>Trạng thái</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody id="proj-tbody"></tbody>
-        </table>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Mã DA</th>
+                <th>Tên thiết bị / Máy</th>
+                <th>Khách hàng</th>
+                <th style="min-width:140px">Tiến độ</th>
+                <th>Hạn bàn giao</th>
+                <th>Giá trị</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="proj-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -845,20 +853,22 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
             <span class="card-title" id="docs-panel-title">Tất cả tài liệu</span>
             <span class="badge badge-gray" id="docs-count-badge">0 file</span>
           </div>
-          <table class="tbl">
-            <thead>
-              <tr>
-                <th>Dự án</th>
-                <th>Tên file</th>
-                <th>Định dạng</th>
-                <th>Giai đoạn</th>
-                <th>Ngày cập nhật</th>
-                <th>Dung lượng</th>
-                <th>Tải xuống</th>
-              </tr>
-            </thead>
-            <tbody id="docs-tbody"></tbody>
-          </table>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Dự án</th>
+                  <th>Tên file</th>
+                  <th>Định dạng</th>
+                  <th>Giai đoạn</th>
+                  <th>Ngày cập nhật</th>
+                  <th>Dung lượng</th>
+                  <th>Tải xuống</th>
+                </tr>
+              </thead>
+              <tbody id="docs-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -880,20 +890,22 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
             Thêm nhân sự
           </button>
         </div>
-        <table class="tbl">
-          <thead>
-            <tr>
-              <th>Họ tên</th>
-              <th>Email</th>
-              <th>Vai trò chuyên môn</th>
-              <th>Dự án tham gia</th>
-              <th>Trạng thái</th>
-              <th>Phân quyền</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody id="team-tbody"></tbody>
-        </table>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>Vai trò chuyên môn</th>
+                <th>Dự án tham gia</th>
+                <th>Trạng thái</th>
+                <th>Phân quyền</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="team-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -930,7 +942,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
     <!-- CHAT -->
     <div class="view" id="view-chat">
       <div class="chat-layout">
-        <!-- Room list -->
         <div class="chat-rooms">
           <div class="chat-rooms-hd">
             💬 Rooms
@@ -940,7 +951,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
           </div>
           <div id="chat-room-list"></div>
         </div>
-        <!-- Chat main -->
         <div class="chat-main">
           <div class="chat-header" id="chat-header">
             <div class="chat-header-icon" id="chat-header-icon">💬</div>
@@ -985,7 +995,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
       </div>
     </div>
   </div>
-</div>
 
     <!-- WAREHOUSE VIEW -->
     <div class="view" id="view-warehouse">
@@ -1017,22 +1026,24 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
           </div>
         </div>
         <div class="card">
-          <table class="tbl" id="stock-table">
-            <thead>
-              <tr>
-                <th>Mã VT</th>
-                <th>Tên vật tư / Linh kiện</th>
-                <th>Đơn vị</th>
-                <th>Tồn kho</th>
-                <th>Tối thiểu</th>
-                <th>Vị trí kho</th>
-                <th>Nhà cung cấp</th>
-                <th>Ghi chú</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="stock-tbody"></tbody>
-          </table>
+          <div class="tbl-wrap">
+            <table class="tbl" id="stock-table">
+              <thead>
+                <tr>
+                  <th>Mã VT</th>
+                  <th>Tên vật tư / Linh kiện</th>
+                  <th>Đơn vị</th>
+                  <th>Tồn kho</th>
+                  <th>Tối thiểu</th>
+                  <th>Vị trí kho</th>
+                  <th>Nhà cung cấp</th>
+                  <th>Ghi chú</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="stock-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -1049,22 +1060,24 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
           </button>
         </div>
         <div class="card">
-          <table class="tbl">
-            <thead>
-              <tr>
-                <th>Mã phiếu</th>
-                <th>Vật tư</th>
-                <th>Số lượng</th>
-                <th>Dự án</th>
-                <th>Người order</th>
-                <th>Ngày tạo</th>
-                <th>Ghi chú</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="order-tbody"></tbody>
-          </table>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Mã phiếu</th>
+                  <th>Vật tư</th>
+                  <th>Số lượng</th>
+                  <th>Dự án</th>
+                  <th>Người order</th>
+                  <th>Ngày tạo</th>
+                  <th>Ghi chú</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="order-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -1127,7 +1140,7 @@ const ROLE_TEMPLATES = {
 };
 
 let team = [
-  {name:'Tung', email:'tungbui2995@gmail.com', role:'Lead Mechanical Engineer / PM', projects:[], status:'Sẵn sàng', roleTemplate:'admin',    perms: {...ROLE_TEMPLATES.admin}},
+  {name:'Tùng', email:'tungbui2995@gmail.com', role:'Lead Mechanical Engineer / PM', projects:[], status:'Sẵn sàng', roleTemplate:'admin',    perms: {...ROLE_TEMPLATES.admin}},
   {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer', projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
   {name:'Trần Văn B',   email:'b@company.com', role:'Senior Mechanical Designer',     projects:['TL-2025-002'], status:'Sẵn sàng', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
   {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}}
@@ -1324,92 +1337,94 @@ function loadPhases(pId) {
         <span class="card-title">Chi tiết từng giai đoạn</span>
         <span style="font-size:11px;color:var(--text2)">Nhấn vào dot phía trên để cập nhật +20%</span>
       </div>
-      <table class="tbl">
-        <thead>
-          <tr>
-            <th>GĐ</th>
-            <th>Tên công việc</th>
-            <th style="min-width:160px">Tiến độ</th>
-            <th>Trạng thái</th>
-            <th style="min-width:160px">
-              <div style="display:flex;align-items:center;gap:5px">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                PIC phụ trách
-              </div>
-            </th>
-            <th style="min-width:150px">
-              <div style="display:flex;align-items:center;gap:5px">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Deadline giai đoạn
-              </div>
-            </th>
-            <th style="min-width:160px">
-              <div style="display:flex;align-items:center;gap:5px">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Tài liệu giai đoạn
-              </div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          ${PH.map((ph,i) => {
-            const pct = p.phases[i]||0;
-            const color = pct===100?'var(--green)':pct>0?'var(--accent)':'var(--text2)';
-            const st = pct===100?'<span class="badge badge-green">Hoàn thành</span>':pct>0?'<span class="badge badge-blue">Đang làm</span>':'<span class="badge badge-gray">Chưa bắt đầu</span>';
-            const dl = p.phaseDeadlines[i] || '';
-            const dlDisplay = dl ? `<span style="font-family:monospace;font-size:11px;color:${isOverdue(dl)?'var(--red)':'var(--text1)'}">${formatDateVN(dl)}</span>` : '<span style="color:var(--text2);font-size:11px">Chưa đặt</span>';
-            const docCount = (p.phaseDocs[i]||[]).length;
-            const picEmail = p.phasePIC[i] || '';
-            const picMember = team.find(t=>t.email===picEmail);
-            const picDisplay = picMember
-              ? `<div style="display:flex;align-items:center;gap:5px">
-                  <div style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);border:1px solid rgba(79,142,247,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0">${picMember.name.slice(-1)}</div>
-                  <div><div style="font-size:12px;font-weight:500">${picMember.name}</div><div style="font-size:10px;color:var(--text2)">${picMember.role.split('/')[0].trim()}</div></div>
-                </div>`
-              : '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>';
-            return `<tr>
-              <td class="tbl-code">P${i+1}</td>
-              <td style="font-size:13px">${ph.icon} ${ph.name}</td>
-              <td>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
-                  <span style="font-size:11px;font-family:monospace;color:${color};min-width:28px">${pct}%</span>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>GĐ</th>
+              <th>Tên công việc</th>
+              <th style="min-width:160px">Tiến độ</th>
+              <th>Trạng thái</th>
+              <th style="min-width:160px">
+                <div style="display:flex;align-items:center;gap:5px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  PIC phụ trách
                 </div>
-              </td>
-              <td>${st}</td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                  ${picDisplay}
-                  <button class="btn btn-xs btn-ghost" onclick="assignPIC('${pId}',${i})" style="padding:3px 6px;flex-shrink:0" title="Gán PIC">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
+              </th>
+              <th style="min-width:150px">
+                <div style="display:flex;align-items:center;gap:5px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Deadline giai đoạn
                 </div>
-              </td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px">
-                  ${dlDisplay}
-                  <button class="btn btn-xs btn-ghost" onclick="editPhaseDeadline('${pId}',${i})" title="Đặt deadline" style="padding:3px 6px;flex-shrink:0">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
+              </th>
+              <th style="min-width:160px">
+                <div style="display:flex;align-items:center;gap:5px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Tài liệu giai đoạn
                 </div>
-              </td>
-              <td>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <label class="upload-phase-btn" title="Tải tài liệu lên giai đoạn P${i+1}">
-                    <input type="file" multiple style="display:none" onchange="uploadPhaseDoc('${pId}',${i},this)">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-                    Tải lên
-                  </label>
-                  ${docCount > 0 ? `<button class="btn btn-xs" style="background:var(--green-dim);border-color:rgba(52,211,153,0.2);color:var(--green)" onclick="viewPhaseDocs('${pId}',${i})">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    ${docCount} file
-                  </button>` : ''}
-                </div>
-              </td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            ${PH.map((ph,i) => {
+              const pct = p.phases[i]||0;
+              const color = pct===100?'var(--green)':pct>0?'var(--accent)':'var(--text2)';
+              const st = pct===100?'<span class="badge badge-green">Hoàn thành</span>':pct>0?'<span class="badge badge-blue">Đang làm</span>':'<span class="badge badge-gray">Chưa bắt đầu</span>';
+              const dl = p.phaseDeadlines[i] || '';
+              const dlDisplay = dl ? `<span style="font-family:monospace;font-size:11px;color:${isOverdue(dl)?'var(--red)':'var(--text1)'}">${formatDateVN(dl)}</span>` : '<span style="color:var(--text2);font-size:11px">Chưa đặt</span>';
+              const docCount = (p.phaseDocs[i]||[]).length;
+              const picEmail = p.phasePIC[i] || '';
+              const picMember = team.find(t=>t.email===picEmail);
+              const picDisplay = picMember
+                ? `<div style="display:flex;align-items:center;gap:5px">
+                    <div style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);border:1px solid rgba(79,142,247,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0">${picMember.name.slice(-1)}</div>
+                    <div><div style="font-size:12px;font-weight:500">${picMember.name}</div><div style="font-size:10px;color:var(--text2)">${picMember.role.split('/')[0].trim()}</div></div>
+                  </div>`
+                : '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>';
+              return `<tr>
+                <td class="tbl-code">P${i+1}</td>
+                <td style="font-size:13px">${ph.icon} ${ph.name}</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
+                    <span style="font-size:11px;font-family:monospace;color:${color};min-width:28px">${pct}%</span>
+                  </div>
+                </td>
+                <td>${st}</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    ${picDisplay}
+                    <button class="btn btn-xs btn-ghost" onclick="assignPIC('${pId}',${i})" style="padding:3px 6px;flex-shrink:0" title="Gán PIC">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                  </div>
+                </td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    ${dlDisplay}
+                    <button class="btn btn-xs btn-ghost" onclick="editPhaseDeadline('${pId}',${i})" title="Đặt deadline" style="padding:3px 6px;flex-shrink:0">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                  </div>
+                </td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <label class="upload-phase-btn" title="Tải tài liệu lên giai đoạn P${i+1}">
+                      <input type="file" multiple style="display:none" onchange="uploadPhaseDoc('${pId}',${i},this)">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                      Tải lên
+                    </label>
+                    ${docCount > 0 ? `<button class="btn btn-xs" style="background:var(--green-dim);border-color:rgba(52,211,153,0.2);color:var(--green)" onclick="viewPhaseDocs('${pId}',${i})">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      ${docCount} file
+                    </button>` : ''}
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>
   `;
 }
@@ -2202,11 +2217,9 @@ function openTaskModal(type, editId) {
   overlay.classList.add('open');
   document.getElementById('modal-hd-title').textContent = (isEdit ? '✏️ Sửa' : '➕ Thêm') + ' — ' + typeLabel;
 
-  // Build project options
   const projOpts = '<option value="">— Không liên quan dự án —</option>'
     + projects.map(p=>`<option value="${p.id}" ${task&&task.proj===p.id?'selected':''}>${p.id} — ${p.name}</option>`).join('');
 
-  // Build PIC options
   const picOpts = '<option value="">— Chọn người xử lý —</option>'
     + team.map(t=>`<option value="${t.email}" ${task&&task.pic===t.email?'selected':''}>${t.name} (${t.email})</option>`).join('');
 
@@ -2458,7 +2471,6 @@ function confirmTask(taskId) {
   const requester = team.find(m=>m.email===t.requester);
   const proj      = projects.find(p=>p.id===t.proj);
 
-  // Đánh dấu đã xác nhận
   t.confirmed   = true;
   t.confirmedAt = new Date().toISOString();
 
@@ -2466,7 +2478,6 @@ function confirmTask(taskId) {
   syncDataToDrive();
   toast(`✓ ${member ? member.name : 'PIC'} đã xác nhận nhận việc`);
 
-  // Gửi email cho người yêu cầu nếu có
   if(!requester || !requester.email) return;
 
   const isUrgent = t.type === 'urgent';
