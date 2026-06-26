@@ -1134,7 +1134,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
             <div style="font-size:11px;color:var(--text2);line-height:1.6">
               Trợ lý AI hiểu ngữ cảnh dự án của bạn. Có thể hỏi về tiến độ, nhân sự, vật tư, kỹ thuật cơ khí và nhiều hơn.
             </div>
-            <div class="ai-model-badge" style="margin-top:10px">Claude Sonnet 4.6</div>
+            <div class="ai-model-badge" style="margin-top:10px">Gemini 2.0 Flash</div>
           </div>
 
           <div class="ai-info-card">
@@ -1194,6 +1194,8 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 
 <script>
 const DRIVE_API_URL = "https://script.google.com/macros/s/AKfycbzA-4NPh-rxPxMERUD9wKlev-cauLgI99Kd4H-Q7W2unJLbxu42wiM_X4NWjBv0bjv-/exec";
+const GEMINI_API_KEY = "AIzaSyDRiN6kaIEKFl3oS20mOCm7V_iD7cbjq2c";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const PH = [
   {id:'p1', name:'Khảo sát & Phương án', icon:'🔍'},
@@ -3488,7 +3490,6 @@ function syncChatToDrive() {
   fetch(DRIVE_API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }).catch(()=>{});
 }
 
-// ── RENDER ALL ──
 // ── AI CHATBOT ──────────────────────────────────────────────
 let aiMessages = []; // {role:'user'|'assistant', content}
 let aiLoading = false;
@@ -3638,21 +3639,40 @@ async function sendAIMessage() {
   if(sendBtn) sendBtn.disabled = true;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Gộp system prompt + lịch sử hội thoại thành một prompt duy nhất
+    const systemPrompt = buildSystemPrompt();
+    const conversationHistory = aiMessages.slice(-10).map(m => 
+      `${m.role === 'user' ? 'Người dùng' : 'Trợ lý'}: ${m.content}`
+    ).join('\n\n');
+    const fullPrompt = `${systemPrompt}\n\n--- LỊCH SỬ HỘI THOẠI ---\n${conversationHistory}\n\n--- CÂU HỎI ---\nNgười dùng: ${text}\n\nTrợ lý:`;
+
+    const payload = {
+      contents: [
+        {
+          parts: [{ text: fullPrompt }]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1200,
+        topP: 0.9
+      }
+    };
+
+    const response = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: buildSystemPrompt(),
-        messages: aiMessages.slice(-20) // giữ 20 tin gần nhất
-      })
+      body: JSON.stringify(payload)
     });
+
     const data = await response.json();
-    const reply = data?.content?.[0]?.text || 'Xin lỗi, tôi không nhận được phản hồi. Vui lòng thử lại.';
+    if (data.error) {
+      throw new Error(data.error.message || 'Lỗi API Gemini');
+    }
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Xin lỗi, tôi không nhận được phản hồi. Vui lòng thử lại.';
     aiMessages.push({ role:'assistant', content:reply });
   } catch(err) {
-    aiMessages.push({ role:'assistant', content:'⚠️ Lỗi kết nối API. Vui lòng kiểm tra kết nối mạng và thử lại.' });
+    aiMessages.push({ role:'assistant', content:`⚠️ Lỗi kết nối Gemini: ${err.message}. Vui lòng kiểm tra API key và thử lại.` });
   }
 
   aiLoading = false;
