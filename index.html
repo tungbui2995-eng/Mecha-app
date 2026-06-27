@@ -232,7 +232,7 @@ body {
 .card-title { font-size: 13px; font-weight: 600; flex: 1; }
 .card-body { padding: 16px; }
 
-/* ── TABLES ── */
+/* ── TABLES (cải thiện hiển thị) ── */
 .tbl-wrap { overflow-x: auto; }
 .tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
 .tbl th {
@@ -482,6 +482,21 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 .stock-ok  { color:var(--green); }
 .stock-mid { color:var(--amber); }
 
+/* ── ORDER CART ── */
+.order-stock-result { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--r); border:1px solid var(--border); background:var(--bg3); margin-bottom:6px; cursor:pointer; transition:all .12s; }
+.order-stock-result:hover { border-color:var(--accent); background:var(--accent-dim); }
+.order-stock-result .stock-info { flex:1; min-width:0; }
+.order-stock-result .stock-name { font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.order-stock-result .stock-meta { font-size:10px; color:var(--text2); margin-top:1px; }
+.cart-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); }
+.cart-item:last-child { border-bottom:none; }
+.cart-item-name { flex:1; font-size:12px; font-weight:500; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cart-qty-input { width:64px; padding:4px 8px; background:var(--bg4); border:1px solid var(--border2); border-radius:var(--r); color:var(--text0); font-size:12px; text-align:center; font-family:monospace; }
+.cart-qty-input:focus { outline:none; border-color:var(--accent); }
+.history-order-item { padding:10px 14px; border-bottom:1px solid var(--border); font-size:12px; cursor:pointer; transition:background .1s; }
+.history-order-item:hover { background:var(--bg3); }
+.history-order-item:last-child { border-bottom:none; }
+
 /* ── LOGIN ── */
 .login-screen {
   position:fixed; inset:0; background:var(--bg0);
@@ -546,30 +561,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
   .two-col { grid-template-columns: 1fr; }
   .docs-layout { grid-template-columns: 1fr; }
   .chat-layout { grid-template-columns: 1fr; }
-}
-
-/* ── ORDER CART SPECIFIC ── */
-.order-cart-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 0; border-bottom: 1px solid var(--border);
-  font-size: 12px;
-}
-.order-cart-item:last-child { border-bottom: none; }
-.order-cart-qty {
-  display: flex; align-items: center; gap: 6px;
-}
-.order-cart-qty button {
-  width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--border);
-  background: var(--bg3); color: var(--text0); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; transition: background .15s;
-}
-.order-cart-qty button:hover { background: var(--bg4); }
-.cart-summary {
-  background: var(--bg3); border-radius: var(--r);
-  padding: 8px 12px; margin-top: 8px;
-  display: flex; justify-content: space-between; font-size: 12px;
-  color: var(--text1);
 }
 </style>
 </head>
@@ -1120,7 +1111,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
       <div id="wh-panel-order" style="display:none">
         <div class="two-col" style="gap:16px;align-items:flex-start">
 
-          <!-- CỘT TRÁI: Tìm kiếm + lịch sử -->
+          <!-- LEFT: Search + add to cart -->
           <div>
             <div class="card" style="margin-bottom:12px">
               <div class="card-header">
@@ -1136,6 +1127,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
               </div>
             </div>
 
+            <!-- Order history -->
             <div class="card">
               <div class="card-header">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
@@ -1146,14 +1138,13 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
             </div>
           </div>
 
-          <!-- CỘT PHẢI: Giỏ hàng + form tạo phiếu -->
+          <!-- RIGHT: Cart + submit -->
           <div>
             <div class="card" style="position:sticky;top:0">
               <div class="card-header">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 <span class="card-title">Giỏ hàng</span>
                 <span class="nav-badge" id="cart-badge" style="display:none">0</span>
-                <button class="btn btn-xs btn-ghost" onclick="clearCart()" style="color:var(--red)">Xóa tất cả</button>
               </div>
               <div id="order-cart" style="min-height:80px;padding:10px 14px">
                 <div class="empty-state" style="padding:20px" id="cart-empty">
@@ -1162,7 +1153,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
                 </div>
               </div>
 
-              <!-- Form tạo phiếu -->
+              <!-- Order info -->
               <div id="order-form-area" style="display:none;padding:0 14px 14px">
                 <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:10px"></div>
                 <div class="form-row">
@@ -1366,16 +1357,16 @@ const ROLE_TEMPLATES = {
 };
 
 let team = [
-  {name:'Tùng', email:'tungbui2995@gmail.com', role:'Lead Mechanical Engineer / PM', projects:[], status:'Sẵn sàng', roleTemplate:'admin',    perms:{...ROLE_TEMPLATES.admin}, password:'1234'},
-  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer', projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'},
-  {name:'Trần Văn B',   email:'b@company.com', role:'Senior Mechanical Designer',     projects:['TL-2025-002'], status:'Sẵn sàng', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'},
-  {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'}
+  {name:'Tùng', email:'tungbui2995@gmail.com', role:'Lead Mechanical Engineer / PM', projects:[], status:'Sẵn sàng', roleTemplate:'admin',    perms: {...ROLE_TEMPLATES.admin}},
+  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer', projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
+  {name:'Trần Văn B',   email:'b@company.com', role:'Senior Mechanical Designer',     projects:['TL-2025-002'], status:'Sẵn sàng', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}},
+  {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms: {...ROLE_TEMPLATES.engineer}}
 ];
 
-let tasks = [];
-let warehouseStock  = [];
-let warehouseOrders = [];
-let warehouseTxns   = [];
+let tasks = []; // công việc đột xuất: { id, type, title, requester, pic, proj, deadline, note, done, createdAt }
+let warehouseStock  = []; // { id, code, name, unit, qty, minQty, location, supplier, note }
+let warehouseOrders = []; // { id, stockId, stockName, qty, unit, proj, orderer, ordererEmail, date, note, status, warehouseManager, confirmedAt }
+let warehouseTxns   = []; // { id, type:'import'|'export', stockId, stockName, stockCode, qty, unit, proj, creator, creatorEmail, date, note, images[], status:'pending'|'confirmed'|'rejected', confirmedBy, confirmedAt, rejectReason }
 
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
@@ -1657,6 +1648,7 @@ function loadPhases(pId) {
   `;
 }
 
+// ── PHASE DEADLINE HELPERS ──
 function formatDateVN(dateStr) {
   if(!dateStr) return '';
   const [y,m,d] = dateStr.split('-');
@@ -1667,6 +1659,7 @@ function isOverdue(dateStr) {
   return new Date(dateStr) < new Date();
 }
 
+// ── PIC ASSIGNMENT ──
 function assignPIC(pId, idx) {
   const p = projects.find(x=>x.id===pId);
   if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
@@ -1825,6 +1818,7 @@ function savePhaseDeadline(pId, idx, val) {
   toast(`Đã đặt deadline P${idx+1}: ${formatDateVN(val)}`);
 }
 
+// ── PHASE DOC UPLOAD ──
 function uploadPhaseDoc(pId, idx, input) {
   const p = projects.find(x=>x.id===pId);
   if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
@@ -1868,6 +1862,7 @@ function uploadPhaseDoc(pId, idx, input) {
             driveLink: res.driveLink || null
           };
           p.phaseDocs[idx].push(docEntry);
+          // Also add to global docs
           docs.unshift({
             proj: pId, name: file.name,
             type: file.name.split('.').pop().toUpperCase(),
@@ -1924,6 +1919,7 @@ function updatePhasePct(pId, idx) {
   syncDataToDrive();
 }
 
+// ── RENDER GANTT ──
 function renderGantt() {
   const wrap = document.getElementById('gantt-wrap');
   if(projects.length===0){ wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">Không có dữ liệu tiến độ</div></div>`; return; }
@@ -1942,6 +1938,7 @@ function renderGantt() {
   }).join('');
 }
 
+// ── RENDER ISSUES ──
 function renderIssues() {
   const container = document.getElementById('issues-container');
   if(issues.length===0){
@@ -1973,6 +1970,7 @@ function closeIssue(id){
   });
 }
 
+// ── RENDER FOLDERS ──
 function renderFolders() {
   const list = document.getElementById('folder-list');
   list.innerHTML = folders.map(f => {
@@ -1983,6 +1981,7 @@ function renderFolders() {
   }).join('');
 }
 
+// ── RENDER DOCS (with download button) ──
 function renderDocs() {
   const tbody = document.getElementById('docs-tbody');
   const titleEl = document.getElementById('docs-panel-title');
@@ -2030,6 +2029,7 @@ function downloadDoc(name) {
   toast(`File "${name}" chưa có liên kết Drive trực tiếp`);
 }
 
+// ── RENDER TEAM ──
 function renderTeam() {
   const tbody = document.getElementById('team-tbody');
   if(team.length===0){
@@ -2198,7 +2198,7 @@ function addMember() {
   const name = document.getElementById('nm-name').value.trim();
   const email = document.getElementById('nm-email').value.trim();
   if(!name || !email){ toast('Vui lòng điền tên và email'); return; }
-  team.push({name, email, role: document.getElementById('nm-role').value.trim(), projects:[], status: document.getElementById('nm-status').value, roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'});
+  team.push({name, email, role: document.getElementById('nm-role').value.trim(), projects:[], status: document.getElementById('nm-status').value, roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}});
   closeModal(); renderTeam(); syncDataToDrive();
   toast(`Đã thêm ${name} vào danh sách nhân sự`);
 }
@@ -2280,10 +2280,10 @@ function openModal(type, data) {
     openModal_editStock(data);
   }
   else if(type==='new-txn') {
-    openModal_newTxn(data);
+    openModal_newTxn(data); // data = 'import' | 'export'
   }
   else if(type==='view-txn') {
-    openModal_viewTxn(data);
+    openModal_viewTxn(data); // data = txn id
   }
 }
 
@@ -2369,6 +2369,7 @@ function saveDocWithFile() {
   uploadNext();
 }
 
+// ── DRIVE API ──
 function fetchDataFromDrive() {
   showLoading("Đang nạp dữ liệu từ Google Drive...");
   document.getElementById('drive-status-text').textContent = 'Đang kết nối...';
@@ -2383,25 +2384,11 @@ function fetchDataFromDrive() {
       projects = data.projects || [];
       issues = data.issues || [];
       docs = data.docs || [];
-      if(data.team  && data.team.length  > 0) {
-        data.team.forEach(t => {
-          const existing = team.find(m=>m.email===t.email);
-          if(existing) Object.assign(existing, t);
-          else team.push(t);
-        });
-      }
+      if(data.team  && data.team.length  > 0) team  = data.team;
       if(data.tasks && data.tasks.length > 0) tasks = data.tasks;
       if(data.chatRooms) chatRooms = data.chatRooms;
       if(data.warehouseStock)  warehouseStock  = data.warehouseStock;
-      if(data.warehouseOrders) {
-        warehouseOrders = data.warehouseOrders.map(o => {
-          if(o.items) return o;
-          return {
-            ...o,
-            items: o.stockId ? [{ stockId: o.stockId, stockName: o.stockName, stockCode: o.stockCode || '', qty: o.qty, unit: o.unit || '' }] : []
-          };
-        });
-      }
+      if(data.warehouseOrders) warehouseOrders = data.warehouseOrders;
       if(data.warehouseTxns)   warehouseTxns   = data.warehouseTxns;
       renderAll(); initChat(); hideLoading();
       initLoginScreen();
@@ -2441,7 +2428,8 @@ function toast(msg) {
   setTimeout(()=>el.classList.remove('show'), 2800);
 }
 
-// ── MANUAL TASKS ──
+// ── MANUAL TASKS (Yêu cầu gấp / Cần xử lý hôm nay) ──────
+
 function openTaskModal(type, editId) {
   const isEdit = !!editId;
   const task   = isEdit ? tasks.find(t=>t.id===editId) : null;
@@ -2632,6 +2620,7 @@ function taskCardHtml(t) {
   </div>`;
 }
 
+// ── GỬI EMAIL THÔNG BÁO TASK ──
 function sendTaskEmail(taskId) {
   const t = tasks.find(x=>x.id===taskId);
   if(!t) return;
@@ -2697,6 +2686,7 @@ function sendTaskEmail(taskId) {
     .catch(()=>toast('Lỗi kết nối khi gửi email'));
 }
 
+// ── XÁC NHẬN NHẬN VIỆC → GỬI MAIL CHO NGƯỜI YÊU CẦU ──
 function confirmTask(taskId) {
   const t = tasks.find(x=>x.id===taskId);
   if(!t) return;
@@ -2787,6 +2777,7 @@ function confirmTask(taskId) {
   .catch(()=>toast(`✓ Đã xác nhận. Email sẽ gửi khi kết nối ổn định`));
 }
 
+// ── RENDER DASHBOARD TASK LISTS ──
 function renderDashTasks() {
   const urgentOpen = tasks.filter(t=>t.type==='urgent'&&!t.done);
   const todayOpen  = tasks.filter(t=>t.type==='today' &&!t.done);
@@ -2920,11 +2911,10 @@ function emergencyAdminLogin() {
     name: 'Admin (Khẩn cấp)',
     role: 'System Administrator',
     color: '#f87171',
-    perms: {...ROLE_TEMPLATES.admin},
-    password:'admin1234'
+    perms: {...ROLE_TEMPLATES.admin}
   };
   if(!team.find(t=>t.email===adminUser.email)) {
-    team.push({...adminUser, projects:[], status:'Sẵn sàng', roleTemplate:'admin'});
+    team.push({...adminUser, projects:[], status:'Sẵn sàng', roleTemplate:'admin', password:'admin1234'});
   }
   applyLogin(adminUser);
   toast('⚠️ Đăng nhập khẩn cấp. Vào Nhân sự → Phân quyền để cài lại cho từng người.');
@@ -3006,7 +2996,7 @@ function switchWhTab(tab) {
   document.querySelectorAll('.wh-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('wh-tab-'+tab).classList.add('active');
   if(tab==='stock') renderStock();
-  else if(tab==='order') { renderOrders(); renderOrderSearchResults(''); renderOrderHistory(); }
+  else if(tab==='order') renderOrders();
   else renderTxns();
 }
 
@@ -3046,6 +3036,227 @@ function renderStock() {
   }).join('');
 }
 
+function renderOrders() {
+  // Update pending badge on tab
+  const pending = warehouseOrders.filter(o=>o.status==='pending').length;
+  const badge = document.getElementById('b-wh-pending');
+  if(badge) { badge.textContent=pending; badge.style.display=pending?'':'none'; }
+  const b2 = document.getElementById('b-warehouse-order');
+  if(b2) { b2.textContent=pending||''; b2.style.display=pending?'':'none'; }
+  // Populate selects
+  const projSel = document.getElementById('cart-proj');
+  const mgrSel  = document.getElementById('cart-manager');
+  if(projSel) projSel.innerHTML = '<option value="">— Không liên quan dự án —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
+  if(mgrSel)  mgrSel.innerHTML  = '<option value="">— Chọn quản lý kho —</option>' + team.map(t=>`<option value="${t.email}">${t.name}</option>`).join('');
+  // Render history
+  renderOrderHistory();
+  // Render cart
+  renderCart();
+  // Init search
+  searchOrderStock('');
+}
+
+let orderCart = []; // [{stockId, stockName, stockCode, unit, qty}]
+
+function searchOrderStock(q) {
+  const el = document.getElementById('order-search-results');
+  if(!el) return;
+  const filtered = q.length < 1
+    ? warehouseStock.slice(0, 8)
+    : warehouseStock.filter(s =>
+        s.name.toLowerCase().includes(q.toLowerCase()) ||
+        s.code.toLowerCase().includes(q.toLowerCase())
+      ).slice(0, 8);
+
+  if(filtered.length===0) {
+    el.innerHTML = `<div style="text-align:center;padding:14px;font-size:12px;color:var(--text2)">Không tìm thấy vật tư</div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(s => {
+    const lvColor = s.qty<=0?'var(--red)':s.qty<(s.minQty||0)?'var(--amber)':'var(--green)';
+    const inCart  = orderCart.find(c=>c.stockId===s.id);
+    return `<div class="order-stock-result" onclick="addToCart('${s.id}')">
+      <div class="stock-info">
+        <div class="stock-name">${s.code} — ${s.name}</div>
+        <div class="stock-meta">Tồn: <span style="color:${lvColor};font-weight:600">${s.qty} ${s.unit}</span> · ${s.location||'Chưa có vị trí'}</div>
+      </div>
+      ${inCart
+        ? `<span class="badge badge-green">✓ Đã thêm</span>`
+        : `<button class="btn btn-xs btn-accent" style="flex-shrink:0">+ Thêm</button>`}
+    </div>`;
+  }).join('');
+}
+
+function addToCart(stockId) {
+  const s = warehouseStock.find(x=>x.id===stockId);
+  if(!s) return;
+  if(orderCart.find(c=>c.stockId===stockId)) {
+    toast('Vật tư đã có trong giỏ'); return;
+  }
+  orderCart.push({ stockId, stockName:s.name, stockCode:s.code, unit:s.unit, qty:1 });
+  renderCart();
+  searchOrderStock(document.getElementById('order-search')?.value||'');
+  toast(`✓ Đã thêm: ${s.name}`);
+}
+
+function removeFromCart(stockId) {
+  orderCart = orderCart.filter(c=>c.stockId!==stockId);
+  renderCart();
+  searchOrderStock(document.getElementById('order-search')?.value||'');
+}
+
+function renderCart() {
+  const el    = document.getElementById('order-cart');
+  const empty = document.getElementById('cart-empty');
+  const form  = document.getElementById('order-form-area');
+  const badge = document.getElementById('cart-badge');
+  if(!el) return;
+
+  if(orderCart.length===0) {
+    if(empty) empty.style.display='';
+    if(form)  form.style.display='none';
+    if(badge) badge.style.display='none';
+    el.innerHTML = `<div class="empty-state" style="padding:20px" id="cart-empty">
+      <div style="font-size:20px;margin-bottom:4px">🛒</div>
+      <div style="font-size:12px;color:var(--text2)">Tìm và thêm vật tư vào giỏ</div>
+    </div>`;
+    return;
+  }
+
+  if(badge) { badge.textContent=orderCart.length; badge.style.display=''; }
+  if(form)  form.style.display='';
+
+  el.innerHTML = `<div style="padding:4px 14px 0">` + orderCart.map((c,i)=>`
+    <div class="cart-item">
+      <div class="cart-item-name">${c.stockCode} — ${c.stockName}</div>
+      <input class="cart-qty-input" type="number" min="1" value="${c.qty}"
+        onchange="updateCartQty('${c.stockId}',this.value)" title="Số lượng">
+      <span style="font-size:11px;color:var(--text2);flex-shrink:0">${c.unit}</span>
+      <button class="btn btn-xs btn-ghost" style="color:var(--red);flex-shrink:0" onclick="removeFromCart('${c.stockId}')">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`).join('') + `</div>
+  <div style="padding:6px 14px 10px;font-size:11px;color:var(--text2);border-top:1px solid var(--border);margin-top:6px">
+    ${orderCart.length} loại vật tư trong giỏ
+  </div>`;
+}
+
+function updateCartQty(stockId, val) {
+  const item = orderCart.find(c=>c.stockId===stockId);
+  if(item) item.qty = Math.max(1, parseInt(val)||1);
+}
+
+function submitCartOrder() {
+  if(orderCart.length===0) { toast('Giỏ hàng trống'); return; }
+  const manager = document.getElementById('cart-manager')?.value;
+  if(!manager) { toast('Vui lòng chọn quản lý kho'); return; }
+  if(!currentUser) { toast('Vui lòng đăng nhập'); return; }
+
+  const now = new Date();
+  const dateStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()}`;
+  const proj  = document.getElementById('cart-proj')?.value||'';
+  const note  = document.getElementById('cart-note')?.value.trim()||'';
+  const orderId = 'ORD-'+Date.now();
+
+  // Tạo 1 phiếu nhiều dòng
+  const order = {
+    id: orderId,
+    items: orderCart.map(c=>({ stockId:c.stockId, stockName:c.stockName, stockCode:c.stockCode, qty:c.qty, unit:c.unit })),
+    // Compat fields (lấy item đầu cho hiển thị cũ)
+    stockId: orderCart[0].stockId, stockName: orderCart[0].stockName, stockCode: orderCart[0].stockCode,
+    qty: orderCart[0].qty, unit: orderCart[0].unit,
+    proj, orderer: currentUser.name, ordererEmail: currentUser.email,
+    warehouseManagerEmail: manager, date: dateStr, note,
+    status:'pending', confirmedBy:'', confirmedAt:''
+  };
+  warehouseOrders.push(order);
+  orderCart = [];
+  renderCart();
+  renderOrderHistory();
+  syncDataToDrive();
+  toast(`📤 Phiếu ${orderId} đã gửi (${order.items.length} loại vật tư)`);
+
+  // Gửi email
+  const mgr = team.find(t=>t.email===manager);
+  if(mgr) sendCartOrderEmail(order, mgr);
+}
+
+function sendCartOrderEmail(order, mgr) {
+  const proj = projects.find(p=>p.id===order.proj);
+  const itemRows = order.items.map(item=>`
+    <tr style="border-bottom:1px solid #262d3d">
+      <td style="padding:7px 12px 7px 0;color:#eef0f4">${item.stockCode} — ${item.stockName}</td>
+      <td style="padding:7px 0;color:#fbbf24;font-weight:700;font-family:monospace;text-align:right">${item.qty} ${item.unit}</td>
+    </tr>`).join('');
+
+  const htmlBody = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
+      <div style="background:linear-gradient(135deg,#4f8ef7,#6366f1);padding:22px 24px 18px">
+        <div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject — Kho vật tư</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.9);margin-top:4px">🛒 Phiếu order mới cần duyệt — ${order.id}</div>
+      </div>
+      <div style="padding:22px 24px">
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">Xin chào ${mgr.name},</div>
+        <p style="font-size:13px;color:#9aa3b5;margin-bottom:16px"><strong style="color:#eef0f4">${order.orderer}</strong> vừa tạo phiếu order ${order.items.length} loại vật tư:</p>
+        <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">${itemRows}</table>
+        </div>
+        <table style="font-size:12px;border-collapse:collapse;width:100%;margin-bottom:16px">
+          <tr><td style="color:#5c6578;padding:4px 14px 4px 0">Mã phiếu</td><td style="color:#4f8ef7;font-weight:700">${order.id}</td></tr>
+          ${proj?`<tr><td style="color:#5c6578;padding:4px 14px 4px 0">Dự án</td><td style="color:#4f8ef7">${proj.id} — ${proj.name}</td></tr>`:''}
+          <tr><td style="color:#5c6578;padding:4px 14px 4px 0">Ngày tạo</td><td style="color:#eef0f4">${order.date}</td></tr>
+          ${order.note?`<tr><td style="color:#5c6578;padding:4px 14px 4px 0">Ghi chú</td><td style="color:#9aa3b5">${order.note}</td></tr>`:''}
+        </table>
+        <p style="font-size:12px;color:#5c6578">Đăng nhập MechaProject → Kho → Order từ kho để Xác nhận hoặc Từ chối.</p>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Kho vật tư · Không reply email này</div>
+    </div>`;
+
+  fetch(DRIVE_API_URL,{method:'POST',body:JSON.stringify({
+    action:'send_email', to:mgr.email,
+    subject:`[MechaProject Kho] Phiếu order mới ${order.id} — ${order.items.length} loại vật tư`,
+    body:'Phiếu order mới: '+order.id+'\nNgười order: '+order.orderer+'\nVật tư:\n'+order.items.map(function(i){return '- '+i.stockName+': '+i.qty+' '+i.unit}).join('\n'),
+    htmlBody
+  })}).then(r=>r.json()).then(res=>{
+    if(res.status==='success') toast(`✉ Đã gửi email cho ${mgr.name}`);
+  }).catch(()=>{});
+}
+
+function renderOrderHistory() {
+  const el = document.getElementById('order-history-list');
+  const cnt = document.getElementById('order-history-count');
+  if(!el) return;
+  if(cnt) cnt.textContent = warehouseOrders.length;
+
+  if(warehouseOrders.length===0) {
+    el.innerHTML=`<div class="empty-state" style="padding:20px"><div style="font-size:12px;color:var(--text2)">Chưa có phiếu order nào</div></div>`;
+    return;
+  }
+
+  el.innerHTML = [...warehouseOrders].reverse().map(o=>{
+    const stColor = o.status==='approved'?'var(--green)':o.status==='rejected'?'var(--red)':'var(--amber)';
+    const stLabel = o.status==='approved'?'✅ Duyệt':o.status==='rejected'?'❌ Từ chối':'⏳ Chờ';
+    const itemCount = o.items ? o.items.length : 1;
+    const canApprove = isAdmin() && o.status==='pending';
+    return `<div class="history-order-item">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span class="tbl-code" style="font-size:11px">${o.id}</span>
+        <span style="font-size:11px;font-weight:700;color:${stColor}">${stLabel}</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--text2)">${o.date}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text1);margin-bottom:4px">${itemCount > 1 ? `${itemCount} loại vật tư` : (o.stockName||'—')} · ${o.orderer}</div>
+      ${canApprove?`<div style="display:flex;gap:5px;margin-top:6px">
+        <button class="btn btn-xs btn-green" onclick="confirmOrder('${o.id}','approved')">✅ Xác nhận</button>
+        <button class="btn btn-xs btn-danger" onclick="confirmOrder('${o.id}','rejected')">❌ Từ chối</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+function filterStock(q) {
+  const rows = document.querySelectorAll('#stock-tbody tr');
+  rows.forEach(r => r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none');
+}
+
 function deleteStock(idx) {
   showConfirm({
     title:'Xóa vật tư', icon:'🗑️', iconBg:'var(--red-dim)',
@@ -3055,323 +3266,6 @@ function deleteStock(idx) {
   });
 }
 
-function filterStock(q) {
-  const rows = document.querySelectorAll('#stock-tbody tr');
-  rows.forEach(r => r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none');
-}
-
-// ── ORDER TABS ──
-let orderCart = [];
-
-function renderOrderSearchResults(query) {
-  const container = document.getElementById('order-search-results');
-  if(!container) return;
-  if(!query.trim()) {
-    container.innerHTML = `<div style="font-size:12px;color:var(--text2);padding:8px 0">Nhập từ khóa để tìm vật tư</div>`;
-    return;
-  }
-  const q = query.toLowerCase();
-  const results = warehouseStock.filter(s => 
-    s.code.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
-  );
-  if(results.length===0) {
-    container.innerHTML = `<div style="font-size:12px;color:var(--text2);padding:8px 0">Không tìm thấy vật tư nào</div>`;
-    return;
-  }
-  container.innerHTML = results.map(s => {
-    const inCart = orderCart.find(item=>item.stockId===s.id);
-    const qtyInCart = inCart ? inCart.qty : 0;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
-      <div>
-        <span style="font-weight:500">${s.code}</span> — ${s.name} 
-        <span style="color:var(--text2)">(Tồn: ${s.qty} ${s.unit})</span>
-        ${qtyInCart > 0 ? `<span class="badge badge-blue" style="margin-left:6px">Đã thêm ${qtyInCart}</span>` : ''}
-      </div>
-      <button class="btn btn-xs btn-accent" onclick="addToCart('${s.id}')" ${qtyInCart > 0 ? 'style="opacity:0.6" disabled' : ''}>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Thêm vào giỏ
-      </button>
-    </div>`;
-  }).join('');
-}
-
-function searchOrderStock(value) {
-  renderOrderSearchResults(value);
-}
-
-function addToCart(stockId) {
-  const existing = orderCart.find(item => item.stockId === stockId);
-  if(existing) {
-    existing.qty += 1;
-  } else {
-    orderCart.push({ stockId, qty: 1 });
-  }
-  renderCart();
-  renderOrderSearchResults(document.getElementById('order-search').value);
-  toast('Đã thêm vào giỏ');
-}
-
-function removeFromCart(stockId) {
-  orderCart = orderCart.filter(item => item.stockId !== stockId);
-  renderCart();
-  renderOrderSearchResults(document.getElementById('order-search').value);
-}
-
-function clearCart() {
-  if(orderCart.length===0) return;
-  showConfirm({
-    title:'Xóa giỏ hàng',
-    icon:'🛒',
-    iconBg:'var(--red-dim)',
-    msg:'Xác nhận xóa tất cả vật tư trong giỏ?',
-    okText:'Xóa tất cả',
-    okClass:'btn-danger',
-    onOk:()=>{ orderCart=[]; renderCart(); toast('Đã xóa giỏ hàng'); }
-  });
-}
-
-function renderCart() {
-  const container = document.getElementById('order-cart');
-  const empty = document.getElementById('cart-empty');
-  const badge = document.getElementById('cart-badge');
-  const formArea = document.getElementById('order-form-area');
-
-  if(orderCart.length===0) {
-    container.innerHTML = `<div class="empty-state" style="padding:20px" id="cart-empty">
-      <div style="font-size:20px;margin-bottom:4px">🛒</div>
-      <div style="font-size:12px;color:var(--text2)">Tìm và thêm vật tư vào giỏ</div>
-    </div>`;
-    badge.style.display = 'none';
-    formArea.style.display = 'none';
-    return;
-  }
-
-  let html = '';
-  let totalQty = 0;
-  orderCart.forEach((item, idx) => {
-    const stock = warehouseStock.find(s=>s.id===item.stockId);
-    if(!stock) return;
-    totalQty += item.qty;
-    html += `<div class="order-cart-item">
-      <div style="flex:1;min-width:0">
-        <span style="font-weight:500">${stock.code}</span> — ${stock.name}
-      </div>
-      <div class="order-cart-qty">
-        <button onclick="changeCartQty('${item.stockId}',-1)">−</button>
-        <span style="min-width:24px;text-align:center;font-weight:700">${item.qty}</span>
-        <button onclick="changeCartQty('${item.stockId}',1)">+</button>
-        <span style="color:var(--text2);font-size:11px;margin-left:4px">${stock.unit}</span>
-      </div>
-      <button class="btn btn-xs btn-danger" onclick="removeFromCart('${item.stockId}')" style="margin-left:8px">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>`;
-  });
-
-  html += `<div class="cart-summary">
-    <span>Tổng: <strong>${orderCart.length}</strong> loại · <strong>${totalQty}</strong> đơn vị</span>
-  </div>`;
-
-  container.innerHTML = html;
-  badge.textContent = orderCart.length;
-  badge.style.display = '';
-
-  formArea.style.display = '';
-  populateOrderFormSelects();
-}
-
-function changeCartQty(stockId, delta) {
-  const item = orderCart.find(i=>i.stockId===stockId);
-  if(!item) return;
-  item.qty = Math.max(1, item.qty + delta);
-  renderCart();
-}
-
-function populateOrderFormSelects() {
-  const projSel = document.getElementById('cart-proj');
-  if(projSel) {
-    const current = projSel.value;
-    projSel.innerHTML = '<option value="">— Không liên quan dự án —</option>'
-      + projects.map(p=>`<option value="${p.id}" ${p.id===current?'selected':''}>${p.id} — ${p.name}</option>`).join('');
-  }
-  const mgrSel = document.getElementById('cart-manager');
-  if(mgrSel) {
-    const current = mgrSel.value;
-    mgrSel.innerHTML = '<option value="">— Chọn quản lý kho —</option>'
-      + team.map(t=>`<option value="${t.email}" ${t.email===current?'selected':''}>${t.name} (${t.email})</option>`).join('');
-  }
-}
-
-function submitCartOrder() {
-  if(orderCart.length===0){ toast('Giỏ hàng trống'); return; }
-  const manager = document.getElementById('cart-manager').value;
-  if(!manager){ toast('Vui lòng chọn người nhận duyệt (quản lý kho)'); return; }
-  if(!currentUser){ toast('Vui lòng đăng nhập'); return; }
-
-  const items = orderCart.map(item => {
-    const stock = warehouseStock.find(s=>s.id===item.stockId);
-    return {
-      stockId: item.stockId,
-      stockName: stock?stock.name:'',
-      stockCode: stock?stock.code:'',
-      qty: item.qty,
-      unit: stock?stock.unit:''
-    };
-  });
-
-  const now = new Date();
-  const dateStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()}`;
-  const order = {
-    id: 'ORD-'+Date.now(),
-    items: items,
-    proj: document.getElementById('cart-proj').value,
-    orderer: currentUser.name,
-    ordererEmail: currentUser.email,
-    warehouseManagerEmail: manager,
-    date: dateStr,
-    note: document.getElementById('cart-note').value.trim(),
-    status: 'pending',
-    confirmedBy: '',
-    confirmedAt: ''
-  };
-
-  warehouseOrders.push(order);
-  orderCart = [];
-  renderCart();
-  renderOrders();
-  renderOrderHistory();
-  syncDataToDrive();
-  toast(`📤 Đã gửi phiếu order ${order.id} — đang thông báo quản lý kho...`);
-
-  const mgr = team.find(t=>t.email===manager);
-  if(mgr) sendOrderRequestEmail(order, mgr);
-}
-
-function sendOrderRequestEmail(order, mgr) {
-  const proj = projects.find(p=>p.id===order.proj);
-  const itemRows = order.items.map(it => `
-    <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">${it.stockCode}</td>
-        <td style="color:#eef0f4">${it.stockName}</td>
-        <td style="color:#fbbf24;font-weight:700">${it.qty} ${it.unit}</td></tr>
-  `).join('');
-
-  const htmlBody = `
-    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
-      <div style="background:linear-gradient(135deg,#4f8ef7,#6366f1);padding:22px 24px 18px">
-        <div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject — Kho vật tư</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.9);margin-top:4px">🛒 Có phiếu order mới cần duyệt</div>
-      </div>
-      <div style="padding:22px 24px">
-        <div style="font-size:15px;font-weight:600;margin-bottom:16px">Xin chào ${mgr.name},</div>
-        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px"><strong style="color:#eef0f4">${order.orderer}</strong> vừa tạo phiếu yêu cầu xuất kho cần bạn xem xét:</p>
-        <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:16px 18px;margin-bottom:18px">
-          <table style="font-size:13px;border-collapse:collapse;width:100%">
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0;white-space:nowrap">Mã phiếu</td><td style="color:#4f8ef7;font-weight:700">${order.id}</td></tr>
-            ${proj?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Dự án</td><td style="color:#4f8ef7">${proj.id} — ${proj.name}</td></tr>`:''}
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Người order</td><td style="color:#eef0f4">${order.orderer}</td></tr>
-            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ngày tạo</td><td style="color:#eef0f4">${order.date}</td></tr>
-            ${order.note?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ghi chú</td><td style="color:#9aa3b5">${order.note}</td></tr>`:''}
-          </table>
-          <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--text1)">📦 Danh sách vật tư:</div>
-          <table style="font-size:13px;border-collapse:collapse;width:100%;margin-top:6px">
-            <tr><th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 8px 4px 0">Mã</th>
-                <th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 8px 4px 0">Tên</th>
-                <th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 0">SL</th></tr>
-            ${itemRows}
-          </table>
-        </div>
-        <p style="font-size:12px;color:#5c6578">Vui lòng đăng nhập MechaProject → Kho vật tư → Order từ kho để Xác nhận hoặc Từ chối.</p>
-      </div>
-      <div style="padding:14px 24px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Kho vật tư · Không reply email này</div>
-    </div>`;
-
-  fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
-    action:'send_email', to: mgr.email,
-    subject: `[MechaProject Kho] Phiếu order mới cần duyệt: ${order.id}`,
-    body: `Phiếu order mới: ${order.id}\nVật tư: ${order.items.map(i=>i.stockName+' × '+i.qty+' '+i.unit).join('; ')}\nNgười order: ${order.orderer}`,
-    htmlBody
-  })}).then(r=>r.json()).then(res=>{
-    if(res.status==='success') toast(`✉ Đã gửi email thông báo tới ${mgr.name}`);
-  }).catch(()=>{});
-}
-
-// ── RENDER ORDERS (HIỂN THỊ NÚT DUYỆT ĐÚNG) ──
-function renderOrders() {
-  const tbody = document.getElementById('order-tbody');
-  if(!tbody) return;
-  const pending = warehouseOrders.filter(o=>o.status==='pending').length;
-  const badge = document.getElementById('b-wh-pending');
-  if(badge) { badge.textContent=pending; badge.style.display=pending?'':'none'; }
-  document.getElementById('b-warehouse-order').textContent = pending||'';
-  document.getElementById('b-warehouse-order').style.display = pending ? '' : 'none';
-
-  document.getElementById('order-history-count').textContent = warehouseOrders.length;
-
-  if(warehouseOrders.length===0) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">🛒</div><div class="empty-state-title">Chưa có phiếu order nào</div>Nhấn "Tìm vật tư" và thêm vào giỏ để tạo phiếu</div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = [...warehouseOrders].reverse().map(o => {
-    const stCls = o.status==='approved'?'badge-green':o.status==='rejected'?'badge-red':'badge-amber';
-    const stLabel = o.status==='approved'?'✅ Đã duyệt':o.status==='rejected'?'❌ Từ chối':'⏳ Chờ duyệt';
-    const proj = projects.find(p=>p.id===o.proj);
-    const itemsSummary = o.items.map(i=>`${i.stockName} × ${i.qty} ${i.unit}`).join('; ');
-    const shortSummary = itemsSummary.length > 60 ? itemsSummary.slice(0,60)+'…' : itemsSummary;
-    // Kiểm tra quyền
-    const canManage = currentUser && (isAdmin() || currentUser.email === o.warehouseManagerEmail);
-    const isPending = o.status==='pending';
-
-    return `<tr>
-      <td class="tbl-code">${o.id}</td>
-      <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${itemsSummary}">${shortSummary}</td>
-      <td style="font-family:monospace;font-weight:700;color:var(--accent)">${o.items.reduce((s,i)=>s+i.qty,0)}</td>
-      <td style="font-size:12px">${proj?proj.id+' — '+proj.name:'—'}</td>
-      <td style="font-size:12px">${o.orderer}</td>
-      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${o.date}</td>
-      <td style="font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.note||''}</td>
-      <td style="font-size:11px;color:var(--text2)">${o.warehouseManagerEmail || '—'}</td>
-      <td><span class="badge ${stCls}">${stLabel}</span>${o.confirmedAt?`<div style="font-size:10px;color:var(--text2);margin-top:3px">${o.confirmedBy||''} · ${o.confirmedAt}</div>`:''}</td>
-      <td>
-        <div style="display:flex;flex-direction:column;gap:4px">
-          ${isPending && canManage ? `
-            <button class="btn btn-xs btn-green" onclick="confirmOrder('${o.id}','approved')">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-              Xác nhận
-            </button>
-            <button class="btn btn-xs btn-danger" onclick="confirmOrder('${o.id}','rejected')">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              Từ chối
-            </button>` : (isPending ? '<span style="font-size:11px;color:var(--text2)">Chờ duyệt</span>' : '<span style="font-size:11px;color:var(--text2)">Đã xử lý</span>')}
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-function renderOrderHistory() {
-  const el = document.getElementById('order-history-list');
-  if(!el) return;
-  if(warehouseOrders.length===0) {
-    el.innerHTML = `<div class="empty-state" style="padding:20px"><div style="font-size:12px;color:var(--text2)">Chưa có order</div></div>`;
-    return;
-  }
-  const list = [...warehouseOrders].reverse().slice(0,10);
-  el.innerHTML = list.map(o => {
-    const stColor = o.status==='approved'?'var(--green)':o.status==='rejected'?'var(--red)':'var(--amber)';
-    const stIcon = o.status==='approved'?'✅':o.status==='rejected'?'❌':'⏳';
-    const itemsShort = o.items.map(i=>`${i.stockCode||i.stockName}×${i.qty}`).join(', ');
-    return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <span style="font-family:monospace;font-weight:600;color:var(--accent)">${o.id}</span>
-        <span style="color:var(--text2);margin-left:6px">${itemsShort.length>30?itemsShort.slice(0,30)+'…':itemsShort}</span>
-      </div>
-      <span style="color:${stColor};font-weight:600">${stIcon}</span>
-    </div>`;
-  }).join('');
-}
-
-// ── CONFIRM ORDER (Xác nhận / Từ chối) ──
 function confirmOrder(orderId, action) {
   const o = warehouseOrders.find(x=>x.id===orderId);
   if(!o) return;
@@ -3380,7 +3274,7 @@ function confirmOrder(orderId, action) {
     title: action==='approved' ? '✅ Xác nhận xuất kho' : '❌ Từ chối phiếu order',
     icon:  action==='approved' ? '✅' : '❌',
     iconBg: action==='approved' ? 'var(--green-dim)' : 'var(--red-dim)',
-    msg: `${actionLabel} phiếu <strong>${orderId}</strong> với ${o.items.length} vật tư?`,
+    msg: `${actionLabel} phiếu <strong>${orderId}</strong>: <strong>${o.stockName}</strong> × ${o.qty} ${o.unit}?`,
     okText: actionLabel, okClass: action==='approved' ? 'btn-green' : 'btn-danger',
     onOk: () => {
       const now = new Date();
@@ -3390,13 +3284,11 @@ function confirmOrder(orderId, action) {
       o.confirmedAt = timeStr;
 
       if(action==='approved') {
-        o.items.forEach(item => {
-          const stock = warehouseStock.find(s=>s.id===item.stockId);
-          if(stock) stock.qty = Math.max(0, (stock.qty||0) - (item.qty||0));
-        });
+        const stock = warehouseStock.find(s=>s.id===o.stockId);
+        if(stock) stock.qty = Math.max(0, (stock.qty||0) - (o.qty||0));
       }
 
-      renderOrders(); renderStock(); renderOrderHistory(); syncDataToDrive();
+      renderOrders(); renderStock(); syncDataToDrive();
       toast(action==='approved' ? `✅ Đã xác nhận phiếu ${orderId}` : `❌ Đã từ chối phiếu ${orderId}`);
 
       const ordererMember = team.find(t=>t.email===o.ordererEmail);
@@ -3411,12 +3303,6 @@ function sendOrderResultEmail(o, action, recipient, timeStr) {
   const barColor = approved ? '#34d399,#059669' : '#f87171,#dc2626';
   const proj = projects.find(p=>p.id===o.proj);
 
-  const itemRows = o.items.map(it => `
-    <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">${it.stockCode}</td>
-        <td style="color:#eef0f4">${it.stockName}</td>
-        <td style="color:#fbbf24;font-weight:700">${it.qty} ${it.unit}</td></tr>
-  `).join('');
-
   const htmlBody = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
       <div style="background:linear-gradient(135deg,${barColor});padding:22px 24px 18px">
@@ -3425,22 +3311,17 @@ function sendOrderResultEmail(o, action, recipient, timeStr) {
       </div>
       <div style="padding:22px 24px">
         <div style="font-size:15px;font-weight:600;margin-bottom:16px">Xin chào ${recipient.name},</div>
-        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px">Phiếu order của bạn vừa được <strong style="color:${approved?'#34d399':'#f87171'}">${approved?'XÁC NHẬN':'TỪ CHỐI'}</strong>:</p>
+        <p style="font-size:13px;color:#9aa3b5;margin-bottom:18px">Phiếu order vật tư của bạn vừa được <strong style="color:${approved?'#34d399':'#f87171'}">${approved?'XÁC NHẬN':'TỪ CHỐI'}</strong>:</p>
         <div style="background:#1e2330;border:1px solid #262d3d;border-radius:10px;padding:16px 18px;margin-bottom:18px">
           <table style="font-size:13px;border-collapse:collapse;width:100%">
             <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0;white-space:nowrap">Mã phiếu</td><td style="color:#4f8ef7;font-weight:700">${o.id}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Vật tư</td><td style="color:#eef0f4;font-weight:700">${o.stockName}</td></tr>
+            <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Số lượng</td><td style="color:#eef0f4">${o.qty} ${o.unit}</td></tr>
             ${proj?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Dự án</td><td style="color:#4f8ef7">${proj.id} — ${proj.name}</td></tr>`:''}
             <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Kết quả</td><td style="color:${approved?'#34d399':'#f87171'};font-weight:700">${statusLabel}</td></tr>
             <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Duyệt bởi</td><td style="color:#eef0f4">${o.confirmedBy}</td></tr>
             <tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Thời gian</td><td style="color:#eef0f4">${timeStr}</td></tr>
             ${o.note?`<tr><td style="color:#5c6578;font-weight:600;padding:5px 16px 5px 0">Ghi chú</td><td style="color:#9aa3b5">${o.note}</td></tr>`:''}
-          </table>
-          <div style="margin-top:12px;font-size:12px;font-weight:700;color:var(--text1)">📦 Danh sách vật tư:</div>
-          <table style="font-size:13px;border-collapse:collapse;width:100%;margin-top:6px">
-            <tr><th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 8px 4px 0">Mã</th>
-                <th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 8px 4px 0">Tên</th>
-                <th style="color:#5c6578;font-weight:700;text-align:left;padding:4px 0">SL</th></tr>
-            ${itemRows}
           </table>
         </div>
         <p style="font-size:12px;color:#5c6578">${approved?'Vui lòng đến kho nhận vật tư trong giờ hành chính.':'Liên hệ quản lý kho để biết thêm chi tiết.'}</p>
@@ -3450,8 +3331,8 @@ function sendOrderResultEmail(o, action, recipient, timeStr) {
 
   fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
     action:'send_email', to: recipient.email,
-    subject: `[MechaProject Kho] ${statusLabel}: ${o.id}`,
-    body: `${statusLabel}\nPhiếu: ${o.id}\nKết quả: ${statusLabel}\nDuyệt bởi: ${o.confirmedBy}`,
+    subject: `[MechaProject Kho] ${statusLabel}: ${o.stockName} × ${o.qty} ${o.unit}`,
+    body: `${statusLabel}\n\nPhiếu: ${o.id}\nVật tư: ${o.stockName}\nSố lượng: ${o.qty} ${o.unit}\nDuyệt bởi: ${o.confirmedBy}\nThời gian: ${timeStr}`,
     htmlBody
   })}).then(r=>r.json()).then(res=>{
     if(res.status==='success') toast(`✉ Đã gửi kết quả tới ${recipient.name}`);
@@ -3528,7 +3409,11 @@ function saveStock(idx) {
   toast(idx!==undefined?'Đã cập nhật vật tư':'Đã thêm vật tư vào kho');
 }
 
-// ── XUẤT / NHẬP KHO ──
+
+
+
+
+// ── XUẤT / NHẬP KHO ─────────────────────────────────────────
 let txnFilterText = '';
 let txnFilterType = '';
 let txnFilterStatus = '';
@@ -3540,24 +3425,31 @@ function filterTxnStatus(v) { txnFilterStatus = v; renderTxns(); }
 function renderTxns() {
   const tbody = document.getElementById('txn-tbody');
   if(!tbody) return;
+
+  // Badge pending
   const pending = warehouseTxns.filter(t=>t.status==='pending').length;
   const b = document.getElementById('b-wh-txn-pending');
   if(b){ b.textContent=pending; b.style.display=pending?'':'none'; }
+
   let list = [...warehouseTxns].reverse();
   if(txnFilterText)   list = list.filter(t=>(t.id+t.stockName+t.stockCode).toLowerCase().includes(txnFilterText));
   if(txnFilterType)   list = list.filter(t=>t.type===txnFilterType);
   if(txnFilterStatus) list = list.filter(t=>t.status===txnFilterStatus);
+
   if(list.length===0) {
     tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">Chưa có phiếu xuất/nhập nào</div></div></td></tr>`;
     return;
   }
+
   tbody.innerHTML = list.map(t => {
     const isImport = t.type==='import';
     const typeHtml = isImport
       ? `<span class="badge" style="background:var(--green-dim);color:var(--green)">📥 Nhập kho</span>`
       : `<span class="badge" style="background:var(--red-dim);color:var(--red)">📤 Xuất kho</span>`;
+
     const stCls   = t.status==='confirmed'?'badge-green':t.status==='rejected'?'badge-red':'badge-amber';
     const stLabel = t.status==='confirmed'?'✅ Đã xác nhận':t.status==='rejected'?'❌ Từ chối':'⏳ Chờ xác nhận';
+
     const imgHtml = (t.images||[]).length > 0
       ? `<div style="display:flex;gap:4px;flex-wrap:wrap">
           ${t.images.slice(0,3).map(img=>
@@ -3566,8 +3458,10 @@ function renderTxns() {
           ${t.images.length>3?`<div style="width:36px;height:36px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text2)">+${t.images.length-3}</div>`:''}
         </div>`
       : `<span style="font-size:11px;color:var(--text2)">Không có</span>`;
+
     const proj = projects.find(p=>p.id===t.proj);
     const canConfirm = isAdmin() && t.status==='pending';
+
     return `<tr>
       <td class="tbl-code" style="cursor:pointer;color:var(--accent)" onclick="openModal('view-txn','${t.id}')">${t.id}</td>
       <td>${typeHtml}</td>
@@ -3609,10 +3503,13 @@ function confirmTxn(txnId, action, rejectReason) {
   const isImport = t.type==='import';
   const now = new Date();
   const timeStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
   t.status = action;
   t.confirmedBy = currentUser?.name || 'Thủ kho';
   t.confirmedAt = timeStr;
   if(rejectReason) t.rejectReason = rejectReason;
+
+  // Cập nhật tồn kho
   if(action==='confirmed') {
     const stock = warehouseStock.find(s=>s.id===t.stockId);
     if(stock) {
@@ -3620,8 +3517,11 @@ function confirmTxn(txnId, action, rejectReason) {
       else         stock.qty = Math.max(0, (stock.qty||0) - (t.qty||0));
     }
   }
+
   closeModal(); renderTxns(); renderStock(); syncDataToDrive();
   toast(action==='confirmed' ? `✅ Đã xác nhận phiếu ${txnId}` : `❌ Đã từ chối phiếu ${txnId}`);
+
+  // Gửi email báo người tạo phiếu
   const creator = team.find(m=>m.email===t.creatorEmail);
   if(creator) sendTxnResultEmail(t, action, creator, timeStr, rejectReason);
 }
@@ -3658,6 +3558,7 @@ function sendTxnResultEmail(txn, action, recipient, timeStr, rejectReason) {
   const barColor = approved ? '#34d399,#059669' : '#f87171,#dc2626';
   const statusLabel = approved ? '✅ ĐÃ XÁC NHẬN' : '❌ BỊ TỪ CHỐI';
   const proj = projects.find(p=>p.id===txn.proj);
+
   const htmlBody = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
       <div style="background:linear-gradient(135deg,${barColor});padding:22px 24px 18px">
@@ -3689,6 +3590,7 @@ function sendTxnResultEmail(txn, action, recipient, timeStr, rejectReason) {
       </div>
       <div style="padding:14px 24px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Kho vật tư · Không reply email này</div>
     </div>`;
+
   fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
     action:'send_email', to: recipient.email,
     subject: `[MechaProject Kho] ${statusLabel}: ${txn.stockName} × ${txn.qty} ${txn.unit}`,
@@ -3705,6 +3607,7 @@ function openModal_newTxn(txnType) {
   const color = isImport ? 'var(--green)' : 'var(--red)';
   const stockOpts = '<option value="">— Chọn vật tư —</option>' + warehouseStock.map(s=>`<option value="${s.id}">${s.code} — ${s.name} (Tồn: ${s.qty} ${s.unit})</option>`).join('');
   const projOpts  = '<option value="">— Không liên quan —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
+
   document.getElementById('overlay').classList.add('open');
   document.getElementById('modal-hd-title').textContent = label;
   document.getElementById('modal-body').innerHTML = `
@@ -3745,13 +3648,14 @@ function onTxnStockChange(stockId) {
   document.getElementById('txn-unit').value = s ? s.unit : '';
 }
 
-let txnImageData = [];
+let txnImageData = []; // [{name, base64, url}]
 
 function previewTxnImages(input) {
   txnImageData = [];
   const preview = document.getElementById('txn-img-preview');
   preview.innerHTML = '';
   const files = Array.from(input.files);
+
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -3783,10 +3687,14 @@ async function submitTxn(txnType) {
   if(!stockId) { toast('Vui lòng chọn vật tư'); return; }
   if(qty <= 0)  { toast('Số lượng phải lớn hơn 0'); return; }
   if(!currentUser) { toast('Vui lòng đăng nhập'); return; }
+
   const stock = warehouseStock.find(s=>s.id===stockId);
   const now = new Date();
   const dateStr = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()}`;
+
   showLoading(txnImageData.length > 0 ? `Đang tải ${txnImageData.length} ảnh lên Drive...` : 'Đang lưu phiếu...');
+
+  // Upload ảnh lên Drive nếu có
   const uploadedImages = [];
   for(let i=0; i<txnImageData.length; i++) {
     const img = txnImageData[i];
@@ -3802,6 +3710,7 @@ async function submitTxn(txnType) {
       uploadedImages.push({ name: img.name, base64: img.base64, url: img.base64 });
     }
   }
+
   const txn = {
     id: (txnType==='import'?'IMP':'EXP')+'-'+Date.now(),
     type: txnType, stockId, stockName: stock.name, stockCode: stock.code,
@@ -3828,6 +3737,7 @@ function openModal_viewTxn(txnId) {
   const stColor = t.status==='confirmed'?'var(--green)':t.status==='rejected'?'var(--red)':'var(--amber)';
   const proj = projects.find(p=>p.id===t.proj);
   const canConfirm = isAdmin() && t.status==='pending';
+
   document.getElementById('overlay').classList.add('open');
   document.getElementById('modal-hd-title').textContent = `${isImport?'📥':'📤'} Chi tiết phiếu — ${t.id}`;
   document.getElementById('modal-body').innerHTML = `
@@ -3879,14 +3789,15 @@ function openModal_viewTxn(txnId) {
 
 function renderWarehouse() {
   if(whCurrentTab==='stock') renderStock();
-  else if(whCurrentTab==='order') { renderOrders(); renderOrderSearchResults(''); renderOrderHistory(); }
+  else if(whCurrentTab==='order') renderOrders();
   else renderTxns();
+  // Update txn pending badge
   const pending = warehouseTxns.filter(t=>t.status==='pending').length;
   const b = document.getElementById('b-wh-txn-pending');
   if(b){ b.textContent=pending; b.style.display=pending?'':'none'; }
 }
 
-// ── CHAT SYSTEM ──
+// ── CHAT SYSTEM ─────────────────────────────────────────────
 let chatRooms = [
   { id:'general', name:'Toàn team', icon:'💬', color:'#4f8ef7', type:'general', messages:[] }
 ];
@@ -3949,12 +3860,14 @@ function openRoom(roomId) {
   const room = chatRooms.find(r=>r.id===roomId);
   if(!room) return;
   renderChatRooms();
+
   document.getElementById('chat-header-icon').textContent = room.icon;
   document.getElementById('chat-header-icon').style.background = room.color+'22';
   document.getElementById('chat-header-name').textContent = room.name;
   document.getElementById('chat-header-meta').textContent =
     room.type==='project' ? `Phòng dự án · ${(room.messages||[]).length} tin nhắn`
     : `Toàn team · ${(room.messages||[]).length} tin nhắn`;
+
   document.getElementById('chat-input-area').style.display = '';
   populateSenderSelect();
   renderMessages(room);
@@ -3971,6 +3884,7 @@ function renderMessages(room) {
     </div>`;
     return;
   }
+
   let html = '';
   let lastDate = '';
   msgs.forEach(msg => {
@@ -3979,14 +3893,18 @@ function renderMessages(room) {
       html += `<div class="chat-msg-system">— ${msgDate} —</div>`;
       lastDate = msgDate;
     }
+
     if(msg.type === 'system') {
       html += `<div class="chat-msg-system">${msg.text}</div>`;
       return;
     }
+
     const timeStr = new Date(msg.ts).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
     const initial = (msg.senderName||'?').slice(-1).toUpperCase();
     const avatarColor = stringToColor(msg.senderEmail||msg.senderName||'');
+
     const textHtml = (msg.text||'').replace(/@(\S+)/g, '<span class="mention">@$1</span>');
+
     html += `<div class="chat-msg">
       <div class="chat-msg-avatar" style="background:${avatarColor}22;border-color:${avatarColor}44;color:${avatarColor}">${initial}</div>
       <div class="chat-msg-body">
@@ -4007,6 +3925,7 @@ function renderMessages(room) {
       </div>
     </div>`;
   });
+
   el.innerHTML = html;
   el.scrollTop = el.scrollHeight;
 }
@@ -4030,6 +3949,7 @@ function handleMentionTrigger(el) {
   const before = val.slice(0, cursor);
   const match = before.match(/@(\w*)$/);
   const dd = document.getElementById('mention-dropdown');
+
   if(match) {
     mentionQuery = match[1].toLowerCase();
     mentionActive = true;
@@ -4071,6 +3991,7 @@ function sendChatMessage() {
   const text = input.value.trim();
   if(!text || !currentRoomId) return;
   if(!chatSenderEmail) { toast('Vui lòng chọn tên của bạn trước khi gửi'); return; }
+
   const sender = team.find(t=>t.email===chatSenderEmail);
   const msg = {
     id: 'msg-'+Date.now(),
@@ -4081,12 +4002,14 @@ function sendChatMessage() {
     files: [],
     ts: new Date().toISOString()
   };
+
   const room = chatRooms.find(r=>r.id===currentRoomId);
   if(!room.messages) room.messages = [];
   room.messages.push(msg);
   input.value = '';
   input.style.height = 'auto';
   document.getElementById('mention-dropdown').style.display='none';
+
   renderMessages(room);
   renderChatRooms();
   syncChatToDrive();
@@ -4099,8 +4022,10 @@ function sendChatFiles(input) {
   const sender = team.find(t=>t.email===chatSenderEmail);
   const room = chatRooms.find(r=>r.id===currentRoomId);
   if(!room.messages) room.messages = [];
+
   let idx = 0;
   showLoading(`Đang tải lên ${files.length} file...`);
+
   function next() {
     if(idx >= files.length) { hideLoading(); renderMessages(room); renderChatRooms(); syncChatToDrive(); input.value=''; return; }
     const file = files[idx];
@@ -4132,9 +4057,11 @@ function syncChatToDrive() {
   fetch(DRIVE_API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }).catch(()=>{});
 }
 
-// ── AI CHATBOT ──
-let aiMessages = [];
+// ── RENDER ALL ──
+// ── AI CHATBOT ──────────────────────────────────────────────
+let aiMessages = []; // {role:'user'|'assistant', content}
 let aiLoading = false;
+
 const AI_PROMPTS = [
   '📊 Tóm tắt tiến độ tất cả dự án',
   '⚠️ Dự án nào đang có vấn đề?',
@@ -4222,6 +4149,7 @@ function askAIChip(prompt) {
 function renderAIMessages() {
   const el = document.getElementById('ai-messages');
   if(!el) return;
+
   if(aiMessages.length === 0) {
     const userName = currentUser?.name || 'bạn';
     el.innerHTML = `
@@ -4237,10 +4165,12 @@ function renderAIMessages() {
       </div>`;
     return;
   }
+
   el.innerHTML = aiMessages.map(m => {
     const isUser = m.role === 'user';
     const initial = currentUser?.name?.slice(-1)?.toUpperCase() || 'U';
     const color = currentUser?.color || 'var(--accent)';
+    // Format markdown-like
     let html = m.content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/`([^`]+)`/g, '<code style="background:var(--bg0);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>')
@@ -4252,6 +4182,7 @@ function renderAIMessages() {
       <div class="ai-msg-bubble">${html}</div>
     </div>`;
   }).join('');
+
   if(aiLoading) {
     el.innerHTML += `<div class="ai-msg">
       <div class="ai-msg-avatar bot">✨</div>
@@ -4261,20 +4192,24 @@ function renderAIMessages() {
   el.scrollTop = el.scrollHeight;
 }
 
+// ── GROQ API CONFIG ──────────────────────────────────────────
 const GROQ_API_KEY = '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';
-const GROQ_MODEL   = 'llama-3.3-70b-versatile';
+const GROQ_MODEL   = 'llama-3.3-70b-versatile'; // Model mạnh nhất của Groq, miễn phí
 
 async function sendAIMessage() {
   const input = document.getElementById('ai-input');
   const text = input.value.trim();
   if(!text || aiLoading) return;
+
   aiMessages.push({ role:'user', content:text });
   input.value = '';
   input.style.height = 'auto';
   aiLoading = true;
   renderAIMessages();
+
   const sendBtn = document.getElementById('ai-send-btn');
   if(sendBtn) sendBtn.disabled = true;
+
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -4292,6 +4227,7 @@ async function sendAIMessage() {
         ]
       })
     });
+
     const data = await response.json();
     if(data.error) throw new Error(data.error.message);
     const reply = data?.choices?.[0]?.message?.content || 'Xin lỗi, tôi không nhận được phản hồi. Vui lòng thử lại.';
@@ -4299,6 +4235,7 @@ async function sendAIMessage() {
   } catch(err) {
     aiMessages.push({ role:'assistant', content:`⚠️ Lỗi: ${err.message||'Không kết nối được Groq API. Kiểm tra lại mạng.'}` });
   }
+
   aiLoading = false;
   if(sendBtn) sendBtn.disabled = false;
   renderAIMessages();
