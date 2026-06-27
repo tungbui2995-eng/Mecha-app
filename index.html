@@ -774,10 +774,11 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         </div>
         <div class="card">
           <div class="card-header">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span class="card-title">Cảnh báo kỹ thuật</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span class="card-title" style="color:var(--red)">Cảnh báo quá hạn</span>
+            <span class="badge badge-red" id="dash-alert-count" style="margin-left:4px;display:none">0</span>
           </div>
-          <div style="padding:12px 16px" id="dash-alerts"></div>
+          <div id="dash-alerts" style="max-height:280px;overflow-y:auto"></div>
         </div>
       </div>
 
@@ -1444,14 +1445,65 @@ function renderDashboard() {
   }
 
   // Alerts
+  // Cảnh báo quá hạn
   const alerts = document.getElementById('dash-alerts');
-  const activeIssues = issues.filter(i=>i.status==='Mở');
-  if(activeIssues.length===0){
-    alerts.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--green);font-size:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Hệ thống an toàn. Không có lỗi kỹ thuật.</div>`;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const alertItems = [];
+
+  projects.forEach(p => {
+    if(p.status==='Hoàn thành') return;
+    // Kiểm tra hạn bàn giao dự án
+    if(p.deadline && p.deadline !== '—') {
+      const dl = new Date(p.deadline); dl.setHours(0,0,0,0);
+      const diff = Math.round((dl-today)/86400000);
+      if(diff <= 7) alertItems.push({
+        label: diff<0?`Quá hạn ${Math.abs(diff)} ngày`:diff===0?'HÔM NAY':`Còn ${diff} ngày`,
+        color: diff<0?'var(--red)':diff<=3?'var(--orange)':'var(--amber)',
+        text: `${p.id} — ${p.name}`,
+        sub: 'Hạn bàn giao dự án',
+        urgent: diff<=0
+      });
+    }
+    // Kiểm tra deadline từng giai đoạn
+    (p.phaseDeadlines||[]).forEach((dl,i)=>{
+      if(!dl || (p.phases||[])[i]>=100) return;
+      const d = new Date(dl); d.setHours(0,0,0,0);
+      const diff = Math.round((d-today)/86400000);
+      if(diff<=3) {
+        const picEmail = (p.phasePIC||[])[i];
+        const pic = team.find(t=>t.email===picEmail);
+        alertItems.push({
+          label: diff<0?`Quá hạn ${Math.abs(diff)} ngày`:diff===0?'HÔM NAY':`Còn ${diff} ngày`,
+          color: diff<0?'var(--red)':diff===0?'var(--orange)':'var(--amber)',
+          text: `${p.id} — P${i+1}: ${PH[i].name}`,
+          sub: `PIC: ${pic?pic.name:'Chưa phân công'} · ${(p.phases||[])[i]||0}% tiến độ`,
+          urgent: diff<=0
+        });
+      }
+    });
+  });
+
+  alertItems.sort((a,b)=>b.urgent-a.urgent);
+  const cntEl = document.getElementById('dash-alert-count');
+  if(cntEl){ cntEl.textContent=alertItems.length; cntEl.style.display=alertItems.length?'':'none'; }
+
+  if(alertItems.length===0) {
+    alerts.innerHTML=`<div style="display:flex;align-items:center;gap:8px;color:var(--green);font-size:12px;padding:12px 16px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Không có giai đoạn/dự án nào quá hạn hoặc sắp hết hạn
+    </div>`;
   } else {
-    alerts.innerHTML = activeIssues.slice(0,5).map(i => `<div style="margin-bottom:8px;padding:8px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);font-size:12px">
-      <span class="badge badge-red" style="margin-right:6px">${i.priority||'Cao'}</span>${i.proj}: ${i.title}
-    </div>`).join('');
+    alerts.innerHTML = alertItems.map(a=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">
+        <div style="flex-shrink:0;text-align:center;min-width:70px">
+          <div style="font-size:9px;font-weight:700;color:${a.color};text-transform:uppercase;letter-spacing:.05em">${a.label}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.text}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px">${a.sub}</div>
+        </div>
+        <div style="width:6px;height:6px;border-radius:50%;background:${a.color};flex-shrink:0"></div>
+      </div>`).join('');
   }
 
   // Mini gantt
@@ -1643,6 +1695,59 @@ function loadPhases(pId) {
             }).join('')}
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- COMMENT BOX -->
+    <div class="card" style="margin-top:14px">
+      <div class="card-header">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span class="card-title">Nhận xét & Ghi chú giai đoạn</span>
+        <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--purple)" id="comment-count-${pId}">
+          ${(p.phaseComments||[]).length} nhận xét
+        </span>
+      </div>
+      <!-- Existing comments -->
+      <div id="phase-comments-${pId}" style="max-height:320px;overflow-y:auto">
+        ${(p.phaseComments||[]).length===0
+          ? `<div style="padding:16px;text-align:center;font-size:12px;color:var(--text2)">Chưa có nhận xét nào. Hãy là người đầu tiên!</div>`
+          : (p.phaseComments||[]).map((c,ci)=>{
+              const member = team.find(t=>t.email===c.authorEmail);
+              const color  = stringToColor(c.authorEmail||c.author);
+              const initial= (c.author||'?').slice(-1).toUpperCase();
+              const d = new Date(c.ts);
+              const timeStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+              const phLabel = c.phaseIdx !== undefined ? `<span class="badge badge-gray" style="margin-left:6px">P${c.phaseIdx+1}</span>` : '';
+              return `<div style="display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)">
+                <div style="width:30px;height:30px;border-radius:50%;background:${color}22;border:1px solid ${color}44;color:${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${initial}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+                    <span style="font-size:12px;font-weight:700;color:${color}">${c.author}</span>
+                    ${phLabel}
+                    <span style="font-size:10px;color:var(--text2);margin-left:auto">${timeStr}</span>
+                    ${currentUser?.email===c.authorEmail||isAdmin()?`<button class="btn btn-xs btn-ghost" style="padding:2px 6px;color:var(--red)" onclick="deletePhaseComment('${pId}',${ci})">×</button>`:''}
+                  </div>
+                  <div style="font-size:13px;line-height:1.55;color:var(--text0)">${c.text.replace(/\n/g,'<br>')}</div>
+                </div>
+              </div>`;
+            }).join('')
+        }
+      </div>
+      <!-- Input -->
+      <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end">
+        <select class="form-ctrl" id="comment-phase-sel-${pId}" style="max-width:160px;flex-shrink:0;padding:8px 10px;font-size:12px">
+          <option value="">Giai đoạn chung</option>
+          ${PH.map((ph,i)=>`<option value="${i}">P${i+1}: ${ph.name}</option>`).join('')}
+        </select>
+        <textarea class="form-ctrl" id="comment-input-${pId}" rows="1"
+          style="flex:1;resize:none;min-height:38px;max-height:100px"
+          placeholder="Thêm nhận xét, ghi chú kỹ thuật... (Enter để gửi, Shift+Enter xuống dòng)"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addPhaseComment('${pId}')}"></textarea>
+        <button class="btn btn-sm" style="background:rgba(167,139,250,0.15);border-color:rgba(167,139,250,0.3);color:var(--purple);flex-shrink:0" onclick="addPhaseComment('${pId}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Gửi
+        </button>
       </div>
     </div>
   `;
@@ -1910,6 +2015,44 @@ function viewPhaseDocs(pId, idx) {
         </tbody>
       </table>`;
   document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Đóng</button>`;
+}
+
+// ── PHASE COMMENTS ───────────────────────────────────────────
+function addPhaseComment(pId) {
+  const input = document.getElementById(`comment-input-${pId}`);
+  const text  = input?.value.trim();
+  if(!text) return;
+  if(!currentUser) { toast('Vui lòng đăng nhập để nhận xét'); return; }
+
+  const p = projects.find(x=>x.id===pId);
+  if(!p.phaseComments) p.phaseComments = [];
+
+  const phSelVal = document.getElementById(`comment-phase-sel-${pId}`)?.value;
+  const phaseIdx = phSelVal !== '' ? parseInt(phSelVal) : undefined;
+
+  p.phaseComments.push({
+    author:      currentUser.name,
+    authorEmail: currentUser.email,
+    text,
+    phaseIdx,
+    ts: new Date().toISOString()
+  });
+
+  input.value = '';
+  input.style.height = 'auto';
+  loadPhases(pId);
+  syncDataToDrive();
+}
+
+function deletePhaseComment(pId, idx) {
+  const p = projects.find(x=>x.id===pId);
+  if(!p.phaseComments) return;
+  showConfirm({
+    title:'Xóa nhận xét', icon:'🗑️', iconBg:'var(--red-dim)',
+    msg:'Xác nhận xóa nhận xét này?',
+    okText:'Xóa', okClass:'btn-danger',
+    onOk:()=>{ p.phaseComments.splice(idx,1); loadPhases(pId); syncDataToDrive(); }
+  });
 }
 
 function updatePhasePct(pId, idx) {
@@ -4013,6 +4156,43 @@ function sendChatMessage() {
   renderMessages(room);
   renderChatRooms();
   syncChatToDrive();
+
+  // Gửi email cho người được @mention
+  const mentions = [...text.matchAll(/@([\w\sÀ-ỹ]+?)(?=\s|$|[,.!?])/g)].map(m=>m[1].trim());
+  if(mentions.length > 0) {
+    const senderName = sender?.name || chatSenderEmail;
+    const roomName   = room.name || 'Chat nhóm';
+    const now        = new Date();
+    const timeStr    = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} ${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}`;
+    mentions.forEach(mentionName => {
+      const mentioned = team.find(t => t.name.toLowerCase() === mentionName.toLowerCase() || t.name.toLowerCase().includes(mentionName.toLowerCase()));
+      if(!mentioned || mentioned.email===chatSenderEmail) return;
+      const htmlBody = `
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
+          <div style="background:linear-gradient(135deg,#6366f1,#4f8ef7);padding:20px 22px 16px">
+            <div style="font-size:17px;font-weight:700;color:#fff">💬 MechaProject Chat</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:3px">Bạn được nhắc đến trong ${roomName}</div>
+          </div>
+          <div style="padding:20px 22px">
+            <div style="font-size:14px;font-weight:600;margin-bottom:12px">Xin chào ${mentioned.name},</div>
+            <p style="font-size:13px;color:#9aa3b5;margin-bottom:14px"><strong style="color:#eef0f4">${senderName}</strong> đã nhắc đến bạn lúc <strong style="color:#eef0f4">${timeStr}</strong> trong <strong style="color:#a78bfa">${roomName}</strong>:</p>
+            <div style="background:#1e2330;border-left:3px solid #6366f1;border-radius:0 8px 8px 0;padding:12px 16px;font-size:13px;color:#eef0f4;line-height:1.6;margin-bottom:16px">
+              ${text.replace(/@([\w\sÀ-ỹ]+)/g,'<strong style="color:#a78bfa">@$1</strong>')}
+            </div>
+            <p style="font-size:12px;color:#5c6578">Đăng nhập MechaProject → Chat để xem toàn bộ cuộc trò chuyện.</p>
+          </div>
+          <div style="padding:12px 22px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Chat · Không reply email này</div>
+        </div>`;
+      fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
+        action:'send_email', to: mentioned.email,
+        subject:`[MechaProject] ${senderName} nhắc đến bạn trong ${roomName}`,
+        body:`${senderName} nhắc đến bạn lúc ${timeStr} trong ${roomName}:\n\n${text}`,
+        htmlBody
+      })}).then(r=>r.json()).then(res=>{
+        if(res.status==='success') toast(`✉ Đã thông báo cho ${mentioned.name}`);
+      }).catch(()=>{});
+    });
+  }
 }
 
 function sendChatFiles(input) {
