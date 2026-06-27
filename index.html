@@ -236,12 +236,12 @@ body {
 .tbl tbody tr:hover td { background: var(--bg3); }
 .tbl-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); }
 
-.phase-timeline { display: flex; gap: 0; margin-bottom: 24px; position: relative; }
+.phase-timeline { display: flex; gap: 0; margin-bottom: 24px; position: relative; flex-wrap: wrap; }
 .phase-timeline::after {
   content: ''; position: absolute; top: 17px; left: 4%; right: 4%;
   height: 2px; background: var(--border); z-index: 0;
 }
-.phase-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; z-index: 1; cursor: pointer; }
+.phase-step { flex: 1 0 100px; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; z-index: 1; cursor: pointer; min-width: 60px; }
 .phase-dot {
   width: 34px; height: 34px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -524,7 +524,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 .phase-info-name { font-size: 14px; font-weight: 600; }
 .phase-info-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
 
-/* ── CUSTOM PERMISSION CLICK CARD ── */
 .perm-grid {
   display: grid; grid-template-columns: 140px 1fr; gap: 0;
   border: 1px solid var(--border); border-radius: var(--r2); overflow: hidden;
@@ -568,7 +567,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 .perm-opt.active .perm-label { color: var(--accent); }
 .perm-opt input { display: none; }
 
-/* ── TASK REJECT BADGE ── */
 .task-rejected {
   border-left-color: var(--red) !important;
   background: var(--red-dim) !important;
@@ -887,7 +885,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         <div class="empty-state">
           <div class="empty-state-icon">📐</div>
           <div class="empty-state-title">Chọn một dự án để bắt đầu</div>
-          Tiến độ 8 giai đoạn thiết kế sẽ hiển thị ở đây
+          Tiến độ các giai đoạn sẽ hiển thị ở đây
         </div>
       </div>
     </div>
@@ -1344,21 +1342,13 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// TOÀN BỘ JAVASCRIPT HOÀN CHỈNH (đã sửa lỗi admin + phân quyền click)
+// TOÀN BỘ JAVASCRIPT HOÀN CHỈNH (đã sửa lỗi admin + phân quyền click + thêm/xóa giai đoạn)
 // ═══════════════════════════════════════════════════════════════
 
 const DRIVE_API_URL = "https://script.google.com/macros/s/AKfycbzA-4NPh-rxPxMERUD9wKlev-cauLgI99Kd4H-Q7W2unJLbxu42wiM_X4NWjBv0bjv-/exec";
 
-const PH = [
-  {id:'p1', name:'Khảo sát & Phương án', icon:'🔍'},
-  {id:'p2', name:'Thiết kế 3D & Cơ khí', icon:'📐'},
-  {id:'p3', name:'Thiết kế Điện & Thủy khí', icon:'⚡'},
-  {id:'p4', name:'Bóc tách BVẽ & BOM', icon:'📄'},
-  {id:'p5', name:'Gia công & Đặt hàng', icon:'⚙'},
-  {id:'p6', name:'Lắp ráp Cơ điện', icon:'🔧'},
-  {id:'p7', name:'Lập trình PLC/HMI', icon:'💻'},
-  {id:'p8', name:'Nghiệm thu & Bàn giao', icon:'🏁'}
-];
+// Danh sách icon mặc định cho giai đoạn
+const PHASE_ICONS = ['🔍','📐','⚡','📄','⚙','🔧','💻','🏁'];
 
 let projects = [], issues = [], docs = [], currentFolder = 'all';
 
@@ -1454,11 +1444,13 @@ function stringToColor(str) {
   return colors[Math.abs(hash) % colors.length];
 }
 
-// ── PERMISSIONS ──
+// ── PERMISSIONS ── (ĐÃ SỬA: ADMIN LUÔN FULL QUYỀN)
 function getPerm(module) {
   if(!currentUser) return 0;
   const member = team.find(t=>t.email===currentUser.email);
   if(!member) return 0;
+  // Admin luôn có toàn quyền, bất kể perms thế nào
+  if(member.roleTemplate === 'admin') return 3;
   if(!member.perms || Object.keys(member.perms).length === 0) return 3;
   return member.perms[module] ?? 1;
 }
@@ -1507,6 +1499,12 @@ function ensureAdminExists() {
       perms: { ...ROLE_TEMPLATES.admin },
       password: 'admin1234'
     });
+  } else {
+    const admin = team.find(t => t.email === 'admin@mechaproject.local');
+    if(admin) {
+      admin.roleTemplate = 'admin';
+      admin.perms = { ...ROLE_TEMPLATES.admin };
+    }
   }
 }
 
@@ -1527,7 +1525,8 @@ function renderDashboard() {
     list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">Chưa có dự án nào</div>Tạo dự án đầu tiên để bắt đầu</div>`;
   } else {
     list.innerHTML = projects.slice(0,5).map(p => {
-      const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
+      const phases = p.phases || [];
+      const avg = phases.length ? Math.round(phases.reduce((s, ph) => s + (ph.progress||0), 0) / phases.length) : 0;
       const color = avg >= 80 ? 'var(--green)' : avg >= 40 ? 'var(--accent)' : 'var(--amber)';
       return `<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px" onclick="goToPhaseDetail('${p.id}')" style="cursor:pointer">
         <div style="flex:1;min-width:0">
@@ -1559,18 +1558,17 @@ function renderDashboard() {
         urgent: diff<=0
       });
     }
-    (p.phaseDeadlines||[]).forEach((dl,i)=>{
-      if(!dl || (p.phases||[])[i]>=100) return;
-      const d = new Date(dl); d.setHours(0,0,0,0);
+    (p.phases || []).forEach((phase, i) => {
+      if(!phase.deadline || phase.progress >= 100) return;
+      const d = new Date(phase.deadline); d.setHours(0,0,0,0);
       const diff = Math.round((d-today)/86400000);
       if(diff<=3) {
-        const picEmail = (p.phasePIC||[])[i];
-        const pic = team.find(t=>t.email===picEmail);
+        const pic = team.find(t=>t.email===phase.pic);
         alertItems.push({
           label: diff<0?`Quá hạn ${Math.abs(diff)} ngày`:diff===0?'HÔM NAY':`Còn ${diff} ngày`,
           color: diff<0?'var(--red)':diff===0?'var(--orange)':'var(--amber)',
-          text: `${p.id} — P${i+1}: ${PH[i].name}`,
-          sub: `PIC: ${pic?pic.name:'Chưa phân công'} · ${(p.phases||[])[i]||0}% tiến độ`,
+          text: `${p.id} — ${phase.name || 'Giai đoạn '+(i+1)}`,
+          sub: `PIC: ${pic?pic.name:'Chưa phân công'} · ${phase.progress||0}% tiến độ`,
           urgent: diff<=0
         });
       }
@@ -1604,7 +1602,8 @@ function renderDashboard() {
   if(projects.length===0) { mg.innerHTML = `<div class="empty-state" style="padding:20px">Chưa có dữ liệu tiến độ</div>`; }
   else {
     mg.innerHTML = projects.slice(0,6).map(p => {
-      const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
+      const phases = p.phases || [];
+      const avg = phases.length ? Math.round(phases.reduce((s, ph) => s + (ph.progress||0), 0) / phases.length) : 0;
       return `<div class="gantt-row">
         <div class="gantt-row-hd">
           <span class="gantt-row-name">${p.id} — ${p.name}</span>
@@ -1623,7 +1622,8 @@ function renderProjects() {
     return;
   }
   tbody.innerHTML = projects.map(p => {
-    const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
+    const phases = p.phases || [];
+    const avg = phases.length ? Math.round(phases.reduce((s, ph) => s + (ph.progress||0), 0) / phases.length) : 0;
     const color = avg >= 80 ? 'var(--green)' : avg >= 40 ? 'var(--accent)' : 'var(--amber)';
     return `<tr>
       <td class="tbl-code" style="cursor:pointer" onclick="goToPhaseDetail('${p.id}')">${p.id}</td>
@@ -1659,7 +1659,7 @@ function goToPhaseDetail(id){
   nav('phases', el);
 }
 
-// ── LOAD PHASES ──
+// ── LOAD PHASES (HỖ TRỢ THÊM/XÓA GIAI ĐOẠN) ──
 function loadPhases(pId) {
   const cont = document.getElementById('phases-content');
   if(!pId) {
@@ -1668,12 +1668,11 @@ function loadPhases(pId) {
   }
   const p = projects.find(x=>x.id===pId);
   if(!p) return;
-  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
-  if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
-  if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
+  if(!p.phases) p.phases = [];
   if(!p.generalComments) p.generalComments = [];
   if(!p.phaseComments) p.phaseComments = [];
-  const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
+
+  const avg = p.phases.length ? Math.round(p.phases.reduce((s, ph) => s + (ph.progress||0), 0) / p.phases.length) : 0;
 
   cont.innerHTML = `
     <div class="phase-info-card">
@@ -1687,13 +1686,20 @@ function loadPhases(pId) {
         <div class="prog-wrap"><div class="prog-fill" style="width:${avg}%;background:var(--accent)"></div></div>
       </div>
     </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-sm btn-accent" onclick="addPhase('${pId}')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Thêm giai đoạn
+      </button>
+      <span style="font-size:11px;color:var(--text2)">${p.phases.length} giai đoạn</span>
+    </div>
     <div class="phase-timeline">
-      ${PH.map((ph,i) => {
-        const pct = p.phases[i]||0;
-        const cls = pct===100?'done':'active-ph';
+      ${p.phases.map((ph, i) => {
+        const pct = ph.progress || 0;
+        const cls = pct===100 ? 'done' : (pct>0 ? 'active-ph' : 'pending');
         return `<div class="phase-step" onclick="updatePhasePct('${pId}',${i})">
           <div class="phase-dot ${cls}">${pct}%</div>
-          <div class="phase-step-label">${ph.icon} ${ph.name}</div>
+          <div class="phase-step-label">${ph.icon||'📌'} ${ph.name||'Giai đoạn '+(i+1)}</div>
         </div>`;
       }).join('')}
     </div>
@@ -1714,17 +1720,18 @@ function loadPhases(pId) {
               <th style="min-width:150px">Deadline giai đoạn</th>
               <th style="min-width:160px">Tài liệu giai đoạn</th>
               <th style="min-width:80px">Comment</th>
+              <th style="min-width:60px">Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            ${PH.map((ph,i) => {
-              const pct = p.phases[i]||0;
-              const color = pct===100?'var(--green)':pct>0?'var(--accent)':'var(--text2)';
-              const st = pct===100?'<span class="badge badge-green">Hoàn thành</span>':pct>0?'<span class="badge badge-blue">Đang làm</span>':'<span class="badge badge-gray">Chưa bắt đầu</span>';
-              const dl = p.phaseDeadlines[i] || '';
+            ${p.phases.map((ph, i) => {
+              const pct = ph.progress || 0;
+              const color = pct===100 ? 'var(--green)' : pct>0 ? 'var(--accent)' : 'var(--text2)';
+              const st = pct===100 ? '<span class="badge badge-green">Hoàn thành</span>' : pct>0 ? '<span class="badge badge-blue">Đang làm</span>' : '<span class="badge badge-gray">Chưa bắt đầu</span>';
+              const dl = ph.deadline || '';
               const dlDisplay = dl ? `<span style="font-family:monospace;font-size:11px;color:${isOverdue(dl)?'var(--red)':'var(--text1)'}">${formatDateVN(dl)}</span>` : '<span style="color:var(--text2);font-size:11px">Chưa đặt</span>';
-              const docCount = (p.phaseDocs[i]||[]).length;
-              const picEmail = p.phasePIC[i] || '';
+              const docCount = (ph.docs||[]).length;
+              const picEmail = ph.pic || '';
               const picMember = team.find(t=>t.email===picEmail);
               const picDisplay = picMember
                 ? `<div style="display:flex;align-items:center;gap:5px">
@@ -1733,9 +1740,10 @@ function loadPhases(pId) {
                   </div>`
                 : '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>';
               const commentCount = (p.phaseComments||[]).filter(c=>c.phaseIdx===i).length;
+              const canDelete = p.phases.length > 1; // Không xóa giai đoạn cuối cùng?
               return `<tr>
                 <td class="tbl-code">P${i+1}</td>
-                <td style="font-size:13px">${ph.icon} ${ph.name}</td>
+                <td style="font-size:13px">${ph.icon||'📌'} ${ph.name||'Giai đoạn '+(i+1)}</td>
                 <td>
                   <div style="display:flex;align-items:center;gap:8px">
                     <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
@@ -1776,6 +1784,9 @@ function loadPhases(pId) {
                   <button class="btn btn-xs" style="background:rgba(167,139,250,0.12);color:var(--purple);border-color:rgba(167,139,250,0.2)" onclick="viewPhaseComments('${pId}',${i})">
                     💬 ${commentCount}
                   </button>
+                </td>
+                <td>
+                  ${canDelete ? `<button class="btn btn-xs btn-danger" onclick="deletePhase('${pId}',${i})" title="Xóa giai đoạn này">×</button>` : ''}
                 </td>
               </tr>`;
             }).join('')}
@@ -1821,7 +1832,7 @@ function loadPhases(pId) {
       <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end">
         <select class="form-ctrl" id="comment-phase-sel-${pId}" style="max-width:160px;flex-shrink:0;padding:8px 10px;font-size:12px">
           <option value="">Giai đoạn chung</option>
-          ${PH.map((ph,i)=>`<option value="${i}">P${i+1}: ${ph.name}</option>`).join('')}
+          ${p.phases.map((ph,i)=>`<option value="${i}">P${i+1}: ${ph.name||'Giai đoạn '+(i+1)}</option>`).join('')}
         </select>
         <textarea class="form-ctrl" id="comment-input-${pId}" rows="1"
           style="flex:1;resize:none;min-height:38px;max-height:100px"
@@ -1883,6 +1894,85 @@ function loadPhases(pId) {
   </div>`;
 }
 
+// ── THÊM / XÓA GIAI ĐOẠN ──
+function addPhase(pId) {
+  const p = projects.find(x=>x.id===pId);
+  if(!p) return;
+  if(!p.phases) p.phases = [];
+
+  const overlay = document.getElementById('overlay');
+  overlay.classList.add('open');
+  document.getElementById('modal-hd-title').textContent = `➕ Thêm giai đoạn mới cho ${p.id}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-row">
+      <label class="form-label">Tên giai đoạn *</label>
+      <input class="form-ctrl" id="new-phase-name" placeholder="Ví dụ: Kiểm tra, Chạy thử...">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Icon (emoji)</label>
+      <input class="form-ctrl" id="new-phase-icon" placeholder="📌" value="📌">
+    </div>
+  `;
+  document.getElementById('modal-ft').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
+    <button class="btn btn-accent" onclick="confirmAddPhase('${pId}')">Thêm giai đoạn</button>
+  `;
+}
+
+function confirmAddPhase(pId) {
+  const name = document.getElementById('new-phase-name').value.trim();
+  if(!name) { toast('Vui lòng nhập tên giai đoạn'); return; }
+  const icon = document.getElementById('new-phase-icon').value.trim() || '📌';
+  const p = projects.find(x=>x.id===pId);
+  if(!p) return;
+  if(!p.phases) p.phases = [];
+
+  p.phases.push({
+    name: name,
+    icon: icon,
+    progress: 0,
+    deadline: '',
+    pic: '',
+    docs: [],
+    comments: []
+  });
+
+  closeModal();
+  loadPhases(pId);
+  syncDataToDrive();
+  toast(`Đã thêm giai đoạn "${name}"`);
+}
+
+function deletePhase(pId, idx) {
+  const p = projects.find(x=>x.id===pId);
+  if(!p || !p.phases || p.phases.length <= 1) {
+    toast('Không thể xóa giai đoạn cuối cùng');
+    return;
+  }
+  const ph = p.phases[idx];
+  showConfirm({
+    title:'Xóa giai đoạn',
+    icon:'🗑️',
+    iconBg:'var(--red-dim)',
+    msg:`Xác nhận xóa giai đoạn <strong>${ph.name||'P'+(idx+1)}</strong>? Các dữ liệu liên quan sẽ bị mất.`,
+    okText:'Xóa',
+    okClass:'btn-danger',
+    onOk:()=>{
+      p.phases.splice(idx,1);
+      // Xóa các comment liên quan
+      p.phaseComments = (p.phaseComments||[]).filter(c => c.phaseIdx !== idx);
+      // Cập nhật lại phaseIdx cho các comment còn lại
+      p.phaseComments = p.phaseComments.map(c => {
+        if(c.phaseIdx > idx) c.phaseIdx--;
+        return c;
+      });
+      loadPhases(pId);
+      syncDataToDrive();
+      toast(`Đã xóa giai đoạn "${ph.name}"`);
+    }
+  });
+}
+
 // ── CÁC HÀM COMMENT ──
 function addGeneralComment(pId) {
   const input = document.getElementById(`general-comment-input-${pId}`);
@@ -1921,10 +2011,10 @@ function viewPhaseComments(projectId, phaseIdx) {
   const p = projects.find(x=>x.id===projectId);
   if(!p) return;
   const comments = (p.phaseComments||[]).filter(c=>c.phaseIdx===phaseIdx);
-  const ph = PH[phaseIdx];
+  const ph = p.phases[phaseIdx];
   const overlay = document.getElementById('overlay');
   overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = `💬 Nhận xét — ${ph.icon} ${ph.name}`;
+  document.getElementById('modal-hd-title').textContent = `💬 Nhận xét — ${ph.icon||'📌'} ${ph.name||'P'+(phaseIdx+1)}`;
 
   let html = `<div style="max-height:300px;overflow-y:auto;margin-bottom:12px">`;
   if(comments.length===0) {
@@ -2034,7 +2124,9 @@ function deletePhaseComment(pId, idx) {
 
 function updatePhasePct(pId, idx) {
   const p = projects.find(x=>x.id===pId);
-  p.phases[idx] = p.phases[idx] === 100 ? 0 : (p.phases[idx]||0) + 20;
+  const ph = p.phases[idx];
+  if(!ph) return;
+  ph.progress = ph.progress === 100 ? 0 : (ph.progress||0) + 20;
   loadPhases(pId);
   syncDataToDrive();
 }
@@ -2042,11 +2134,12 @@ function updatePhasePct(pId, idx) {
 // ── CÁC HÀM PHASE ──
 function assignPIC(pId, idx) {
   const p = projects.find(x=>x.id===pId);
-  if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
-  const current = p.phasePIC[idx] || '';
+  const ph = p.phases[idx];
+  if(!ph) return;
+  const current = ph.pic || '';
   const overlay = document.getElementById('overlay');
   overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = `👤  Gán PIC — P${idx+1}: ${PH[idx].name}`;
+  document.getElementById('modal-hd-title').textContent = `👤  Gán PIC — ${ph.icon||'📌'} ${ph.name||'P'+(idx+1)}`;
   const teamOpts = team.length === 0
     ? `<div style="color:var(--text2);font-size:12px;padding:8px 0">Chưa có nhân sự. Vui lòng thêm ở mục Nhân sự trước.</div>`
     : `<select class="form-ctrl" id="pic-select">
@@ -2083,8 +2176,9 @@ function assignPIC(pId, idx) {
 
 function savePIC(pId, idx, email) {
   const p = projects.find(x=>x.id===pId);
-  if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
-  p.phasePIC[idx] = email;
+  const ph = p.phases[idx];
+  if(!ph) return;
+  ph.pic = email;
 
   const sendEmail = document.getElementById('send-email-chk')?.checked;
   const member = team.find(t=>t.email===email);
@@ -2102,25 +2196,25 @@ function savePIC(pId, idx, email) {
       phaseIdx: idx
     });
   } else if(email && member) {
-    toast(`Đã gán PIC: ${member.name} → P${idx+1}`);
+    toast(`Đã gán PIC: ${member.name} → ${ph.name||'P'+(idx+1)}`);
   } else if(!email) {
-    toast(`Đã bỏ phân công P${idx+1}`);
+    toast(`Đã bỏ phân công ${ph.name||'P'+(idx+1)}`);
   }
 }
 
 function sendEmailNotification({ type, to, toName, proj, phaseIdx }) {
-  const ph = PH[phaseIdx];
-  const deadline = proj.phaseDeadlines?.[phaseIdx] || 'Chưa đặt';
+  const ph = proj.phases[phaseIdx];
+  const deadline = ph.deadline || 'Chưa đặt';
   const deadlineText = deadline !== 'Chưa đặt' ? formatDateVN(deadline) : 'Chưa đặt';
 
   const payload = {
     action: 'send_email',
     to,
-    subject: `[MechaProject] Bạn được gán phụ trách: ${proj.id} — P${phaseIdx+1}: ${ph.name}`,
+    subject: `[MechaProject] Bạn được gán phụ trách: ${proj.id} — ${ph.name||'P'+(phaseIdx+1)}`,
     body: `Xin chào ${toName},\n\nBạn được phân công phụ trách giai đoạn sau:\n\n` +
       `📁 Dự án: ${proj.id} — ${proj.name}\n` +
       `👷 Khách hàng: ${proj.client}\n` +
-      `📐 Giai đoạn: P${phaseIdx+1} — ${ph.name}\n` +
+      `📐 Giai đoạn: ${ph.icon||'📌'} ${ph.name||'P'+(phaseIdx+1)}\n` +
       `📅 Deadline giai đoạn: ${deadlineText}\n` +
       `📅 Hạn bàn giao dự án: ${proj.deadline}\n\n` +
       `Vui lòng đăng nhập MechaProject để xem chi tiết và cập nhật tiến độ.\n\nTrân trọng,\nHệ thống MechaProject`,
@@ -2137,7 +2231,7 @@ function sendEmailNotification({ type, to, toName, proj, phaseIdx }) {
             <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px">
               <span style="color:#5c6578;font-weight:600">Dự án</span><span style="color:#eef0f4">${proj.id} — ${proj.name}</span>
               <span style="color:#5c6578;font-weight:600">Khách hàng</span><span style="color:#eef0f4">${proj.client}</span>
-              <span style="color:#5c6578;font-weight:600">Giai đoạn</span><span style="color:#4f8ef7;font-weight:600">P${phaseIdx+1} — ${ph.name}</span>
+              <span style="color:#5c6578;font-weight:600">Giai đoạn</span><span style="color:#4f8ef7;font-weight:600">${ph.icon||'📌'} ${ph.name||'P'+(phaseIdx+1)}</span>
               <span style="color:#5c6578;font-weight:600">Deadline GĐ</span><span style="color:${deadline!=='Chưa đặt'?'#fbbf24':'#5c6578'};font-weight:600">${deadlineText}</span>
               <span style="color:#5c6578;font-weight:600">Hạn bàn giao</span><span style="color:#eef0f4">${proj.deadline}</span>
             </div>
@@ -2162,12 +2256,13 @@ function sendEmailNotification({ type, to, toName, proj, phaseIdx }) {
 
 function editPhaseDeadline(pId, idx) {
   const p = projects.find(x=>x.id===pId);
-  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
-  const current = p.phaseDeadlines[idx] || '';
+  const ph = p.phases[idx];
+  if(!ph) return;
+  const current = ph.deadline || '';
 
   const overlay = document.getElementById('overlay');
   overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = `📅  Deadline — P${idx+1}: ${PH[idx].name}`;
+  document.getElementById('modal-hd-title').textContent = `📅  Deadline — ${ph.icon||'📌'} ${ph.name||'P'+(idx+1)}`;
   document.getElementById('modal-body').innerHTML = `
     <div class="form-row">
       <label class="form-label">Ngày hoàn thành giai đoạn</label>
@@ -2184,36 +2279,38 @@ function editPhaseDeadline(pId, idx) {
 
 function savePhaseDeadline(pId, idx, val) {
   const p = projects.find(x=>x.id===pId);
-  if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
+  const ph = p.phases[idx];
+  if(!ph) return;
   if(!val){
     showConfirm({title:'Xóa deadline',icon:'📅',iconBg:'var(--amber-dim)',
-      msg:`Xác nhận xóa deadline giai đoạn <strong>P${idx+1}</strong>?`,
+      msg:`Xác nhận xóa deadline giai đoạn <strong>${ph.name||'P'+(idx+1)}</strong>?`,
       okText:'Xóa',okClass:'btn-danger',
-      onOk:()=>{p.phaseDeadlines[idx]='';closeModal();loadPhases(pId);syncDataToDrive();toast(`Đã xóa deadline P${idx+1}`);}
+      onOk:()=>{ph.deadline='';closeModal();loadPhases(pId);syncDataToDrive();toast(`Đã xóa deadline P${idx+1}`);}
     });
     return;
   }
-  p.phaseDeadlines[idx]=val;closeModal();loadPhases(pId);syncDataToDrive();
+  ph.deadline=val;closeModal();loadPhases(pId);syncDataToDrive();
   toast(`Đã đặt deadline P${idx+1}: ${formatDateVN(val)}`);
 }
 
 function uploadPhaseDoc(pId, idx, input) {
   const p = projects.find(x=>x.id===pId);
-  if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
-  if(!p.phaseDocs[idx]) p.phaseDocs[idx] = [];
+  const ph = p.phases[idx];
+  if(!ph) return;
+  if(!ph.docs) ph.docs = [];
 
   const files = Array.from(input.files);
   if(!files.length) return;
 
   let uploaded = 0;
-  showLoading(`Đang tải lên ${files.length} tệp cho P${idx+1}...`);
+  showLoading(`Đang tải lên ${files.length} tệp cho ${ph.name||'P'+(idx+1)}...`);
 
   function next(i) {
     if(i >= files.length) {
       hideLoading();
       loadPhases(pId);
       syncDataToDrive();
-      toast(`Đã tải lên ${files.length} tài liệu cho P${idx+1}!`);
+      toast(`Đã tải lên ${files.length} tài liệu cho ${ph.name||'P'+(idx+1)}!`);
       return;
     }
     const file = files[i];
@@ -2239,11 +2336,11 @@ function uploadPhaseDoc(pId, idx, input) {
             fileId: res.fileId || null,
             driveLink: res.driveLink || null
           };
-          p.phaseDocs[idx].push(docEntry);
+          ph.docs.push(docEntry);
           docs.unshift({
             proj: pId, name: file.name,
             type: file.name.split('.').pop().toUpperCase(),
-            phase: PH[idx].name,
+            phase: ph.name||'P'+(idx+1),
             folder: 'f1',
             date: new Date().toISOString().slice(0,10),
             size: docEntry.size,
@@ -2261,10 +2358,12 @@ function uploadPhaseDoc(pId, idx, input) {
 
 function viewPhaseDocs(pId, idx) {
   const p = projects.find(x=>x.id===pId);
-  const docList = (p.phaseDocs && p.phaseDocs[idx]) || [];
+  const ph = p.phases[idx];
+  if(!ph) return;
+  const docList = ph.docs || [];
   const overlay = document.getElementById('overlay');
   overlay.classList.add('open');
-  document.getElementById('modal-hd-title').textContent = `📂  Tài liệu P${idx+1}: ${PH[idx].name}`;
+  document.getElementById('modal-hd-title').textContent = `📂  Tài liệu ${ph.icon||'📌'} ${ph.name||'P'+(idx+1)}`;
   document.getElementById('modal-body').innerHTML = docList.length === 0
     ? `<div class="empty-state">Chưa có tài liệu nào</div>`
     : `<table class="tbl" style="margin-top:0">
@@ -2294,7 +2393,8 @@ function renderGantt() {
   const wrap = document.getElementById('gantt-wrap');
   if(projects.length===0){ wrap.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">Không có dữ liệu tiến độ</div></div>`; return; }
   wrap.innerHTML = projects.map(p => {
-    const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
+    const phases = p.phases || [];
+    const avg = phases.length ? Math.round(phases.reduce((s, ph) => s + (ph.progress||0), 0) / phases.length) : 0;
     return `<div class="gantt-row">
       <div class="gantt-row-hd">
         <span class="gantt-row-name"><span style="color:var(--text2);font-family:monospace;font-size:11px">${p.id}</span> — ${p.name}</span>
@@ -2493,7 +2593,6 @@ function openPermModal(idx) {
     </button>`;
   }).join('');
 
-  // Build permission grid with clickable cards
   let permRows = MODULES.map(mod => {
     const cur = (t.perms||{})[mod] ?? 1;
     const opts = [0,1,2,3].map(lv => {
@@ -2534,17 +2633,14 @@ function openPermModal(idx) {
   `;
 }
 
-// Toggle permission by click on card
 function togglePerm(idx, mod, lv) {
   const t = team[idx];
   if(!t.perms) t.perms = {};
-  // If clicking the same level, set to 0 (off)
   if(t.perms[mod] === lv) {
     t.perms[mod] = 0;
   } else {
     t.perms[mod] = lv;
   }
-  // Re-render modal to reflect changes
   openPermModal(idx);
 }
 
@@ -2556,7 +2652,6 @@ function applyTemplate(idx, tmpl) {
 }
 
 function savePerms(idx) {
-  // Perms already saved in real-time via togglePerm, just close
   const t = team[idx];
   closeModal();
   renderTeam();
@@ -2606,7 +2701,6 @@ function saveMember(idx) {
     role: document.getElementById('em-role').value.trim(),
     status: document.getElementById('em-status').value
   };
-  // If admin, update password
   if(isAdmin()) {
     const pass = document.getElementById('em-pass')?.value.trim();
     if(pass) team[idx].password = pass;
@@ -2666,6 +2760,11 @@ function openModal(type, data) {
       <div class="form-grid">
         <div class="form-row"><label class="form-label">Giá trị hợp đồng (VNĐ)</label><input class="form-ctrl" type="number" id="f-val" placeholder="0"></div>
         <div class="form-row"><label class="form-label">Hạn bàn giao</label><input class="form-ctrl" type="date" id="f-deadline"></div>
+      </div>
+      <div class="form-row"><label class="form-label">Các giai đoạn mặc định (có thể thêm/xóa sau)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--text2);margin-top:4px">
+          <span>🔍 Khảo sát, 📐 Thiết kế 3D, ⚡ Điện/Thủy khí, 📄 BOM, ⚙ Gia công, 🔧 Lắp ráp, 💻 PLC, 🏁 Nghiệm thu</span>
+        </div>
       </div>
     `;
     document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveProject()">Xác nhận tạo</button>`;
@@ -2740,15 +2839,23 @@ function saveProject() {
   const name = document.getElementById('f-name').value.trim();
   const client = document.getElementById('f-client').value.trim();
   if(!id || !name || !client){ toast('Vui lòng điền đủ thông tin bắt buộc'); return; }
+  // Tạo danh sách giai đoạn mặc định
+  const defaultPhases = [
+    { name: 'Khảo sát & Phương án', icon: '🔍', progress: 0, deadline: '', pic: '', docs: [] },
+    { name: 'Thiết kế 3D & Cơ khí', icon: '📐', progress: 0, deadline: '', pic: '', docs: [] },
+    { name: 'Thiết kế Điện & Thủy khí', icon: '⚡', progress: 0, deadline: '', pic: '', docs: [] },
+    { name: 'Bóc tách BVẽ & BOM', icon: '📄', progress: 0, deadline: '', pic: '', docs: [] },
+    { name: 'Gia công & Đặt hàng', icon: '⚙', progress: 0, deadline: '', pic: '', docs: [] },
+    { name: 'Lắp ráp Cơ điện', icon: '🔧', progress: 0, deadline: '', pic: '', docs: [] },
+    { name: 'Lập trình PLC/HMI', icon: '💻', progress: 0, deadline: '', pic: '', docs: [] },
+    { name: 'Nghiệm thu & Bàn giao', icon: '🏁', progress: 0, deadline: '', pic: '', docs: [] }
+  ];
   projects.unshift({
     id, name, client,
     val: document.getElementById('f-val').value||0,
     deadline: document.getElementById('f-deadline').value||'—',
     status: document.getElementById('f-status').value,
-    phases:[0,0,0,0,0,0,0,0],
-    phaseDeadlines:Array(8).fill(''),
-    phasePIC:Array(8).fill(''),
-    phaseDocs:Array(8).fill(null).map(()=>[]),
+    phases: defaultPhases,
     generalComments: [],
     phaseComments: []
   });
@@ -2841,13 +2948,13 @@ function fetchDataFromDrive() {
       projects = (data.projects || []).map(p => {
         if (!p.generalComments) p.generalComments = [];
         if (!p.phaseComments) p.phaseComments = [];
+        if (!p.phases) p.phases = [];
         return p;
       });
       issues = data.issues || [];
       docs = data.docs || [];
       if(data.team  && data.team.length  > 0) team  = data.team;
       else team = [];
-      // Ensure admin always exists
       ensureAdminExists();
       if(data.tasks && data.tasks.length > 0) tasks = data.tasks;
       if(data.chatRooms) chatRooms = data.chatRooms;
@@ -2893,7 +3000,6 @@ function toast(msg) {
 }
 
 // ── MANUAL TASKS (Yêu cầu gấp / Cần xử lý hôm nay) ──────
-// Reject task with comment
 function rejectTask(taskId) {
   const t = tasks.find(x=>x.id===taskId);
   if(!t) return;
@@ -2929,7 +3035,6 @@ function doRejectTask(taskId) {
   t.rejectedAt = new Date().toISOString();
   t.done = false;
 
-  // Notify requester
   const requester = team.find(m=>m.email===t.requester);
   if(requester && requester.email) {
     const isUrgent = t.type === 'urgent';
@@ -3100,7 +3205,6 @@ function updateTaskBadges() {
   document.getElementById('b-today').textContent  = todayOpen  || '';
 }
 
-// ── TASK CARD HTML (with Reject button) ──
 function taskCardHtml(t) {
   const isUrgent   = t.type === 'urgent';
   const accentClr  = isUrgent ? 'var(--red)' : 'var(--orange)';
@@ -3474,6 +3578,13 @@ function doLogin() {
 }
 
 function applyLogin(user) {
+  if(user.email === 'admin@mechaproject.local') {
+    const adminMember = team.find(t=>t.email === user.email);
+    if(adminMember) {
+      adminMember.roleTemplate = 'admin';
+      adminMember.perms = {...ROLE_TEMPLATES.admin};
+    }
+  }
   currentUser=user; sessionStorage.setItem('mp_user',JSON.stringify(user));
   document.getElementById('login-screen').style.display='none';
   document.getElementById('login-pass').value='';
@@ -4609,8 +4720,8 @@ function buildAIContext() {
     projects: projects.map(p=>({
       id: p.id, name: p.name, client: p.client,
       status: p.status, deadline: p.deadline,
-      progress: Math.round((p.phases||[]).reduce((a,b)=>a+b,0)/8),
-      phases: (p.phases||[]).map((pct,i)=>({ phase:`P${i+1}`, pct, pic: p.phasePIC?.[i]||'—', deadline: p.phaseDeadlines?.[i]||'—' }))
+      progress: (p.phases||[]).length ? Math.round((p.phases||[]).reduce((s, ph) => s + (ph.progress||0), 0) / (p.phases||[]).length) : 0,
+      phases: (p.phases||[]).map((ph,i)=>({ phase: ph.name||'P'+(i+1), pct: ph.progress||0, pic: ph.pic||'—', deadline: ph.deadline||'—' }))
     })),
     team: team.map(t=>({ name:t.name, role:t.role, status:t.status, email:t.email })),
     issues: issues.map(i=>({ id:i.id, proj:i.proj, title:i.title, priority:i.priority, status:i.status })),
@@ -4797,7 +4908,6 @@ function renderAll() {
 }
 
 window.onload = () => {
-  // Initialize with empty team and then fetch
   team = [];
   fetchDataFromDrive();
 };
