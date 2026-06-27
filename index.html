@@ -966,7 +966,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         </div>
       </div>
     </div>
-  </div>
 
     <!-- URGENT — YÊU CẦU GẤP -->
     <div class="view" id="view-urgent">
@@ -997,7 +996,8 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
       </div>
       <div id="today-container"></div>
     </div>
-    <!-- CHAT -->
+
+    <!-- CHAT VIEW -->
     <div class="view" id="view-chat">
       <div class="chat-layout">
         <div class="chat-rooms">
@@ -1026,9 +1026,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
           <div class="chat-input-area" id="chat-input-area" style="display:none">
             <div class="chat-input-meta">
               <span id="chat-sender-label">Gửi với tư cách: <strong style="color:var(--accent)" id="chat-sender-name">—</strong></span>
-              <select id="chat-sender-select" class="form-ctrl" style="max-width:180px;padding:3px 8px;font-size:11px" onchange="setChatSender(this.value)">
-                <option value="">— Chọn tên của bạn —</option>
-              </select>
+              <!-- Đã bỏ <select> -->
             </div>
             <div class="chat-input-wrap">
               <div class="chat-wrap-pos">
@@ -1052,7 +1050,6 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         </div>
       </div>
     </div>
-  </div>
 
     <!-- WAREHOUSE VIEW -->
     <div class="view" id="view-warehouse">
@@ -1316,6 +1313,8 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 <div class="toast" id="toast"></div>
 
 <script>
+// ── TOÀN BỘ JAVASCRIPT VỚI CÁC SỬA ĐỔI ──
+
 const DRIVE_API_URL = "https://script.google.com/macros/s/AKfycbzA-4NPh-rxPxMERUD9wKlev-cauLgI99Kd4H-Q7W2unJLbxu42wiM_X4NWjBv0bjv-/exec";
 
 const PH = [
@@ -1445,14 +1444,12 @@ function renderDashboard() {
   }
 
   // Alerts
-  // Cảnh báo quá hạn
   const alerts = document.getElementById('dash-alerts');
   const today = new Date(); today.setHours(0,0,0,0);
   const alertItems = [];
 
   projects.forEach(p => {
     if(p.status==='Hoàn thành') return;
-    // Kiểm tra hạn bàn giao dự án
     if(p.deadline && p.deadline !== '—') {
       const dl = new Date(p.deadline); dl.setHours(0,0,0,0);
       const diff = Math.round((dl-today)/86400000);
@@ -1464,7 +1461,6 @@ function renderDashboard() {
         urgent: diff<=0
       });
     }
-    // Kiểm tra deadline từng giai đoạn
     (p.phaseDeadlines||[]).forEach((dl,i)=>{
       if(!dl || (p.phases||[])[i]>=100) return;
       const d = new Date(dl); d.setHours(0,0,0,0);
@@ -1579,8 +1575,10 @@ function loadPhases(pId) {
   if(!p.phaseDeadlines) p.phaseDeadlines = Array(PH.length).fill('');
   if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
   if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
+  if(!p.generalComments) p.generalComments = [];
   const avg = Math.round(p.phases.reduce((a,b)=>a+b,0)/PH.length);
 
+  // Phase timeline + table (giữ nguyên)
   cont.innerHTML = `
     <div class="phase-info-card">
       <div style="flex:1">
@@ -1698,7 +1696,7 @@ function loadPhases(pId) {
       </div>
     </div>
 
-    <!-- COMMENT BOX -->
+    <!-- COMMENT BOX CHO GIAI ĐOẠN (giữ nguyên) -->
     <div class="card" style="margin-top:14px">
       <div class="card-header">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1707,7 +1705,6 @@ function loadPhases(pId) {
           ${(p.phaseComments||[]).length} nhận xét
         </span>
       </div>
-      <!-- Existing comments -->
       <div id="phase-comments-${pId}" style="max-height:320px;overflow-y:auto">
         ${(p.phaseComments||[]).length===0
           ? `<div style="padding:16px;text-align:center;font-size:12px;color:var(--text2)">Chưa có nhận xét nào. Hãy là người đầu tiên!</div>`
@@ -1733,7 +1730,6 @@ function loadPhases(pId) {
             }).join('')
         }
       </div>
-      <!-- Input -->
       <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end">
         <select class="form-ctrl" id="comment-phase-sel-${pId}" style="max-width:160px;flex-shrink:0;padding:8px 10px;font-size:12px">
           <option value="">Giai đoạn chung</option>
@@ -1751,9 +1747,90 @@ function loadPhases(pId) {
       </div>
     </div>
   `;
+
+  // === THÊM CARD NHẬN XÉT CHUNG ===
+  const generalCommentsHtml = (p.generalComments||[]).map((c,ci) => {
+    const member = team.find(t=>t.email===c.authorEmail);
+    const color  = stringToColor(c.authorEmail||c.author);
+    const initial= (c.author||'?').slice(-1).toUpperCase();
+    const d = new Date(c.ts);
+    const timeStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+    return `<div style="display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)">
+      <div style="width:30px;height:30px;border-radius:50%;background:${color}22;border:1px solid ${color}44;color:${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${initial}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:700;color:${color}">${c.author}</span>
+          <span style="font-size:10px;color:var(--text2);margin-left:auto">${timeStr}</span>
+          ${currentUser?.email===c.authorEmail||isAdmin()?`<button class="btn btn-xs btn-ghost" style="padding:2px 6px;color:var(--red)" onclick="deleteGeneralComment('${pId}',${ci})">×</button>`:''}
+        </div>
+        <div style="font-size:13px;line-height:1.55;color:var(--text0)">${c.text.replace(/\n/g,'<br>')}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  cont.innerHTML += `
+  <div class="card" style="margin-top:14px">
+    <div class="card-header">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="card-title">💬 Nhận xét chung dự án</span>
+      <span class="badge" style="background:rgba(167,139,250,0.12);color:var(--purple)">${(p.generalComments||[]).length} nhận xét</span>
+    </div>
+    <div id="general-comments-${pId}" style="max-height:320px;overflow-y:auto">
+      ${(p.generalComments||[]).length===0
+        ? `<div style="padding:16px;text-align:center;font-size:12px;color:var(--text2)">Chưa có nhận xét chung nào.</div>`
+        : generalCommentsHtml
+      }
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end">
+      <textarea class="form-ctrl" id="general-comment-input-${pId}" rows="1"
+        style="flex:1;resize:none;min-height:38px;max-height:100px"
+        placeholder="Thêm nhận xét chung cho dự án... (Enter để gửi, Shift+Enter xuống dòng)"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addGeneralComment('${pId}')}"></textarea>
+      <button class="btn btn-sm" style="background:rgba(167,139,250,0.15);border-color:rgba(167,139,250,0.3);color:var(--purple);flex-shrink:0" onclick="addGeneralComment('${pId}')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Gửi
+      </button>
+    </div>
+  </div>`;
 }
 
-// ── PHASE DEADLINE HELPERS ──
+// ── HÀM NHẬN XÉT CHUNG ──
+function addGeneralComment(pId) {
+  const input = document.getElementById(`general-comment-input-${pId}`);
+  const text = input?.value.trim();
+  if(!text) return;
+  if(!currentUser) { toast('Vui lòng đăng nhập để nhận xét'); return; }
+
+  const p = projects.find(x=>x.id===pId);
+  if(!p.generalComments) p.generalComments = [];
+
+  p.generalComments.push({
+    author:      currentUser.name,
+    authorEmail: currentUser.email,
+    text,
+    ts: new Date().toISOString()
+  });
+
+  input.value = '';
+  input.style.height = 'auto';
+  loadPhases(pId);
+  syncDataToDrive();
+}
+
+function deleteGeneralComment(pId, idx) {
+  const p = projects.find(x=>x.id===pId);
+  if(!p.generalComments) return;
+  showConfirm({
+    title:'Xóa nhận xét', icon:'🗑️', iconBg:'var(--red-dim)',
+    msg:'Xác nhận xóa nhận xét chung này?',
+    okText:'Xóa', okClass:'btn-danger',
+    onOk:()=>{ p.generalComments.splice(idx,1); loadPhases(pId); syncDataToDrive(); }
+  });
+}
+
+// ── CÁC HÀM PHASE DEADLINE, PIC, COMMENT, DOC, UPDATE PHASE (giữ nguyên) ──
+
 function formatDateVN(dateStr) {
   if(!dateStr) return '';
   const [y,m,d] = dateStr.split('-');
@@ -1764,7 +1841,6 @@ function isOverdue(dateStr) {
   return new Date(dateStr) < new Date();
 }
 
-// ── PIC ASSIGNMENT ──
 function assignPIC(pId, idx) {
   const p = projects.find(x=>x.id===pId);
   if(!p.phasePIC) p.phasePIC = Array(PH.length).fill('');
@@ -1923,7 +1999,6 @@ function savePhaseDeadline(pId, idx, val) {
   toast(`Đã đặt deadline P${idx+1}: ${formatDateVN(val)}`);
 }
 
-// ── PHASE DOC UPLOAD ──
 function uploadPhaseDoc(pId, idx, input) {
   const p = projects.find(x=>x.id===pId);
   if(!p.phaseDocs) p.phaseDocs = Array(PH.length).fill(null).map(()=>[]);
@@ -1967,7 +2042,6 @@ function uploadPhaseDoc(pId, idx, input) {
             driveLink: res.driveLink || null
           };
           p.phaseDocs[idx].push(docEntry);
-          // Also add to global docs
           docs.unshift({
             proj: pId, name: file.name,
             type: file.name.split('.').pop().toUpperCase(),
@@ -2017,7 +2091,6 @@ function viewPhaseDocs(pId, idx) {
   document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Đóng</button>`;
 }
 
-// ── PHASE COMMENTS ───────────────────────────────────────────
 function addPhaseComment(pId) {
   const input = document.getElementById(`comment-input-${pId}`);
   const text  = input?.value.trim();
@@ -2124,7 +2197,7 @@ function renderFolders() {
   }).join('');
 }
 
-// ── RENDER DOCS (with download button) ──
+// ── RENDER DOCS ──
 function renderDocs() {
   const tbody = document.getElementById('docs-tbody');
   const titleEl = document.getElementById('docs-panel-title');
@@ -2437,7 +2510,17 @@ function saveProject() {
   const name = document.getElementById('f-name').value.trim();
   const client = document.getElementById('f-client').value.trim();
   if(!id || !name || !client){ toast('Vui lòng điền đủ thông tin bắt buộc'); return; }
-  projects.unshift({id, name, client, val: document.getElementById('f-val').value||0, deadline: document.getElementById('f-deadline').value||'—', status: document.getElementById('f-status').value, phases:[0,0,0,0,0,0,0,0], phaseDeadlines:Array(8).fill(''), phasePIC:Array(8).fill(''), phaseDocs:Array(8).fill(null).map(()=>[])});
+  projects.unshift({
+    id, name, client,
+    val: document.getElementById('f-val').value||0,
+    deadline: document.getElementById('f-deadline').value||'—',
+    status: document.getElementById('f-status').value,
+    phases:[0,0,0,0,0,0,0,0],
+    phaseDeadlines:Array(8).fill(''),
+    phasePIC:Array(8).fill(''),
+    phaseDocs:Array(8).fill(null).map(()=>[]),
+    generalComments: []   // <--- THÊM DÒNG NÀY
+  });
   closeModal(); syncDataToDrive();
 }
 
@@ -2524,7 +2607,10 @@ function fetchDataFromDrive() {
   fetch(DRIVE_API_URL)
     .then(res => res.json())
     .then(data => {
-      projects = data.projects || [];
+      projects = (data.projects || []).map(p => {
+        if (!p.generalComments) p.generalComments = [];
+        return p;
+      });
       issues = data.issues || [];
       docs = data.docs || [];
       if(data.team  && data.team.length  > 0) team  = data.team;
@@ -2763,7 +2849,6 @@ function taskCardHtml(t) {
   </div>`;
 }
 
-// ── GỬI EMAIL THÔNG BÁO TASK ──
 function sendTaskEmail(taskId) {
   const t = tasks.find(x=>x.id===taskId);
   if(!t) return;
@@ -2829,7 +2914,6 @@ function sendTaskEmail(taskId) {
     .catch(()=>toast('Lỗi kết nối khi gửi email'));
 }
 
-// ── XÁC NHẬN NHẬN VIỆC → GỬI MAIL CHO NGƯỜI YÊU CẦU ──
 function confirmTask(taskId) {
   const t = tasks.find(x=>x.id===taskId);
   if(!t) return;
@@ -2920,7 +3004,6 @@ function confirmTask(taskId) {
   .catch(()=>toast(`✓ Đã xác nhận. Email sẽ gửi khi kết nối ổn định`));
 }
 
-// ── RENDER DASHBOARD TASK LISTS ──
 function renderDashTasks() {
   const urgentOpen = tasks.filter(t=>t.type==='urgent'&&!t.done);
   const todayOpen  = tasks.filter(t=>t.type==='today' &&!t.done);
@@ -3085,7 +3168,7 @@ function applyLogin(user) {
   const av=document.getElementById('topbar-user-avatar');
   av.textContent=user.name.slice(-1).toUpperCase(); av.style.background=c+'22'; av.style.color=c;
   document.getElementById('topbar-user-name').textContent=user.name;
-  chatSenderEmail=user.email;
+  document.getElementById('chat-sender-name').textContent=user.name; // Cập nhật tên ở chat
   setTimeout(applyPermissions, 100);
   toast(`Xin chào, ${user.name}! 👋`);
 }
@@ -3098,6 +3181,7 @@ function doLogout() {
       currentUser=null; sessionStorage.removeItem('mp_user');
       document.getElementById('topbar-user-name').textContent='Chưa đăng nhập';
       document.getElementById('topbar-user-avatar').textContent='?';
+      document.getElementById('chat-sender-name').textContent='—';
       const sel=document.getElementById('login-user');
       sel.innerHTML='<option value="">— Chọn tên của bạn —</option>'+team.map(t=>`<option value="${t.email}">${t.name} — ${t.role.split('/')[0].trim()}</option>`).join('');
       document.getElementById('login-role-preview').style.display='none';
@@ -3180,26 +3264,21 @@ function renderStock() {
 }
 
 function renderOrders() {
-  // Update pending badge on tab
   const pending = warehouseOrders.filter(o=>o.status==='pending').length;
   const badge = document.getElementById('b-wh-pending');
   if(badge) { badge.textContent=pending; badge.style.display=pending?'':'none'; }
   const b2 = document.getElementById('b-warehouse-order');
   if(b2) { b2.textContent=pending||''; b2.style.display=pending?'':'none'; }
-  // Populate selects
   const projSel = document.getElementById('cart-proj');
   const mgrSel  = document.getElementById('cart-manager');
   if(projSel) projSel.innerHTML = '<option value="">— Không liên quan dự án —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
   if(mgrSel)  mgrSel.innerHTML  = '<option value="">— Chọn quản lý kho —</option>' + team.map(t=>`<option value="${t.email}">${t.name}</option>`).join('');
-  // Render history
   renderOrderHistory();
-  // Render cart
   renderCart();
-  // Init search
   searchOrderStock('');
 }
 
-let orderCart = []; // [{stockId, stockName, stockCode, unit, qty}]
+let orderCart = [];
 
 function searchOrderStock(q) {
   const el = document.getElementById('order-search-results');
@@ -3301,11 +3380,9 @@ function submitCartOrder() {
   const note  = document.getElementById('cart-note')?.value.trim()||'';
   const orderId = 'ORD-'+Date.now();
 
-  // Tạo 1 phiếu nhiều dòng
   const order = {
     id: orderId,
     items: orderCart.map(c=>({ stockId:c.stockId, stockName:c.stockName, stockCode:c.stockCode, qty:c.qty, unit:c.unit })),
-    // Compat fields (lấy item đầu cho hiển thị cũ)
     stockId: orderCart[0].stockId, stockName: orderCart[0].stockName, stockCode: orderCart[0].stockCode,
     qty: orderCart[0].qty, unit: orderCart[0].unit,
     proj, orderer: currentUser.name, ordererEmail: currentUser.email,
@@ -3319,7 +3396,6 @@ function submitCartOrder() {
   syncDataToDrive();
   toast(`📤 Phiếu ${orderId} đã gửi (${order.items.length} loại vật tư)`);
 
-  // Gửi email
   const mgr = team.find(t=>t.email===manager);
   if(mgr) sendCartOrderEmail(order, mgr);
 }
@@ -3395,6 +3471,7 @@ function renderOrderHistory() {
     </div>`;
   }).join('');
 }
+
 function filterStock(q) {
   const rows = document.querySelectorAll('#stock-tbody tr');
   rows.forEach(r => r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none');
@@ -3552,10 +3629,6 @@ function saveStock(idx) {
   toast(idx!==undefined?'Đã cập nhật vật tư':'Đã thêm vật tư vào kho');
 }
 
-
-
-
-
 // ── XUẤT / NHẬP KHO ─────────────────────────────────────────
 let txnFilterText = '';
 let txnFilterType = '';
@@ -3569,7 +3642,6 @@ function renderTxns() {
   const tbody = document.getElementById('txn-tbody');
   if(!tbody) return;
 
-  // Badge pending
   const pending = warehouseTxns.filter(t=>t.status==='pending').length;
   const b = document.getElementById('b-wh-txn-pending');
   if(b){ b.textContent=pending; b.style.display=pending?'':'none'; }
@@ -3652,7 +3724,6 @@ function confirmTxn(txnId, action, rejectReason) {
   t.confirmedAt = timeStr;
   if(rejectReason) t.rejectReason = rejectReason;
 
-  // Cập nhật tồn kho
   if(action==='confirmed') {
     const stock = warehouseStock.find(s=>s.id===t.stockId);
     if(stock) {
@@ -3664,7 +3735,6 @@ function confirmTxn(txnId, action, rejectReason) {
   closeModal(); renderTxns(); renderStock(); syncDataToDrive();
   toast(action==='confirmed' ? `✅ Đã xác nhận phiếu ${txnId}` : `❌ Đã từ chối phiếu ${txnId}`);
 
-  // Gửi email báo người tạo phiếu
   const creator = team.find(m=>m.email===t.creatorEmail);
   if(creator) sendTxnResultEmail(t, action, creator, timeStr, rejectReason);
 }
@@ -3791,7 +3861,7 @@ function onTxnStockChange(stockId) {
   document.getElementById('txn-unit').value = s ? s.unit : '';
 }
 
-let txnImageData = []; // [{name, base64, url}]
+let txnImageData = [];
 
 function previewTxnImages(input) {
   txnImageData = [];
@@ -3837,7 +3907,6 @@ async function submitTxn(txnType) {
 
   showLoading(txnImageData.length > 0 ? `Đang tải ${txnImageData.length} ảnh lên Drive...` : 'Đang lưu phiếu...');
 
-  // Upload ảnh lên Drive nếu có
   const uploadedImages = [];
   for(let i=0; i<txnImageData.length; i++) {
     const img = txnImageData[i];
@@ -3934,7 +4003,6 @@ function renderWarehouse() {
   if(whCurrentTab==='stock') renderStock();
   else if(whCurrentTab==='order') renderOrders();
   else renderTxns();
-  // Update txn pending badge
   const pending = warehouseTxns.filter(t=>t.status==='pending').length;
   const b = document.getElementById('b-wh-txn-pending');
   if(b){ b.textContent=pending; b.style.display=pending?'':'none'; }
@@ -3945,14 +4013,13 @@ let chatRooms = [
   { id:'general', name:'Toàn team', icon:'💬', color:'#4f8ef7', type:'general', messages:[] }
 ];
 let currentRoomId = null;
-let chatSenderEmail = '';
 let mentionQuery = '';
 let mentionActive = false;
 
 function initChat() {
   createProjectRooms();
   renderChatRooms();
-  populateSenderSelect();
+  // Không gọi populateSenderSelect
 }
 
 function createProjectRooms() {
@@ -3962,23 +4029,6 @@ function createProjectRooms() {
     }
   });
   renderChatRooms();
-}
-
-function populateSenderSelect() {
-  const sel = document.getElementById('chat-sender-select');
-  if(!sel) return;
-  const saved = localStorage.getItem('chatSenderEmail') || '';
-  sel.innerHTML = '<option value="">— Chọn tên của bạn —</option>'
-    + team.map(t=>`<option value="${t.email}" ${t.email===saved?'selected':''}>${t.name}</option>`).join('');
-  if(saved) setChatSender(saved);
-}
-
-function setChatSender(email) {
-  chatSenderEmail = email;
-  if(email) localStorage.setItem('chatSenderEmail', email);
-  const m = team.find(t=>t.email===email);
-  const nameEl = document.getElementById('chat-sender-name');
-  if(nameEl) nameEl.textContent = m ? m.name : '—';
 }
 
 function renderChatRooms() {
@@ -4012,7 +4062,8 @@ function openRoom(roomId) {
     : `Toàn team · ${(room.messages||[]).length} tin nhắn`;
 
   document.getElementById('chat-input-area').style.display = '';
-  populateSenderSelect();
+  // Hiển thị tên người dùng hiện tại
+  document.getElementById('chat-sender-name').textContent = currentUser ? currentUser.name : '—';
   renderMessages(room);
 }
 
@@ -4129,18 +4180,18 @@ function onChatKeydown(e) {
   if(e.key === 'Enter' && !e.shiftKey && !mentionActive) { e.preventDefault(); sendChatMessage(); }
 }
 
+// ── GỬI TIN NHẮN CHAT – TỰ ĐỘNG DÙNG CURRENT_USER ──
 function sendChatMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if(!text || !currentRoomId) return;
-  if(!chatSenderEmail) { toast('Vui lòng chọn tên của bạn trước khi gửi'); return; }
+  if(!currentUser) { toast('Vui lòng đăng nhập trước khi gửi'); return; }
 
-  const sender = team.find(t=>t.email===chatSenderEmail);
   const msg = {
     id: 'msg-'+Date.now(),
     type: 'text',
-    senderEmail: chatSenderEmail,
-    senderName: sender ? sender.name : chatSenderEmail,
+    senderEmail: currentUser.email,
+    senderName: currentUser.name,
     text,
     files: [],
     ts: new Date().toISOString()
@@ -4157,16 +4208,16 @@ function sendChatMessage() {
   renderChatRooms();
   syncChatToDrive();
 
-  // Gửi email cho người được @mention
+  // Gửi email mention
   const mentions = [...text.matchAll(/@([\w\sÀ-ỹ]+?)(?=\s|$|[,.!?])/g)].map(m=>m[1].trim());
   if(mentions.length > 0) {
-    const senderName = sender?.name || chatSenderEmail;
+    const senderName = currentUser.name;
     const roomName   = room.name || 'Chat nhóm';
     const now        = new Date();
     const timeStr    = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')} ${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}`;
     mentions.forEach(mentionName => {
       const mentioned = team.find(t => t.name.toLowerCase() === mentionName.toLowerCase() || t.name.toLowerCase().includes(mentionName.toLowerCase()));
-      if(!mentioned || mentioned.email===chatSenderEmail) return;
+      if(!mentioned || mentioned.email===currentUser.email) return;
       const htmlBody = `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">
           <div style="background:linear-gradient(135deg,#6366f1,#4f8ef7);padding:20px 22px 16px">
@@ -4196,10 +4247,9 @@ function sendChatMessage() {
 }
 
 function sendChatFiles(input) {
-  if(!currentRoomId || !chatSenderEmail) { toast('Chọn room và tên của bạn trước'); return; }
+  if(!currentRoomId || !currentUser) { toast('Vui lòng đăng nhập'); return; }
   const files = Array.from(input.files);
   if(!files.length) return;
-  const sender = team.find(t=>t.email===chatSenderEmail);
   const room = chatRooms.find(r=>r.id===currentRoomId);
   if(!room.messages) room.messages = [];
 
@@ -4219,8 +4269,8 @@ function sendChatFiles(input) {
       })}).then(r=>r.json()).then(res=>{
         room.messages.push({
           id:'msg-'+Date.now(), type:'text',
-          senderEmail: chatSenderEmail,
-          senderName: sender ? sender.name : chatSenderEmail,
+          senderEmail: currentUser.email,
+          senderName: currentUser.name,
           text:'', files:[{ name:file.name, size:(file.size/1024).toFixed(0)+'KB', fileId: res.fileId||null }],
           ts: new Date().toISOString()
         });
@@ -4237,9 +4287,8 @@ function syncChatToDrive() {
   fetch(DRIVE_API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }).catch(()=>{});
 }
 
-// ── RENDER ALL ──
 // ── AI CHATBOT ──────────────────────────────────────────────
-let aiMessages = []; // {role:'user'|'assistant', content}
+let aiMessages = [];
 let aiLoading = false;
 
 const AI_PROMPTS = [
@@ -4350,7 +4399,6 @@ function renderAIMessages() {
     const isUser = m.role === 'user';
     const initial = currentUser?.name?.slice(-1)?.toUpperCase() || 'U';
     const color = currentUser?.color || 'var(--accent)';
-    // Format markdown-like
     let html = m.content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/`([^`]+)`/g, '<code style="background:var(--bg0);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>')
@@ -4372,9 +4420,9 @@ function renderAIMessages() {
   el.scrollTop = el.scrollHeight;
 }
 
-// ── GROQ API CONFIG ──────────────────────────────────────────
+// ── GROQ API ──
 const GROQ_API_KEY = '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';
-const GROQ_MODEL   = 'llama-3.3-70b-versatile'; // Model mạnh nhất của Groq, miễn phí
+const GROQ_MODEL   = 'llama-3.3-70b-versatile';
 
 async function sendAIMessage() {
   const input = document.getElementById('ai-input');
