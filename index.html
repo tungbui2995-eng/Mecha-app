@@ -1344,7 +1344,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// TOÀN BỘ JAVASCRIPT HOÀN CHỈNH (tích hợp từ file gốc + cải tiến)
+// TOÀN BỘ JAVASCRIPT HOÀN CHỈNH (đã sửa lỗi admin + phân quyền click)
 // ═══════════════════════════════════════════════════════════════
 
 const DRIVE_API_URL = "https://script.google.com/macros/s/AKfycbzA-4NPh-rxPxMERUD9wKlev-cauLgI99Kd4H-Q7W2unJLbxu42wiM_X4NWjBv0bjv-/exec";
@@ -1388,13 +1388,7 @@ const ROLE_TEMPLATES = {
   viewer:   { dashboard:1, projects:1, phases:1, gantt:1, issues:1, docs:1, team:0, chat:1, urgent:0, today:0, warehouse:1, ai:1 }
 };
 
-let team = [
-  {name:'Tùng', email:'tungbui2995@gmail.com', role:'Lead Mechanical Engineer / PM', projects:[], status:'Sẵn sàng', roleTemplate:'admin',    perms:{...ROLE_TEMPLATES.admin}, password:'1234'},
-  {name:'Nguyễn Văn A', email:'a@company.com', role:'Lead Mechanical Engineer', projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'},
-  {name:'Trần Văn B',   email:'b@company.com', role:'Senior Mechanical Designer',     projects:['TL-2025-002'], status:'Sẵn sàng', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'},
-  {name:'Lê Văn C',     email:'c@company.com', role:'Automation & Electrical Engineer',projects:['TL-2025-001'], status:'Bận', roleTemplate:'engineer', perms:{...ROLE_TEMPLATES.engineer}, password:'1234'}
-];
-
+let team = [];
 let tasks = [];
 let warehouseStock  = [];
 let warehouseOrders = [];
@@ -1498,6 +1492,22 @@ function applyPermissions() {
       el.style.display = canEdit(mod) ? '' : 'none';
     });
   });
+}
+
+// ── ENSURE ADMIN ALWAYS EXISTS ──
+function ensureAdminExists() {
+  if(!team.find(t => t.email === 'admin@mechaproject.local' || t.roleTemplate === 'admin')) {
+    team.push({
+      name: 'Admin',
+      email: 'admin@mechaproject.local',
+      role: 'System Administrator',
+      projects: [],
+      status: 'Sẵn sàng',
+      roleTemplate: 'admin',
+      perms: { ...ROLE_TEMPLATES.admin },
+      password: 'admin1234'
+    });
+  }
 }
 
 // ── RENDER FUNCTIONS ──
@@ -2836,6 +2846,9 @@ function fetchDataFromDrive() {
       issues = data.issues || [];
       docs = data.docs || [];
       if(data.team  && data.team.length  > 0) team  = data.team;
+      else team = [];
+      // Ensure admin always exists
+      ensureAdminExists();
       if(data.tasks && data.tasks.length > 0) tasks = data.tasks;
       if(data.chatRooms) chatRooms = data.chatRooms;
       if(data.warehouseStock)  warehouseStock  = data.warehouseStock;
@@ -2914,7 +2927,7 @@ function doRejectTask(taskId) {
   t.rejected = true;
   t.rejectReason = reason;
   t.rejectedAt = new Date().toISOString();
-  t.done = false; // Not done, but rejected
+  t.done = false;
 
   // Notify requester
   const requester = team.find(m=>m.email===t.requester);
@@ -3045,7 +3058,6 @@ function saveTask(editId) {
 
   if(editId) {
     const idx = tasks.findIndex(t=>t.id===editId);
-    // Preserve rejection status if exists
     const old = tasks[idx];
     if(old) {
       task.rejected = old.rejected || false;
@@ -3074,7 +3086,6 @@ function toggleTaskDone(id) {
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
   if(t.rejected) {
-    // If rejected, un-reject when marking as done
     t.rejected = false;
     t.rejectReason = '';
   }
@@ -3126,7 +3137,6 @@ function taskCardHtml(t) {
     return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
   })() : '';
 
-  // Only show Reject button if: not done, not rejected, and current user is the PIC
   const canReject = !isDone && !isRejected && currentUser && t.pic === currentUser.email;
 
   return `
@@ -4786,7 +4796,11 @@ function renderAll() {
   if(sel) sel.innerHTML = '<option value="">— Chọn dự án —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
 }
 
-window.onload = () => { fetchDataFromDrive(); };
+window.onload = () => {
+  // Initialize with empty team and then fetch
+  team = [];
+  fetchDataFromDrive();
+};
 </script>
 </body>
 </html>
