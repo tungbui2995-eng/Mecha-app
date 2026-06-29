@@ -765,6 +765,10 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Tải lại
       </button>
+      <button class="btn btn-sm btn-ghost" onclick="triggerDailyReport(true)" title="Gửi báo cáo tổng hợp ngay" style="color:var(--accent)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Gửi báo cáo
+      </button>
       <div class="user-badge" onclick="doLogout()" id="topbar-user-badge" title="Nhấn để đăng xuất">
         <div class="user-avatar" id="topbar-user-avatar" style="background:var(--accent-dim);color:var(--accent)">?</div>
         <span id="topbar-user-name">Chưa đăng nhập</span>
@@ -2565,6 +2569,23 @@ function downloadDoc(name) {
 }
 
 // ── RENDER TEAM ──
+// ── Tính danh sách dự án của một thành viên từ dữ liệu thực tế ──
+function getMemberProjects(email) {
+  const projSet = new Set();
+  projects.forEach(p => {
+    // PIC của giai đoạn
+    (p.phasePIC||[]).forEach(pic => { if(pic===email) projSet.add(p.id); });
+    // Người order kho
+    warehouseOrders?.forEach(o => { if(o.ordererEmail===email) projSet.add(o.proj||null); });
+    // Người tạo phiếu xuất/nhập
+    warehouseTxns?.forEach(t => { if(t.creatorEmail===email) projSet.add(t.proj||null); });
+    // Người tạo task liên quan dự án
+    tasks?.forEach(t => { if((t.pic===email||t.requester===email) && t.proj) projSet.add(t.proj); });
+  });
+  // Lọc bỏ null/empty
+  return [...projSet].filter(Boolean);
+}
+
 function renderTeam() {
   const tbody = document.getElementById('team-tbody');
   if(team.length===0){
@@ -2577,33 +2598,46 @@ function renderTeam() {
     const tmplLabel = tmpl==='admin'?'👑 Admin':tmpl==='viewer'?'👁 Khách hàng':'🔧 Kỹ sư';
     const tmplColor = tmpl==='admin'?'badge-red':tmpl==='viewer'?'badge-gray':'badge-blue';
     const isSelf = currentUser?.email === t.email;
-    const passDisplay = admin
-      ? `<span style="font-family:monospace;font-size:11px;color:var(--text1);cursor:pointer" onclick="editPassword(${i})" title="Nhấn để đổi mật khẩu">•••••</span>`
-      : `<span style="font-size:11px;color:var(--text2)">🔒</span>`;
+
+    // Tính dự án tham gia theo dữ liệu thực tế
+    const memberProjs = getMemberProjects(t.email);
+    const projBadges = memberProjs.length > 0
+      ? memberProjs.map(pid => {
+          const proj = projects.find(p=>p.id===pid);
+          return `<span class="badge badge-gray" style="margin-right:3px;margin-bottom:2px" title="${proj?proj.name:pid}">${pid}</span>`;
+        }).join('')
+      : '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>';
+
     return `<tr>
-      <td style="font-weight:600">${t.name}${isSelf?' <span style="font-size:10px;color:var(--accent)">(bạn)</span>':''}</td>
+      <td style="font-weight:600">${t.name}${isSelf?` <span style="font-size:10px;color:var(--accent)">(bạn)</span>`:''}</td>
       <td><a href="mailto:${t.email}" style="color:var(--accent);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         ${t.email}</a></td>
       <td style="color:var(--text1);font-size:12px">${t.role}</td>
-      <td>${(t.projects||[]).map(p=>`<span class="badge badge-gray" style="margin-right:4px">${p}</span>`).join('') || '<span style="color:var(--text2);font-size:11px">Chưa phân công</span>'}</td>
-      <td><span class="badge ${t.status==='Bận'?'badge-amber':'badge-green'}">${t.status}</span></td>
+      <td style="max-width:160px">${projBadges}</td>
+      <td><span class="badge ${t.status==='Bận'?'badge-amber':t.status==='Nghỉ phép'?'badge-red':'badge-green'}">${t.status}</span></td>
       <td>
-        <div style="display:flex;align-items:center;gap:6px">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
           <span class="badge ${tmplColor}">${tmplLabel}</span>
-          <button class="btn btn-xs btn-ghost" onclick="${admin?'openPermModal('+i+')':'showNoPermToast()'}" title="${admin?'Cài phân quyền chi tiết':'Chỉ Admin mới chỉnh được'}" style="${admin?'':'opacity:0.45;cursor:not-allowed'}">
+          <button class="btn btn-xs btn-ghost" onclick="${admin?`openPermModal(${i})`:'showNoPermToast()'}"
+            style="${admin?'':'opacity:0.45;cursor:not-allowed'}">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             Phân quyền
           </button>
         </div>
       </td>
-      <td style="font-size:12px">${passDisplay}</td>
+      <td>
+        <button class="btn btn-xs" style="background:transparent;border:1px solid ${admin?'rgba(251,191,36,0.3)':'var(--border)'};color:${admin?'var(--amber)':'var(--text2)'};padding:4px 8px"
+          onclick="${admin?`openPermModal(${i})`:'showNoPermToast()'}" title="${admin?'Đổi mật khẩu trong Phân quyền':''}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </button>
+      </td>
       <td>
         <div style="display:flex;gap:5px">
-          <button class="btn btn-xs btn-ghost" onclick="${admin||isSelf?'editMember('+i+')':'showNoPermToast()'}" style="${admin||isSelf?'':'opacity:0.45;cursor:not-allowed'}">
+          <button class="btn btn-xs btn-ghost" onclick="${admin||isSelf?`editMember(${i})`:'showNoPermToast()'}">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Sửa
           </button>
-          <button class="btn btn-xs btn-danger" onclick="${admin?'deleteMember('+i+')':'showNoPermToast()'}" style="${admin?'':'opacity:0.45;cursor:not-allowed'}">Xóa</button>
+          <button class="btn btn-xs btn-danger" onclick="${admin?`deleteMember(${i})`:'showNoPermToast()'}">Xóa</button>
         </div>
       </td>
     </tr>`;
@@ -4331,7 +4365,7 @@ function openModal_newTxn(txnType) {
     <div class="form-row">
       <label class="form-label">📸 Ảnh bằng chứng (hoá đơn, biên bản, ảnh hàng hoá)</label>
       <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg3);border:2px dashed var(--border2);border-radius:var(--r2);cursor:pointer;transition:all .15s" id="txn-img-label"
-        onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border2)'">
+        onmouseover="this.style.borderColor=\`var(--accent)\`" onmouseout="this.style.borderColor=\`var(--border2)\`">
         <input type="file" id="txn-images" multiple accept="image/*" style="display:none" onchange="previewTxnImages(this)">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         <div>
@@ -4969,12 +5003,143 @@ function initAI() {
 }
 
 // ── RENDER ALL ──
+// ── BÁO CÁO TỔNG HỢP HÀNG NGÀY 8H SÁNG ─────────────────────
+// Hàm này gọi Apps Script để kích hoạt sendDailyReport() bên server
+// Apps Script cần có hàm sendDailyReport() (xem Code.gs)
+function triggerDailyReport(manual) {
+  if(!isAdmin()) { toast('⛔ Chỉ Admin mới gửi được báo cáo'); return; }
+  const today = new Date();
+  const dateStr = `${today.getDate().toString().padStart(2,'0')}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getFullYear()}`;
+
+  // Thu thập dữ liệu tồn đọng
+  const now2 = new Date(); now2.setHours(0,0,0,0);
+  const allPending = [];
+  const picMap = {};
+
+  projects.forEach(proj => {
+    if(proj.status==='Hoàn thành') return;
+    const deadlines = proj.phaseDeadlines || [];
+    const pics      = proj.phasePIC       || [];
+    const phases    = proj.phases         || [];
+    const ph        = getPH(proj);
+
+    ph.forEach((phItem, i) => {
+      if((phases[i]||0) >= 100 || !deadlines[i]) return;
+      const dlDate = new Date(deadlines[i]); dlDate.setHours(0,0,0,0);
+      const diff   = Math.round((dlDate - now2) / 86400000);
+      const member = team.find(t=>t.email===pics[i]);
+      const item   = {
+        projId: proj.id, projName: proj.name, client: proj.client,
+        phase: `P${i+1}: ${phItem.name}`, pct: phases[i]||0,
+        dlStatus: diff<0?`Quá hạn ${Math.abs(diff)} ngày`:diff===0?'HÔM NAY':`Còn ${diff} ngày`,
+        dlUrgent: diff<=3, pic: member?.name||'Chưa phân công', picEmail: pics[i]||''
+      };
+      allPending.push(item);
+      if(pics[i] && member) {
+        if(!picMap[pics[i]]) picMap[pics[i]] = { member, items: [] };
+        picMap[pics[i]].items.push(item);
+      }
+    });
+  });
+
+  const PM_EMAIL = team.find(t=>t.roleTemplate==='admin'&&t.email!=='admin@mechaproject.local')?.email
+                || currentUser?.email;
+  if(!PM_EMAIL) { toast('Không tìm thấy email PM'); return; }
+
+  // Gửi báo cáo tổng cho PM
+  const urgent = allPending.filter(x=>x.dlUrgent);
+  const normal = allPending.filter(x=>!x.dlUrgent);
+
+  function buildRow(item) {
+    var c = item.dlUrgent ? '#f87171' : '#eef0f4';
+    var fw = item.dlUrgent ? 700 : 400;
+    return '<tr style="border-bottom:1px solid #262d3d">'
+      + '<td style="padding:6px 10px;color:#4f8ef7;font-family:monospace;font-size:12px">' + item.projId + '</td>'
+      + '<td style="padding:6px 10px;color:#eef0f4;font-size:12px">' + item.phase + '</td>'
+      + '<td style="padding:6px 10px;color:#fbbf24;text-align:center;font-family:monospace">' + item.pct + '%</td>'
+      + '<td style="padding:6px 10px;color:' + c + ';font-weight:' + fw + '">' + item.dlStatus + '</td>'
+      + '<td style="padding:6px 10px;color:#9aa3b5;font-size:12px">' + item.pic + '</td>'
+      + '</tr>';
+  }
+
+  function buildTable(rows, label, color) {
+    if(!rows.length) return '';
+    return '<div style="margin-bottom:16px">'
+      + '<div style="font-size:12px;font-weight:700;color:' + color + ';padding:6px 10px;background:' + color + '18;border-radius:6px;margin-bottom:6px">' + label + ' (' + rows.length + ')</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:13px;background:#1e2330;border-radius:8px;overflow:hidden">'
+      + '<tr style="background:#0a0c10">'
+      + '<th style="padding:7px 10px;text-align:left;color:#5c6578;font-size:10px">DỰ ÁN</th>'
+      + '<th style="padding:7px 10px;text-align:left;color:#5c6578;font-size:10px">GIAI ĐOẠN</th>'
+      + '<th style="padding:7px 10px;text-align:center;color:#5c6578;font-size:10px">%</th>'
+      + '<th style="padding:7px 10px;text-align:left;color:#5c6578;font-size:10px">DEADLINE</th>'
+      + '<th style="padding:7px 10px;text-align:left;color:#5c6578;font-size:10px">PIC</th>'
+      + '</tr>'
+      + rows.map(buildRow).join('')
+      + '</table></div>';
+  }
+
+  const pmHtml = '<div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">'
+    + '<div style="background:linear-gradient(135deg,#3a7de0,#6366f1);padding:22px 24px 18px">'
+    +   '<div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject</div>'
+    +   '<div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px">📊 Báo cáo tồn đọng hàng ngày — ' + dateStr + '</div>'
+    + '</div>'
+    + '<div style="padding:20px 22px">'
+    +   '<p style="font-size:13px;color:#9aa3b5;margin-bottom:16px">Tổng hợp <strong style="color:#eef0f4">' + allPending.length + ' giai đoạn</strong> chưa hoàn thành:</p>'
+    +   buildTable(urgent, '⚠️ Cần xử lý ngay — Quá hạn / ≤3 ngày', '#f87171')
+    +   buildTable(normal, '📋 Đang thực hiện', '#4f8ef7')
+    +   (allPending.length===0 ? '<div style="color:#34d399;padding:12px">✅ Không có giai đoạn tồn đọng hôm nay!</div>' : '')
+    + '</div>'
+    + '<div style="padding:12px 22px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Báo cáo tự động · Không reply</div>'
+    + '</div>';
+
+  showLoading('Đang gửi báo cáo...');
+  fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
+    action:'send_email', to: PM_EMAIL,
+    subject: '[MechaProject] 📊 Báo cáo tồn đọng ' + dateStr + ' — ' + allPending.length + ' giai đoạn',
+    body: 'Báo cáo '+dateStr+'\nTổng tồn đọng: '+allPending.length+' giai đoạn\nCần xử lý ngay: '+urgent.length+'\n\n'+allPending.map(function(x){return x.projId+' | '+x.phase+' | '+x.pct+'% | '+x.dlStatus+' | '+x.pic;}).join('\n'),
+    htmlBody: pmHtml
+  })}).then(r=>r.json()).then(res=>{
+    hideLoading();
+    if(res.status==='success') toast('✉ Đã gửi báo cáo cho PM ('+PM_EMAIL+')');
+    else toast('Lỗi gửi mail: '+(res.message||''));
+  }).catch(()=>{ hideLoading(); toast('Lỗi kết nối khi gửi báo cáo'); });
+
+  // Gửi riêng cho từng PIC
+  Object.keys(picMap).forEach(email => {
+    const { member, items } = picMap[email];
+    const uItems = items.filter(x=>x.dlUrgent);
+    const picHtml = '<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;background:#111318;color:#eef0f4;border-radius:12px;overflow:hidden;border:1px solid #262d3d">'
+      + '<div style="background:linear-gradient(135deg,#1e2330,#2f3850);padding:22px 24px 18px;border-bottom:2px solid #4f8ef7">'
+      +   '<div style="font-size:18px;font-weight:700;color:#fff">⚙ MechaProject</div>'
+      +   '<div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px">📋 Công việc của bạn — ' + dateStr + '</div>'
+      + '</div>'
+      + '<div style="padding:20px 22px">'
+      +   '<div style="font-size:14px;font-weight:600;margin-bottom:12px">Xin chào ' + member.name + ',</div>'
+      +   '<p style="font-size:13px;color:#9aa3b5;margin-bottom:16px">Bạn đang phụ trách <strong style="color:#eef0f4">' + items.length + ' giai đoạn</strong>' + (uItems.length ? ' · <span style="color:#f87171">⚠️ ' + uItems.length + ' cần xử lý ngay</span>' : '') + '</p>'
+      +   buildTable(uItems, '⚠️ Cần xử lý ngay', '#f87171')
+      +   buildTable(items.filter(function(x){ return !x.dlUrgent; }), '📋 Đang thực hiện', '#4f8ef7')
+      + '</div>'
+      + '<div style="padding:12px 22px;border-top:1px solid #262d3d;font-size:11px;color:#5c6578">MechaProject · Báo cáo tự động · Không reply</div>'
+      + '</div>';
+    fetch(DRIVE_API_URL, { method:'POST', body: JSON.stringify({
+      action:'send_email', to: email,
+      subject: '[MechaProject] 📋 Công việc của bạn ' + dateStr + ' — ' + items.length + ' giai đoạn',
+      body: items.map(function(x){ return x.projId+' | '+x.phase+' | '+x.pct+'% | '+x.dlStatus; }).join('\n'),
+      htmlBody: picHtml
+    })}).then(r=>r.json()).then(res=>{
+      if(res.status==='success') toast('✉ Gửi báo cáo cho ' + member.name);
+    }).catch(()=>{});
+  });
+
+  if(manual) toast('📊 Đang gửi báo cáo tổng hợp...');
+}
+
 function renderAll() {
   renderDashboard(); renderProjects(); renderGantt(); renderIssues();
   renderFolders(); renderDocs(); renderTeam(); renderUrgent(); renderToday(); renderDashTasks();
   renderWarehouse(); renderAIContext(); renderAIChips();
   const sel = document.getElementById('phase-proj-sel');
-  if(sel) sel.innerHTML = '<option value="">— Chọn dự án —</option>' + projects.map(p=>`<option value="${p.id}">${p.id} — ${p.name}</option>`).join('');
+  if(sel) sel.innerHTML = '<option value="">— Chọn dự án —</option>' + projects.map(p=>'<option value="'+p.id+'">'+p.id+' — '+p.name+'</option>').join('');
 }
 
 window.onload = () => { fetchDataFromDrive(); };
