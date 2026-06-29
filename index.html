@@ -709,7 +709,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
     </div>
     <div class="nav-item" onclick="nav('docs',this)">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Tài liệu
+      Thư viện tham khảo
     </div>
     <div class="nav-item" onclick="nav('team',this)">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -936,41 +936,66 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
     <div class="view" id="view-docs">
       <div class="section-hd">
         <div class="section-hd-left">
-          <h2>Kho tài liệu</h2>
-          <p>Bản vẽ, BOM, tài liệu kỹ thuật đồng bộ Google Drive</p>
+          <h2>📚 Thư viện tham khảo</h2>
+          <p>Bản vẽ, BOM, tài liệu kỹ thuật — tải lên và chia sẻ trong nhóm</p>
         </div>
-        <button class="btn btn-sm btn-accent" onclick="openModal('new-doc')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-          Tải lên tài liệu
-        </button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="search-input-wrap">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="form-ctrl search-input" id="docs-search" placeholder="Tìm file, dự án..." oninput="filterDocs(this.value)" style="max-width:220px">
+          </div>
+          <select class="form-ctrl" id="docs-folder-filter" style="max-width:180px;padding:7px 10px;font-size:12px" onchange="filterDocsByFolder(this.value)">
+            <option value="all">📁 Tất cả</option>
+            <option value="f1">📐 Bản vẽ 2D/3D</option>
+            <option value="f2">⚡ Sơ đồ mạch điện</option>
+            <option value="f3">📋 BOM vật tư</option>
+            <option value="f4">📖 Tài liệu & CO/CQ</option>
+          </select>
+          <button class="btn btn-sm btn-accent" onclick="openModal('new-doc')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            Tải lên tài liệu
+          </button>
+        </div>
       </div>
-      <div class="docs-layout">
-        <div class="folder-panel">
-          <div class="folder-panel-title">Phân loại</div>
-          <div id="folder-list"></div>
+
+      <!-- Stats row -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:8px;min-width:130px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div><div style="font-size:18px;font-weight:700;font-family:monospace" id="lib-total-count">0</div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Tổng file</div></div>
         </div>
-        <div class="card">
-          <div class="card-header">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span class="card-title" id="docs-panel-title">Tất cả tài liệu</span>
-            <span class="badge badge-gray" id="docs-count-badge">0 file</span>
-          </div>
-          <div class="tbl-wrap">
-            <table class="tbl">
-              <thead>
-                <tr>
-                  <th>Dự án</th>
-                  <th>Tên file</th>
-                  <th>Định dạng</th>
-                  <th>Giai đoạn</th>
-                  <th>Ngày cập nhật</th>
-                  <th>Dung lượng</th>
-                  <th>Tải xuống</th>
-                </tr>
-              </thead>
-              <tbody id="docs-tbody"></tbody>
-            </table>
-          </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:8px;min-width:130px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <div><div style="font-size:18px;font-weight:700;font-family:monospace;color:var(--amber)" id="lib-proj-count">0</div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Dự án có tài liệu</div></div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 16px;display:flex;align-items:center;gap:8px;min-width:130px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <div><div style="font-size:18px;font-weight:700;font-family:monospace;color:var(--green)" id="lib-size-total">0 MB</div><div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Tổng dung lượng</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="card-title" id="docs-panel-title">Tất cả tài liệu</span>
+          <span class="badge badge-gray" id="docs-count-badge">0 file</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Dự án</th>
+                <th>Tên file</th>
+                <th>Định dạng</th>
+                <th>Giai đoạn</th>
+                <th>Ngày cập nhật</th>
+                <th>Dung lượng</th>
+                <th>Tải xuống</th>
+                <th id="docs-delete-col" style="display:none">Xóa</th>
+              </tr>
+            </thead>
+            <tbody id="docs-tbody"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1395,7 +1420,7 @@ const folders = [
 const MODULES = ['dashboard','projects','phases','gantt','issues','docs','team','chat','urgent','today','warehouse','ai'];
 const MODULE_LABELS = {
   dashboard:'Dashboard', projects:'Dự án', phases:'Giai đoạn & CV',
-  gantt:'Tiến độ Gantt', issues:'NCR & Vấn đề', docs:'Tài liệu',
+  gantt:'Tiến độ Gantt', issues:'NCR & Vấn đề', docs:'Thư viện tham khảo',
   team:'Nhân sự', chat:'Chat', urgent:'Yêu cầu gấp', today:'Xử lý hôm nay',
   warehouse:'Kho vật tư', ai:'AI Trợ lý'
 };
@@ -1427,7 +1452,7 @@ const PAGE_TITLES = {
   phases: 'Giai đoạn & Công việc',
   gantt: 'Tiến độ Gantt',
   issues: 'Vấn đề & NCR',
-  docs: 'Kho tài liệu',
+  docs: 'Thư viện tham khảo',
   team: 'Nhân sự',
   urgent: '🚨 Yêu cầu gấp',
   today: '📅 Cần xử lý hôm nay',
@@ -2511,62 +2536,101 @@ function closeIssue(id){
 }
 
 // ── RENDER FOLDERS & DOCS ──
+let docsFilterText = '';
+let docsFilterFolder = 'all';
+
+function filterDocs(q) { docsFilterText = q.toLowerCase(); renderDocs(); }
+function filterDocsByFolder(f) { docsFilterFolder = f; renderDocs(); }
+
 function renderFolders() {
-  const list = document.getElementById('folder-list');
-  list.innerHTML = folders.map(f => {
-    const count = f.id==='all' ? docs.length : docs.filter(d=>d.folder===f.id).length;
-    return `<div class="folder-item ${f.id===currentFolder?'active':''}" onclick="currentFolder='${f.id}';renderFolders();renderDocs();">
-      <span style="flex:1">${f.name}</span><span class="folder-count">${count}</span>
-    </div>`;
-  }).join('');
+  const el = document.getElementById('folder-list');
+  if(el) el.innerHTML = '';
 }
 
 function renderDocs() {
-  const tbody = document.getElementById('docs-tbody');
+  const tbody   = document.getElementById('docs-tbody');
   const titleEl = document.getElementById('docs-panel-title');
   const countEl = document.getElementById('docs-count-badge');
-  const filtered = currentFolder==='all' ? docs : docs.filter(d=>d.folder===currentFolder);
-  
-  const folderName = folders.find(f=>f.id===currentFolder)?.name || 'Tất cả';
-  titleEl.textContent = folderName;
-  countEl.textContent = `${filtered.length} file`;
+  const delCol  = document.getElementById('docs-delete-col');
+  if(!tbody) return;
+
+  if(delCol) delCol.style.display = isAdmin() ? '' : 'none';
+
+  let filtered = [...docs];
+  if(docsFilterFolder !== 'all') filtered = filtered.filter(function(d){return d.folder===docsFilterFolder;});
+  if(docsFilterText)   filtered = filtered.filter(function(d){return (d.name+d.proj+(d.phase||'')).toLowerCase().includes(docsFilterText);});
+
+  const folderNames = {all:'Tất cả tài liệu',f1:'Bản vẽ 2D/3D',f2:'Sơ đồ mạch điện',f3:'BOM vật tư',f4:'Tài liệu & CO/CQ'};
+  if(titleEl) titleEl.textContent = folderNames[docsFilterFolder] || 'Tất cả tài liệu';
+  if(countEl) countEl.textContent = filtered.length + ' file';
+
+  const totalCount = document.getElementById('lib-total-count');
+  const projCount  = document.getElementById('lib-proj-count');
+  const sizeTotal  = document.getElementById('lib-size-total');
+  if(totalCount) totalCount.textContent = docs.length;
+  if(projCount)  projCount.textContent  = new Set(docs.map(function(d){return d.proj;}).filter(Boolean)).size;
+  if(sizeTotal) {
+    const mb = docs.reduce(function(sum,d){ const n=parseFloat(d.size||0); return sum+(isNaN(n)?0:n); },0);
+    sizeTotal.textContent = mb < 1024 ? mb.toFixed(1)+' MB' : (mb/1024).toFixed(2)+' GB';
+  }
 
   if(filtered.length===0){
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-title">Thư mục trống</div>Tải lên tài liệu để bắt đầu</div></td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📚</div><div class="empty-state-title">Chưa có tài liệu nào</div>Nhấn Tải lên tài liệu để thêm vào thư viện</div></td></tr>';
     return;
   }
-  tbody.innerHTML = filtered.map(d => {
-    const ext = (d.type||d.name.split('.').pop()||'').toUpperCase();
+
+  tbody.innerHTML = filtered.map(function(d) {
+    const ext     = (d.type||d.name.split('.').pop()||'').toUpperCase();
     const typeCls = getFileTypeCls(d.type||d.name.split('.').pop());
-    const downloadHtml = d.fileId
-      ? `<a href="https://drive.google.com/uc?export=download&id=${d.fileId}" target="_blank" class="download-btn">
-           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-           Tải xuống
-         </a>`
-      : d.driveLink
-      ? `<a href="${d.driveLink}" target="_blank" class="download-btn">
-           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-           Tải xuống
-         </a>`
-      : `<button class="download-btn" onclick="downloadDoc('${d.name}')" style="opacity:0.6;cursor:default" disabled>
-           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-           Tải xuống
-         </button>`;
-    return `<tr>
-      <td class="tbl-code">${d.proj}</td>
-      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${d.name}">${d.name}</td>
-      <td><span class="file-type ${typeCls}">${ext}</span></td>
-      <td style="font-size:12px;color:var(--text1)">${d.phase}</td>
-      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${d.date}</td>
-      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${d.size}</td>
-      <td>${downloadHtml}</td>
-    </tr>`;
+    const globalIdx = docs.indexOf(d);
+
+    let downloadHtml;
+    if(d.fileId) {
+      downloadHtml = '<a href="https://drive.google.com/uc?export=download&id='+d.fileId+'" target="_blank" class="download-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải xuống</a>';
+    } else if(d.driveLink) {
+      downloadHtml = '<a href="'+d.driveLink+'" target="_blank" class="download-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải xuống</a>';
+    } else {
+      downloadHtml = '<span style="font-size:11px;color:var(--text2)">Chưa có link</span>';
+    }
+
+    const deleteBtn = isAdmin()
+      ? '<button class="btn btn-xs btn-danger" onclick="deleteDoc('+globalIdx+')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>'
+      : '';
+
+    return '<tr>'
+      + '<td class="tbl-code">'+(d.proj||'—')+'</td>'
+      + '<td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:500" title="'+d.name+'">'+d.name+'</td>'
+      + '<td><span class="file-type '+typeCls+'">'+ext+'</span></td>'
+      + '<td style="font-size:12px;color:var(--text1)">'+(d.phase||'—')+'</td>'
+      + '<td style="font-family:monospace;font-size:11px;color:var(--text2)">'+(d.date||'—')+'</td>'
+      + '<td style="font-family:monospace;font-size:11px;color:var(--text2)">'+(d.size||'—')+'</td>'
+      + '<td>'+downloadHtml+'</td>'
+      + (isAdmin() ? '<td>'+deleteBtn+'</td>' : '')
+      + '</tr>';
   }).join('');
 }
 
-function downloadDoc(name) {
-  toast(`File "${name}" chưa có liên kết Drive trực tiếp`);
+function deleteDoc(idx) {
+  if(!isAdmin()) { showNoPermToast(); return; }
+  const d = docs[idx];
+  if(!d) return;
+  showConfirm({
+    title: 'Xóa tài liệu', icon: '🗑️', iconBg: 'var(--red-dim)',
+    msg: 'Xác nhận xóa file <strong>'+d.name+'</strong>?<br><span style="font-size:11px;color:var(--text2)">File trên Drive không bị xóa — chỉ xóa khỏi thư viện.</span>',
+    okText: 'Xóa', okClass: 'btn-danger',
+    onOk: function() {
+      docs.splice(idx, 1);
+      renderDocs();
+      syncDataToDrive();
+      toast('Đã xóa tài liệu khỏi thư viện');
+    }
+  });
 }
+
+function downloadDoc(name) {
+  toast('File "' + name + '" chưa có liên kết Drive trực tiếp');
+}
+
 
 // ── RENDER TEAM ──
 // ── Tính danh sách dự án của một thành viên từ dữ liệu thực tế ──
