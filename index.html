@@ -283,6 +283,11 @@ body {
 .phase-docs-modal .tbl { min-width: auto; width: 100%; }
 .phase-docs-modal .tbl th, .phase-docs-modal .tbl td { white-space: normal; word-break: break-word; padding: 8px 10px; }
 .phase-docs-modal .tbl-wrap { overflow-x: auto; }
+/* Also target when class is on overlay */
+.overlay.phase-docs-modal .modal { width: 90vw; max-width: 900px; }
+.overlay.phase-docs-modal .tbl { min-width: auto; width: 100%; }
+.overlay.phase-docs-modal .tbl th, .overlay.phase-docs-modal .tbl td { white-space: normal; word-break: break-word; padding: 8px 10px; }
+.overlay.phase-docs-modal .tbl-wrap { overflow-x: auto; }
 
 .form-row { margin-bottom: 14px; }
 .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text2); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
@@ -2438,28 +2443,35 @@ function viewPhaseDocs(pId, idx) {
   const docList = (p.phaseDocs && p.phaseDocs[idx]) || [];
   const overlay = document.getElementById('overlay');
   overlay.classList.add('open');
-  const _phListDoc=getPH(projects.find(x=>x.id===pId)||{});document.getElementById('modal-hd-title').textContent = `📂  Tài liệu P${idx+1}: ${(_phListDoc[idx]||{}).name||''}`;
-  const modal = document.querySelector('.modal');
-  if(modal) modal.classList.add('phase-docs-modal');
+  // Thêm class vào overlay để CSS .phase-docs-modal .modal apply được
+  overlay.classList.add('phase-docs-modal');
+  const _phListDoc=getPH(projects.find(x=>x.id===pId)||{});
+  document.getElementById('modal-hd-title').textContent = `📂  Tài liệu P${idx+1}: ${(_phListDoc[idx]||{}).name||''}`;
   document.getElementById('modal-body').innerHTML = docList.length === 0
     ? `<div class="empty-state">Chưa có tài liệu nào</div>`
-    : `<div class="tbl-wrap"><table class="tbl" style="min-width:auto;width:100%">
+    : `<div class="tbl-wrap"><table class="tbl" style="min-width:auto;width:100%;table-layout:fixed">
         <thead><tr>
-          <th style="min-width:140px">Tên file</th>
-          <th style="min-width:60px">Loại</th>
-          <th style="min-width:80px">Dung lượng</th>
-          <th style="min-width:100px">Ngày</th>
-          <th style="min-width:100px">Tải xuống</th>
+          <th style="width:36%">Tên file</th>
+          <th style="width:10%">Loại</th>
+          <th style="width:13%">Dung lượng</th>
+          <th style="width:14%">Ngày</th>
+          <th style="width:27%">Tải xuống</th>
         </tr></thead>
         <tbody>
           ${docList.map((d,di) => {
             const dlBtn = d.fileId
-              ? `<a href="https://drive.google.com/uc?export=download&id=${d.fileId}" target="_blank" class="download-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải</a>`
+              ? `<a href="https://drive.google.com/uc?export=download&id=${d.fileId}" target="_blank" class="download-btn" style="width:100%;justify-content:center">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Tải xuống
+                </a>`
               : d.driveLink
-              ? `<a href="${d.driveLink}" target="_blank" class="download-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tải</a>`
-              : `<span style="color:var(--text2);font-size:11px">Chờ sync</span>`;
+              ? `<a href="${d.driveLink}" target="_blank" class="download-btn" style="width:100%;justify-content:center">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Tải xuống
+                </a>`
+              : `<span style="color:var(--text2);font-size:11px">Chờ sync Drive...</span>`;
             return `<tr>
-              <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${d.name}">${d.name}</td>
+              <td style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px" title="${d.name}">${d.name}</td>
               <td><span class="file-type ${getFileTypeCls(d.type)}">${d.type}</span></td>
               <td class="tbl-code">${d.size}</td>
               <td class="tbl-code">${d.date}</td>
@@ -2903,7 +2915,11 @@ function openModal(type, data) {
   }
 }
 
-function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function closeModal() {
+  const ov = document.getElementById('overlay');
+  ov.classList.remove('open');
+  ov.classList.remove('phase-docs-modal');
+}
 
 // ── SAVE FUNCTIONS ──
 function saveProject() {
