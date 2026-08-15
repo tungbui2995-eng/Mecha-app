@@ -6,6 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0a0c10">
 <title>PTI-Project — Quản lý dự án PTI</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PTI-Project">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -708,12 +716,39 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 .drive-perm-badge.read { background: rgba(52,211,153,0.15); color: var(--green); }
 .drive-perm-badge.none { background: var(--bg3); color: var(--text2); }
 
+.mobile-menu-btn { display: none; }
+.sidebar-overlay { display: none; }
+
 @media (max-width: 768px) {
   .stats-row { grid-template-columns: 1fr 1fr; }
   .two-col { grid-template-columns: 1fr; }
   .chat-layout { grid-template-columns: 1fr; }
   .perm-grid { grid-template-columns: 1fr; }
   .phase-docs-modal .modal { width: 95vw; }
+
+  body { overflow-x: hidden; }
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 1000;
+    width: 82vw; max-width: 300px;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .sidebar-overlay {
+    display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 999; opacity: 0; pointer-events: none; transition: opacity .25s ease;
+    backdrop-filter: blur(2px);
+  }
+  .sidebar-overlay.open { opacity: 1; pointer-events: all; }
+  .mobile-menu-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: var(--r); border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text0); cursor: pointer; flex-shrink: 0;
+  }
+  .topbar { padding: 0 12px; gap: 8px; }
+  .topbar-title { font-size: 13px; }
+  .main { width: 100%; }
 }
 </style>
 </head>
@@ -796,7 +831,8 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
   <div class="loading-sub" id="loading-sub">Vui lòng chờ</div>
 </div>
 
-<nav class="sidebar">
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+<nav class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-mark">
       <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
@@ -870,7 +906,7 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
   </div>
 
   <div class="sidebar-footer">
-    <div class="nav-item" onclick="openModal('new-project')">
+    <div class="nav-item" onclick="openModal('new-project'); closeMobileSidebar();">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       Tạo dự án mới
     </div>
@@ -879,6 +915,9 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
 
 <div class="main">
   <div class="topbar">
+    <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" title="Menu" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="topbar-breadcrumb">
       <span class="topbar-crumb-root">PTI-Project</span>
       <span class="topbar-crumb-sep">›</span>
@@ -894,6 +933,10 @@ textarea.form-ctrl { resize: vertical; min-height: 72px; }
         Tải lại
       </button>
       <button class="btn btn-sm btn-ghost" id="theme-toggle-btn" onclick="toggleTheme()" title="Đổi giao diện sáng/tối"></button>
+      <button class="btn btn-sm btn-ghost" id="pwa-install-btn" onclick="installPwa()" title="Cài đặt PTI-Project vào thiết bị" style="display:none;color:var(--accent)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><polyline points="7 11 12 16 17 11"/><path d="M5 19h14"/></svg>
+        Cài đặt
+      </button>
       <button class="btn btn-sm btn-ghost" id="tg-settings-btn" onclick="openModal_telegramSettings()" title="Cài đặt thông báo Telegram" style="display:none">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
       </button>
@@ -1599,6 +1642,14 @@ function toggleTheme() {
 }
 updateThemeToggleIcon(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
 
+function toggleMobileSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeMobileSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
 function nav(viewId, el) {
   if(!canView(viewId)) {
     toast('⛔ Bạn không có quyền truy cập mục này');
@@ -1613,6 +1664,7 @@ function nav(viewId, el) {
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(`view-${viewId}`).classList.add('active');
   document.getElementById('topbar-title').textContent = PAGE_TITLES[viewId] || viewId;
+  closeMobileSidebar();
 }
 
 function formatVND(n) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', notation: 'compact', maximumFractionDigits: 1 }).format(n); }
@@ -1830,7 +1882,12 @@ function renderProjects() {
       <td style="font-family:monospace;font-size:12px">${p.deadline}</td>
       <td style="font-size:12px;color:var(--text1)">${p.val ? formatVND(p.val) : '—'}</td>
       <td><span class="badge ${p.status==='Hoàn thành'?'badge-green':'badge-blue'}">${p.status}</span></td>
-      <td><button class="btn btn-xs btn-danger" onclick="deleteProject('${p.id}')">Xóa</button></td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-xs btn-ghost" onclick="${isAdmin()?`openModal('edit-project','${p.id}')`:'showNoPermToast()'}">Sửa</button>
+          <button class="btn btn-xs btn-danger" onclick="deleteProject('${p.id}')">Xóa</button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
   document.getElementById('proj-count').textContent = `${projects.length} dự án`;
@@ -2529,6 +2586,19 @@ function savePIC(pId, idx, email) {
   closeModal();
   loadPhases(pId);
   syncDataToDrive();
+  if(email && member) {
+    const ph = getPH(p);
+    const phase = ph[idx];
+    const deadline = p.phaseDeadlines?.[idx] || 'Chưa đặt';
+    const deadlineText = deadline !== 'Chưa đặt' ? formatDateVN(deadline) : 'Chưa đặt';
+    sendTelegramMessage(
+      `👷 <b>Phân công PIC</b>\n` +
+      `📁 Dự án: ${tgEscape(p.id)} — ${tgEscape(p.name)}\n` +
+      `📐 Giai đoạn: P${idx+1} — ${tgEscape(phase.name)}\n` +
+      `👤 PIC: ${tgEscape(member.name)}\n` +
+      `📅 Deadline: ${tgEscape(deadlineText)}`
+    );
+  }
   if(email && member && sendEmail) {
     sendEmailNotification({
       type: 'assign_pic',
@@ -3320,6 +3390,30 @@ function openModal(type, data) {
     `;
     document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveProject()">Xác nhận tạo</button>`;
   } 
+  else if(type==='edit-project'){
+    if(!isAdmin()){ closeModal(); showNoPermToast(); return; }
+    const p = projects.find(x=>x.id===data);
+    if(!p){ closeModal(); toast('Không tìm thấy dự án'); return; }
+    hd.textContent = `✏️  Sửa dự án — ${p.id}`;
+    document.getElementById('modal-body').innerHTML = `
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Mã DA *</label><input class="form-ctrl" id="ep-id" value="${p.id}" disabled style="opacity:0.6;cursor:not-allowed"></div>
+        <div class="form-row"><label class="form-label">Trạng thái</label>
+          <select class="form-ctrl" id="ep-status">
+            ${['Đang thực hiện','Chờ triển khai','Hoàn thành'].map(s=>`<option ${p.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-row"><label class="form-label">Tên thiết bị / Máy *</label><input class="form-ctrl" id="ep-name" value="${p.name||''}" placeholder="Máy hàn tự động, Băng tải, ..."></div>
+      <div class="form-row"><label class="form-label">Khách hàng *</label><input class="form-ctrl" id="ep-client" value="${p.client||''}" placeholder="Tên khách hàng hoặc công ty"></div>
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Giá trị hợp đồng (VNĐ)</label><input class="form-ctrl" type="number" id="ep-val" value="${p.val||0}" placeholder="0"></div>
+        <div class="form-row"><label class="form-label">Hạn bàn giao</label><input class="form-ctrl" type="date" id="ep-deadline" value="${p.deadline && p.deadline!=='—' ? p.deadline : ''}"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">Mã dự án không thể chỉnh sau khi tạo. Để đổi mã, tạo dự án mới rồi xóa dự án cũ.</div>
+    `;
+    document.getElementById('modal-ft').innerHTML = `<button class="btn btn-ghost" onclick="closeModal()">Hủy</button><button class="btn btn-accent" onclick="saveEditProject('${p.id}')">Lưu thay đổi</button>`;
+  }
   else if(type==='new-issue') {
     hd.textContent = '⚠️  Thêm NCR / Sự cố kỹ thuật';
     document.getElementById('modal-body').innerHTML = `
@@ -3411,6 +3505,22 @@ function saveProject() {
     phaseComments: []
   });
   closeModal(); syncDataToDrive();
+}
+
+function saveEditProject(id) {
+  if(!isAdmin()){ showNoPermToast(); return; }
+  const p = projects.find(x=>x.id===id);
+  if(!p){ toast('Không tìm thấy dự án'); return; }
+  const name = document.getElementById('ep-name').value.trim();
+  const client = document.getElementById('ep-client').value.trim();
+  if(!name || !client){ toast('Vui lòng điền đủ thông tin bắt buộc'); return; }
+  p.name = name;
+  p.client = client;
+  p.val = document.getElementById('ep-val').value || 0;
+  p.deadline = document.getElementById('ep-deadline').value || '—';
+  p.status = document.getElementById('ep-status').value;
+  closeModal(); renderProjects(); syncDataToDrive();
+  toast(`✅ Đã cập nhật dự án ${id}`);
 }
 
 function saveIssue() {
@@ -3761,7 +3871,7 @@ function openTaskModal(type, editId) {
   `;
   document.getElementById('modal-ft').innerHTML = `
     <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
-    ${isEdit ? `<button class="btn btn-danger btn-sm" onclick="deleteTask('${editId}')">Xóa</button>` : ''}
+    ${isEdit && isAdmin() ? `<button class="btn btn-danger btn-sm" onclick="deleteTask('${editId}')">Xóa</button>` : ''}
     <button class="btn btn-sm" style="background:${accentColor};border-color:${accentColor};color:#fff" onclick="saveTask(${isEdit?`'${editId}'`:'null'})">
       ${isEdit ? 'Lưu thay đổi' : 'Thêm công việc'}
     </button>
@@ -3813,6 +3923,7 @@ function saveTask(editId) {
 }
 
 function deleteTask(id){
+  if(!isAdmin()){ showNoPermToast(); return; }
   const t=tasks.find(x=>x.id===id);
   showConfirm({title:'Xóa công việc',icon:'🗑️',iconBg:'var(--red-dim)',
     msg:`Xác nhận xóa: <strong>${t?.title||id}</strong>?`,
@@ -3925,6 +4036,10 @@ function taskCardHtml(t) {
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Sửa
       </button>
+      ${isAdmin() ? `<button class="btn btn-xs btn-danger" title="Xóa (Admin)" onclick="deleteTask('${t.id}')">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Xóa
+      </button>` : ''}
       ${canSendEmail ? `<button class="btn btn-xs" style="background:var(--accent-dim);border-color:rgba(79,142,247,0.25);color:var(--accent)" onclick="sendTaskEmail('${t.id}')">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         Gửi mail
@@ -5208,6 +5323,7 @@ function initChat() {
 
 function createProjectRooms() {
   projects.forEach(p => {
+    if(p.chatRoomDeleted) return;
     if(!chatRooms.find(r=>r.id==='proj-'+p.id)) {
       chatRooms.push({ id:'proj-'+p.id, name:p.id+' — '+p.name, icon:'📁', color:'#34d399', type:'project', projId:p.id, messages:[] });
     }
@@ -5218,18 +5334,48 @@ function createProjectRooms() {
 function renderChatRooms() {
   const list = document.getElementById('chat-room-list');
   if(!list) return;
+  const admin = isAdmin();
   list.innerHTML = chatRooms.map(r => {
     const last = r.messages && r.messages.length ? r.messages[r.messages.length-1] : null;
     const lastText = last ? (last.senderName+': '+(last.text||'📎 File').slice(0,28)) : 'Chưa có tin nhắn';
     const isActive = r.id === currentRoomId;
+    const linkedProj = r.type==='project' ? projects.find(p=>p.id===r.projId) : null;
+    const canDelete = admin && r.type==='project' && linkedProj && linkedProj.status==='Hoàn thành';
     return `<div class="chat-room-item ${isActive?'active':''}" onclick="openRoom('${r.id}')">
       <div class="chat-room-icon" style="background:${r.color}22;color:${r.color}">${r.icon}</div>
       <div style="flex:1;min-width:0">
         <div class="chat-room-name">${r.name}</div>
         <div class="chat-room-last">${lastText}</div>
       </div>
+      ${canDelete ? `<button class="btn btn-xs btn-ghost" style="color:var(--red);flex-shrink:0;padding:4px 6px" title="Xóa phòng chat (dự án đã hoàn thành)" onclick="event.stopPropagation();deleteChatRoom('${r.id}')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </button>` : ''}
     </div>`;
   }).join('');
+}
+
+function deleteChatRoom(roomId) {
+  if(!isAdmin()){ showNoPermToast(); return; }
+  const room = chatRooms.find(r=>r.id===roomId);
+  if(!room) return;
+  showConfirm({title:'Xóa phòng chat',icon:'🗑️',iconBg:'var(--red-dim)',
+    msg:`Xác nhận xóa phòng chat <strong>${room.name}</strong>? Toàn bộ tin nhắn trong phòng sẽ bị xóa vĩnh viễn.`,
+    okText:'Xóa phòng chat',okClass:'btn-danger',
+    onOk:()=>{
+      chatRooms = chatRooms.filter(r=>r.id!==roomId);
+      if(room.type==='project' && room.projId) {
+        const linkedProj = projects.find(p=>p.id===room.projId);
+        if(linkedProj) linkedProj.chatRoomDeleted = true;
+      }
+      if(currentRoomId === roomId) {
+        currentRoomId = 'general';
+        if(document.getElementById('chat-room-list')) openRoom('general');
+      }
+      renderChatRooms();
+      syncChatToDrive();
+      toast(`Đã xóa phòng chat ${room.name}`);
+    }
+  });
 }
 
 function openRoom(roomId) {
@@ -5770,6 +5916,34 @@ function renderAll() {
 }
 
 window.onload = () => { fetchDataFromDrive(); };
+
+// ── PWA: đăng ký Service Worker + gợi ý cài đặt app ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW đăng ký lỗi:', err));
+  });
+}
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = '';
+});
+function installPwa() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(() => {
+    deferredInstallPrompt = null;
+    const btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.style.display = 'none';
+  });
+}
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'none';
+  toast('📲 Đã cài đặt PTI-Project vào thiết bị');
+});
 </script>
 </body>
 </html>
